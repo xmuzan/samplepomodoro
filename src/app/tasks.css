@@ -162,8 +162,7 @@
 .tech-task-item {
   position: relative;
   padding: 1rem 0.75rem;
-  background: hsl(var(--card) / 0.5);
-  backdrop-filter: blur(2px);
+  background: transparent;
   transition: all 0.2s ease-in-out;
 }
 
