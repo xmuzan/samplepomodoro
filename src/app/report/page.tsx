@@ -77,7 +77,7 @@ export default function ReportPage() {
 
   if (!isMounted) {
     return (
-        <div className="flex min-h-screen flex-col bg-transparent text-foreground md:flex-row">
+        <div className="flex min-h-screen flex-col text-foreground md:flex-row">
             <Navbar />
             <main className="flex-1 p-4 pb-24 md:ml-20 md:pb-4 lg:ml-64">
                 {/* Skeleton loader can be added here */}
@@ -87,7 +87,7 @@ export default function ReportPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-transparent text-foreground md:flex-row">
+    <div className="flex min-h-screen flex-col text-foreground md:flex-row">
       <Navbar />
       <main className="flex-1 p-4 pb-24 md:ml-20 md:pb-4 lg:ml-64">
         <div className="max-w-4xl mx-auto">

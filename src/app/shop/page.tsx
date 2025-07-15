@@ -173,7 +173,7 @@ export default function ShopPage() {
 
   if (!isMounted) {
     return (
-        <div className="flex min-h-screen flex-col bg-transparent text-foreground md:flex-row">
+        <div className="flex min-h-screen flex-col text-foreground md:flex-row">
             <Navbar />
             <main className="flex-1 p-4 pb-24 md:ml-20 md:pb-4 lg:ml-64">
             </main>
@@ -184,7 +184,7 @@ export default function ShopPage() {
   const isPenaltyActive = penaltyEndTime && penaltyEndTime > Date.now();
 
   return (
-    <div className="flex min-h-screen flex-col bg-transparent text-foreground md:flex-row">
+    <div className="flex min-h-screen flex-col text-foreground md:flex-row">
       <Navbar />
       <main className="flex-1 p-4 pb-24 md:ml-20 md:pb-4 lg:ml-64">
         <div className="max-w-7xl mx-auto">
