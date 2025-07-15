@@ -78,7 +78,7 @@ export function Navbar() {
             <div className="flex h-20 items-center justify-center border-b border-primary/20">
                 <Link href="/" className="flex items-center justify-center">
                     <Bot className={cn("h-8 w-8 text-primary", iconGlow)} />
-                    <span className="font-headline ml-4 hidden text-xl font-bold text-primary lg:block">LevelUp</span>
+                    <span className="font-headline ml-4 hidden text-xl font-bold text-primary lg:block">Sistem</span>
                 </Link>
             </div>
             <div className="flex flex-1 flex-col gap-y-2 overflow-y-auto p-2">

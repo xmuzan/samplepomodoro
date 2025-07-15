@@ -3,7 +3,7 @@ import './tasks.css';
 import { Toaster } from '@/components/ui/toaster';
 
 export const metadata: Metadata = {
-  title: 'LevelUp Navigator',
+  title: 'Sistem',
   description: 'A Solo Leveling inspired life RPG to level up your skills.',
 };
 
