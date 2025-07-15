@@ -66,7 +66,7 @@ export function CreateTaskDialog({ onAddTask }: CreateTaskDialogProps) {
                     <span className="hidden sm:inline">Görev Oluştur</span>
                 </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px] border-primary/50 shadow-[0_0_25px_hsl(var(--primary)/0.4)]">
+            <DialogContent className="futuristic-card sm:max-w-[425px]">
                 <form onSubmit={handleSubmit}>
                     <DialogHeader>
                         <DialogTitle className="font-headline text-primary">Yeni Görev Ekle</DialogTitle>

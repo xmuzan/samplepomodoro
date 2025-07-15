@@ -66,7 +66,7 @@ export function TaskManager() {
 
   if (!isMounted) {
     return (
-        <Card className="border-primary/50 bg-card shadow-[0_0_25px_hsl(var(--primary)/0.4)]">
+        <Card className="futuristic-card">
             <CardHeader className="flex flex-row items-center justify-between">
                 <Skeleton className="h-8 bg-muted/20 rounded w-1/2"></Skeleton>
                 <Skeleton className="h-10 bg-muted/20 rounded w-36"></Skeleton>
@@ -82,7 +82,7 @@ export function TaskManager() {
 
   return (
     <div className="max-w-4xl mx-auto">
-      <Card className="border-primary/50 bg-card shadow-[0_0_25px_hsl(var(--primary)/0.4)]">
+      <Card className="futuristic-card">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="font-headline text-2xl text-primary tracking-wider">ÖZEL GÖREVLER</CardTitle>
           <CreateTaskDialog onAddTask={addTask} />

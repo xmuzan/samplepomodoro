@@ -10,19 +10,19 @@
     --card-foreground: 224 71.4% 4.1%;
     --popover: 0 0% 100%;
     --popover-foreground: 224 71.4% 4.1%;
-    --primary: 195 100% 50%;
-    --primary-foreground: 224 71.4% 4.1%;
+    --primary: 270 90% 60%;
+    --primary-foreground: 0 0% 98%;
     --secondary: 220 14.3% 95.9%;
     --secondary-foreground: 220 26.3% 10.8%;
     --muted: 220 14.3% 95.9%;
     --muted-foreground: 220 8.9% 46.1%;
-    --accent: 195 100% 50%;
+    --accent: 300 100% 50%;
     --accent-foreground: 224 71.4% 4.1%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 195 100% 50%;
+    --border: 270 90% 50%;
+    --input: 270 90% 40%;
+    --ring: 270 90% 65%;
     --chart-1: 12 76% 61%;
     --chart-2: 173 58% 39%;
     --chart-3: 197 37% 24%;
@@ -31,25 +31,25 @@
     --radius: 0.5rem;
   }
   .dark {
-    --background: 225 47% 7%;
+    --background: 240 10% 3.9%;
     --foreground: 0 0% 98%;
-    --card: 225 40% 12%;
+    --card: 240 8% 10%;
     --card-foreground: 0 0% 98%;
-    --popover: 225 47% 7%;
+    --popover: 240 10% 3.9%;
     --popover-foreground: 0 0% 98%;
-    --primary: 195 100% 50%;
-    --primary-foreground: 225 47% 7%;
-    --secondary: 225 40% 15%;
+    --primary: 270 90% 60%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 240 4% 15%;
     --secondary-foreground: 0 0% 98%;
-    --muted: 225 40% 15%;
+    --muted: 240 4% 15%;
     --muted-foreground: 0 0% 63.9%;
-    --accent: 195 100% 50%;
-    --accent-foreground: 225 47% 7%;
+    --accent: 300 100% 50%;
+    --accent-foreground: 0 0% 98%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
-    --border: 195 100% 25%;
-    --input: 195 100% 15%;
-    --ring: 195 100% 50%;
+    --border: 270 90% 50%;
+    --input: 270 90% 25%;
+    --ring: 270 90% 65%;
   }
 }
 
@@ -59,5 +59,43 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer components {
+  /* Futuristic clipped-corner effect for cards and dialogs */
+  .futuristic-card {
+    @apply bg-card border border-primary/50 shadow-lg relative;
+    clip-path: polygon(
+      15px 0,
+      100% 0,
+      100% calc(100% - 15px),
+      calc(100% - 15px) 100%,
+      0 100%,
+      0 15px
+    );
+  }
+  
+  .futuristic-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: var(--radius);
+    padding: 2px; /* border width */
+    background: linear-gradient(145deg, hsl(var(--primary) / 0.7), hsl(var(--accent) / 0.7));
+    -webkit-mask: 
+      linear-gradient(#fff 0 0) content-box, 
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+            mask-composite: exclude;
+    pointer-events: none;
+    clip-path: polygon(
+      15px 0,
+      100% 0,
+      100% calc(100% - 15px),
+      calc(100% - 15px) 100%,
+      0 100%,
+      0 15px
+    );
   }
 }
