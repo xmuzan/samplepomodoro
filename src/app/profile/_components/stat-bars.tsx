@@ -40,8 +40,8 @@ function StatBar({ label, icon: Icon, value, max, colorClass, unit }: { label: s
 export function StatBars({ hp, mp, ir }: StatBarsProps) {
   return (
     <div className="space-y-3">
-      <StatBar label="HP" icon={HeartPulse} value={hp.current} max={hp.max} colorClass="stat-bar-fill-hp" unit="" />
-      <StatBar label="MP" icon={FlaskConical} value={mp.current} max={mp.max} colorClass="stat-bar-fill-mp" unit="" />
+      <StatBar label="HP" icon={HeartPulse} value={hp.current} max={hp.max} colorClass="stat-bar-fill-hp" unit="%" />
+      <StatBar label="MP" icon={FlaskConical} value={mp.current} max={mp.max} colorClass="stat-bar-fill-mp" unit="%" />
       <StatBar label="IR" icon={BrainCircuit} value={ir.current} max={ir.max} colorClass="stat-bar-fill-ir" unit="%" />
     </div>
   );

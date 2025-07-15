@@ -45,7 +45,7 @@ export function UserInfo({ level, job, title, username, avatarUrl, onProfileUpda
         <div className="flex items-center justify-center md:justify-start gap-4 mt-2">
             <div className="text-center">
                 <p className="text-4xl font-headline font-bold text-primary text-glow">{level}</p>
-                <p className="text-sm text-muted-foreground uppercase tracking-widest">Level</p>
+                <p className="text-sm text-muted-foreground uppercase tracking-widest">SEVİYE</p>
             </div>
             <div className="text-left">
                 <p className="text-md"><span className="font-semibold text-muted-foreground">JOB:</span> {job}</p>

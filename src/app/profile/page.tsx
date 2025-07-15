@@ -10,6 +10,7 @@ import { FooterActions } from './_components/footer-actions';
 import { Separator } from '@/components/ui/separator';
 import { shopItemsData } from '@/app/shop/page';
 import { SKILL_CATEGORIES } from '@/lib/skills';
+import { getTitleForLevel } from '@/lib/titles';
 
 import './profile.css';
 
@@ -18,7 +19,7 @@ const defaultAvatarUrl = "https://placehold.co/100x100.png";
 const defaultStats = { str: 0, vit: 0, agi: 0, int: 0, per: 0 };
 const defaultSkillData = Object.keys(SKILL_CATEGORIES).reduce((acc, key) => {
     if (key !== 'other') {
-      acc[key] = { completedTasks: 0, rankIndex: 0 };
+      acc[key as keyof typeof SKILL_CATEGORIES] = { completedTasks: 0, rankIndex: 0 };
     }
     return acc;
   }, {} as Record<string, { completedTasks: number; rankIndex: number }>);
@@ -101,7 +102,7 @@ export default function ProfilePage() {
 
     const handleStorageChange = (event: StorageEvent) => {
         // Re-load all data if any of our keys change
-        if (['userGold', 'username', 'avatarUrl', 'level', 'attributePoints', 'stats', 'skillData'].includes(event.key || '')) {
+        if (['userGold', 'username', 'avatarUrl', 'level', 'attributePoints', 'stats', 'skillData', 'tasksCompletedThisLevel', 'tasksRequiredForNextLevel'].includes(event.key || '')) {
           loadDataFromStorage();
         }
     };
@@ -146,6 +147,8 @@ export default function ProfilePage() {
     );
   }
 
+  const userTitle = getTitleForLevel(level);
+
   return (
     <div className="flex min-h-screen flex-col bg-transparent text-foreground md:flex-row">
       <Navbar />
@@ -159,8 +162,8 @@ export default function ProfilePage() {
               
               <UserInfo 
                 level={level}
-                job="None"
-                title="Wolf Assassin"
+                job={userTitle.job}
+                title={userTitle.title}
                 username={username}
                 avatarUrl={avatarUrl}
                 onProfileUpdate={handleProfileUpdate}
@@ -169,8 +172,8 @@ export default function ProfilePage() {
               <Separator className="my-4 bg-border/20" />
 
               <StatBars 
-                hp={{current: 2220, max: 2220}}
-                mp={{current: 350, max: 350}}
+                hp={{current: 100, max: 100}}
+                mp={{current: 100, max: 100}}
                 ir={{current: 100, max: 100}}
               />
 

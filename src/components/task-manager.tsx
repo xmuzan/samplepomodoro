@@ -83,9 +83,13 @@ export function TaskManager() {
       // Initialize user data if it doesn't exist
       if (!localStorage.getItem('userGold')) localStorage.setItem('userGold', JSON.stringify(150));
       if (!localStorage.getItem('level')) localStorage.setItem('level', JSON.stringify(0));
-      if (!localStorage.getItem('completedTasksCount')) localStorage.setItem('completedTasksCount', JSON.stringify(0));
       if (!localStorage.getItem('attributePoints')) localStorage.setItem('attributePoints', JSON.stringify(0));
       if (!localStorage.getItem('stats')) localStorage.setItem('stats', JSON.stringify({ str: 0, vit: 0, agi: 0, int: 0, per: 0 }));
+      
+      if (!localStorage.getItem('tasksCompletedThisLevel')) localStorage.setItem('tasksCompletedThisLevel', JSON.stringify(0));
+      const currentLevel = JSON.parse(localStorage.getItem('level') || '0');
+      if (!localStorage.getItem('tasksRequiredForNextLevel')) localStorage.setItem('tasksRequiredForNextLevel', JSON.stringify(32 + currentLevel));
+
 
     } catch (error) {
       console.error("Failed to parse from localStorage", error);
@@ -149,20 +153,26 @@ export function TaskManager() {
 
   const handleTaskCompletion = (category: SkillCategory) => {
     try {
-        let completedCount = JSON.parse(localStorage.getItem('completedTasksCount') || '0');
-        completedCount += 1;
-        
-        if (completedCount > 0 && completedCount % 32 === 0) {
-            let level = JSON.parse(localStorage.getItem('level') || '0');
+        let tasksCompleted = JSON.parse(localStorage.getItem('tasksCompletedThisLevel') || '0');
+        tasksCompleted += 1;
+
+        let level = JSON.parse(localStorage.getItem('level') || '0');
+        let tasksRequired = JSON.parse(localStorage.getItem('tasksRequiredForNextLevel') || `${32 + level}`);
+
+        if (tasksCompleted >= tasksRequired) {
             level += 1;
+            tasksCompleted = 0; // Reset for next level
+            tasksRequired = 32 + level; // New requirement
+
             localStorage.setItem('level', JSON.stringify(level));
+            localStorage.setItem('tasksRequiredForNextLevel', JSON.stringify(tasksRequired));
 
             let attributePoints = JSON.parse(localStorage.getItem('attributePoints') || '0');
             attributePoints += 1;
             localStorage.setItem('attributePoints', JSON.stringify(attributePoints));
         }
 
-        localStorage.setItem('completedTasksCount', JSON.stringify(completedCount));
+        localStorage.setItem('tasksCompletedThisLevel', JSON.stringify(tasksCompleted));
         handleSkillProgress(category);
         window.dispatchEvent(new Event('storage'));
     } catch(error) {
