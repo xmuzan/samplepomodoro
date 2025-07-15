@@ -100,9 +100,9 @@ export default function ProfilePage() {
               <Separator className="my-4 bg-border/20" />
 
               <StatBars 
-                hp={{current: 2000, max: 2220}}
-                mp={{current: 250, max: 350}}
-                ir={{current: 80, max: 100}}
+                hp={{current: 2220, max: 2220}}
+                mp={{current: 350, max: 350}}
+                ir={{current: 100, max: 100}}
               />
 
               <Separator className="my-4 bg-border/20" />

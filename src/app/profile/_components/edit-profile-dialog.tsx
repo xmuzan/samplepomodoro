@@ -1,7 +1,8 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
+import Image from 'next/image';
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -16,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { FuturisticBorder } from '@/components/futuristic-border';
 import { useToast } from '@/hooks/use-toast';
+import { Upload } from 'lucide-react';
 
 interface EditProfileDialogProps {
   children: React.ReactNode;
@@ -28,7 +30,30 @@ export function EditProfileDialog({ children, currentUsername, currentAvatarUrl,
   const [open, setOpen] = useState(false);
   const [username, setUsername] = useState(currentUsername);
   const [avatarUrl, setAvatarUrl] = useState(currentAvatarUrl);
+  const [avatarPreview, setAvatarPreview] = useState(currentAvatarUrl);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) { // 2MB limit
+        toast({
+          title: "Error",
+          description: "File size should not exceed 2MB.",
+          variant: "destructive",
+        });
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const dataUrl = reader.result as string;
+        setAvatarUrl(dataUrl);
+        setAvatarPreview(dataUrl);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,12 +65,22 @@ export function EditProfileDialog({ children, currentUsername, currentAvatarUrl,
       });
       return;
     }
-    onSave(username.trim(), avatarUrl.trim());
+    onSave(username.trim(), avatarUrl);
     setOpen(false);
   };
+  
+  const handleOpenChange = (isOpen: boolean) => {
+    setOpen(isOpen);
+    if (isOpen) {
+      // Reset state when dialog opens
+      setUsername(currentUsername);
+      setAvatarUrl(currentAvatarUrl);
+      setAvatarPreview(currentAvatarUrl);
+    }
+  }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         {children}
       </DialogTrigger>
@@ -72,16 +107,28 @@ export function EditProfileDialog({ children, currentUsername, currentAvatarUrl,
                   />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="avatarUrl" className="text-right">
-                    Avatar URL
+                  <Label className="text-right">
+                    Avatar
                   </Label>
-                  <Input
-                    id="avatarUrl"
-                    value={avatarUrl}
-                    onChange={(e) => setAvatarUrl(e.target.value)}
-                    className="col-span-3"
-                    placeholder='https://....'
-                  />
+                   <div className="col-span-3 flex items-center gap-4">
+                     <Image 
+                       src={avatarPreview}
+                       alt="Avatar preview"
+                       width={40}
+                       height={40}
+                       className='rounded-full'
+                     />
+                     <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
+                       <Upload className='mr-2 h-4 w-4'/> Yükle
+                     </Button>
+                     <Input 
+                       type="file"
+                       ref={fileInputRef}
+                       className='hidden'
+                       accept="image/png, image/jpeg, image/gif"
+                       onChange={handleFileChange}
+                     />
+                   </div>
                 </div>
               </div>
               <DialogFooter className="p-6 pt-0">
