@@ -13,12 +13,12 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const SuggestTaskNameInputSchema = z.object({
-  prompt: z.string().describe('Görev adı oluşturmak için bir istem.'),
+  prompt: z.string().describe('The user prompt for which to generate a task name.'),
 });
 export type SuggestTaskNameInput = z.infer<typeof SuggestTaskNameInputSchema>;
 
 const SuggestTaskNameOutputSchema = z.object({
-  taskName: z.string().describe('Önerilen görev adı.'),
+  taskName: z.string().describe('The suggested task name.'),
 });
 export type SuggestTaskNameOutput = z.infer<typeof SuggestTaskNameOutputSchema>;
 
@@ -30,7 +30,14 @@ const prompt = ai.definePrompt({
   name: 'suggestTaskNamePrompt',
   input: {schema: SuggestTaskNameInputSchema},
   output: {schema: SuggestTaskNameOutputSchema},
-  prompt: `Aşağıdaki isteğe göre Türkçe bir görev adı öner: {{{prompt}}}`,
+  prompt: `You are an AI assistant for a "Solo Leveling" inspired life RPG app.
+Your task is to generate a single, challenging, and inspiring quest name in Turkish based on the user's goal.
+The quest should feel like it's coming from the "System" in Solo Leveling.
+It should be short, punchy, and sound epic.
+
+User's goal: {{{prompt}}}
+
+Generate one quest name.`,
 });
 
 const suggestTaskNameFlow = ai.defineFlow(
