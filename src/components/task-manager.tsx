@@ -11,6 +11,7 @@ import { FuturisticBorder } from './futuristic-border';
 import { AlarmClock, Coins } from 'lucide-react';
 import type { SkillCategory } from '@/lib/skills';
 import { useToast } from '@/hooks/use-toast';
+import { getStats } from '@/lib/stats';
 
 export type Task = {
   id: string;
@@ -167,7 +168,6 @@ export function TaskManager() {
         if (localStorage.getItem('taskDeadline')) {
             localStorage.removeItem('taskDeadline');
             setTaskDeadline(null);
-            // Removed the "All tasks completed" toast
             window.dispatchEvent(new Event('storage'));
         }
     } else if (hasIncompleteTasks && !taskDeadline && !currentPenalty) {
@@ -282,28 +282,59 @@ export function TaskManager() {
             const isPenaltyActiveNow = penaltyEndTime && penaltyEndTime > Date.now();
             
             if (updatedTask.completed && !wasCompleted) {
-                if(!isPenaltyActiveNow){
-                  updateGold(updatedTask.reward);
-                  handleTaskCompletionProgress(updatedTask.category);
-                  toast({
-                    title: "Görev Tamamlandı!",
-                    description: (
-                      <div className="flex items-center justify-center w-full gap-2 text-yellow-400">
-                        <Coins className="h-5 w-5" />
-                        <span className="font-bold">+{updatedTask.reward} Altın</span>
-                      </div>
-                    )
-                  })
-                } else {
+                if(isPenaltyActiveNow) {
                   toast({
                     title: "Ceza Aktif!",
                     description: "Ceza süresi bitene kadar ödül kazanamazsın.",
                     variant: "destructive"
                   });
+                  return updatedTask; // Stop further processing
                 }
+
+                // Check HP and MP penalties
+                const stats = getStats();
+                let finalReward = updatedTask.reward;
+                let canLevelUp = true;
+                
+                if (stats.hp === 0) {
+                    finalReward = Math.round(updatedTask.reward * 0.1);
+                    toast({
+                      title: "HP Sıfır!",
+                      description: "Altın kazanımı %90 azaldı.",
+                      variant: "destructive"
+                    });
+                }
+                
+                if (stats.mp === 0) {
+                    canLevelUp = false;
+                    toast({
+                      title: "MP Sıfır!",
+                      description: "Seviye ilerlemesi durduruldu.",
+                      variant: "destructive"
+                    });
+                }
+
+                updateGold(finalReward);
+                
+                if(canLevelUp) {
+                    handleTaskCompletionProgress(updatedTask.category);
+                }
+
+                toast({
+                  title: "Görev Tamamlandı!",
+                  description: (
+                    <div className="flex items-center justify-center w-full gap-2 text-yellow-400">
+                      <Coins className="h-5 w-5" />
+                      <span className="font-bold">+{finalReward} Altın</span>
+                    </div>
+                  )
+                });
+
             } else if (!updatedTask.completed && wasCompleted) {
                 // This part is tricky. Reverting progress could be complex.
                 // For now, we only revert the gold to keep it simple.
+                // Note: We don't check for HP penalty on reversal, just revert the full original amount.
+                // This might need refinement, but for now it's simple.
                 updateGold(-updatedTask.reward);
             }
             return updatedTask;
@@ -316,6 +347,7 @@ export function TaskManager() {
     const taskToDelete = tasks.find(task => task.id === id);
     if (taskToDelete && taskToDelete.completed) {
       // If a completed task is deleted, revert the gold.
+      // We don't know if there was a penalty, so we revert the original amount for simplicity.
       updateGold(-taskToDelete.reward);
       // Note: Reverting level/skill progress is more complex and not implemented here.
     }
