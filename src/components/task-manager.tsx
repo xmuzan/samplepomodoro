@@ -20,6 +20,11 @@ function PenaltyTimer({ endTime }: { endTime: number }) {
   const [timeLeft, setTimeLeft] = useState(endTime - Date.now());
 
   useEffect(() => {
+    if (endTime <= Date.now()) {
+      setTimeLeft(0);
+      return;
+    }
+    
     const interval = setInterval(() => {
       const remaining = endTime - Date.now();
       if (remaining <= 0) {
@@ -74,7 +79,7 @@ export function TaskManager() {
       const storedPenaltyTime = localStorage.getItem('penaltyEndTime');
       if (storedPenaltyTime) {
         const endTime = parseInt(storedPenaltyTime, 10);
-        if (endTime > Date.now()) {
+        if (!isNaN(endTime) && endTime > Date.now()) {
           setPenaltyEndTime(endTime);
         }
       }
@@ -96,8 +101,12 @@ export function TaskManager() {
   }, [tasks, isMounted]);
 
   useEffect(() => {
-    if (isMounted && penaltyEndTime) {
-      localStorage.setItem('penaltyEndTime', penaltyEndTime.toString());
+    if (isMounted) {
+      if (penaltyEndTime) {
+        localStorage.setItem('penaltyEndTime', penaltyEndTime.toString());
+      } else {
+        localStorage.removeItem('penaltyEndTime');
+      }
     }
   }, [penaltyEndTime, isMounted]);
 
@@ -109,7 +118,6 @@ export function TaskManager() {
     };
     setTasks(prev => [newTask, ...prev]);
 
-    // Set penalty timer for 24 hours from now
     const endTime = Date.now() + 24 * 60 * 60 * 1000;
     setPenaltyEndTime(endTime);
   };
@@ -165,7 +173,7 @@ export function TaskManager() {
         </CardContent>
         </div>
       </FuturisticBorder>
-      {penaltyEndTime && penaltyEndTime > Date.now() && <PenaltyTimer endTime={penaltyEndTime} />}
+      {penaltyEndTime && <PenaltyTimer endTime={penaltyEndTime} />}
     </div>
   );
 }
