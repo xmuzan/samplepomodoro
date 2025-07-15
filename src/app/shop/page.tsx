@@ -12,10 +12,18 @@ export const shopItemsData: ShopItemData[] = [
   {
     id: 'potion_energy',
     name: 'Mana İksiri',
-    description: 'Envanterden kullanarak bir bardak içecek veya bir paket atıştırmalık tüket. Zihinsel ve fiziksel gücünü tazeler.',
+    description: 'Envanterden kullanarak bir bardak içecek veya bir paket atıştırmalık tüket. Anında %10 HP yeniler.',
     price: 100,
     imageUrl: 'https://placehold.co/600x400.png',
     aiHint: 'glowing potion'
+  },
+  {
+    id: 'potion_mind',
+    name: 'Zihin Kristali',
+    description: 'Envanterden kullanarak zihinsel berraklığı anında artır. %15 MP yeniler.',
+    price: 120,
+    imageUrl: 'https://placehold.co/600x400.png',
+    aiHint: 'glowing blue crystal'
   },
   {
     id: 'scroll_cinema',
