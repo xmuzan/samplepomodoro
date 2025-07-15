@@ -47,7 +47,7 @@ function PenaltyTimer({ endTime }: { endTime: number }) {
   const seconds = Math.floor((timeLeft / 1000) % 60);
 
   return (
-    <div className="mt-4 flex items-center justify-center gap-2 rounded-md border border-destructive/50 bg-destructive/10 p-3 text-destructive shadow-[0_0_15px_hsl(var(--destructive)/0.5)]">
+    <div className="flex items-center justify-center gap-2 bg-destructive/10 p-3 text-destructive shadow-[0_0_15px_hsl(var(--destructive)/0.5)]">
       <AlarmClock className="h-5 w-5" />
       <p className="font-mono text-sm font-medium tracking-wider">
         CEZA SÜRESİ: {String(hours).padStart(2, '0')}:{String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
@@ -102,7 +102,7 @@ export function TaskManager() {
 
   useEffect(() => {
     if (isMounted) {
-      if (penaltyEndTime) {
+      if (penaltyEndTime && penaltyEndTime > Date.now()) {
         localStorage.setItem('penaltyEndTime', penaltyEndTime.toString());
       } else {
         localStorage.removeItem('penaltyEndTime');
@@ -156,7 +156,7 @@ export function TaskManager() {
           <CardTitle className="font-headline text-2xl text-primary tracking-wider">ÖZEL GÖREVLER</CardTitle>
           <CreateTaskDialog onAddTask={addTask} />
         </CardHeader>
-        <CardContent className="px-2">
+        <CardContent className="px-2 pb-2">
           <div className="">
             {tasks.length > 0 ? (
               <div className="space-y-0">
@@ -171,9 +171,9 @@ export function TaskManager() {
             )}
           </div>
         </CardContent>
+        {penaltyEndTime && <div className="p-2 pt-0"><PenaltyTimer endTime={penaltyEndTime} /></div>}
         </div>
       </FuturisticBorder>
-      {penaltyEndTime && <PenaltyTimer endTime={penaltyEndTime} />}
     </div>
   );
 }
