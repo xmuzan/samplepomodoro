@@ -3,10 +3,11 @@
 
 import { useState, useEffect } from 'react';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CreateTaskDialog } from './create-task-dialog';
 import { TaskItem } from './task-item';
 import { Skeleton } from './ui/skeleton';
+import { FuturisticBorder } from './futuristic-border';
 
 export type Task = {
   id: string;
@@ -66,7 +67,8 @@ export function TaskManager() {
 
   if (!isMounted) {
     return (
-        <Card className="futuristic-card">
+      <FuturisticBorder>
+        <div className="bg-background/90 backdrop-blur-sm p-1">
             <CardHeader className="flex flex-row items-center justify-between">
                 <Skeleton className="h-8 bg-muted/20 rounded w-1/2"></Skeleton>
                 <Skeleton className="h-10 bg-muted/20 rounded w-36"></Skeleton>
@@ -76,13 +78,15 @@ export function TaskManager() {
                 <Skeleton className="h-12 bg-muted/20 rounded w-full"></Skeleton>
                 <Skeleton className="h-12 bg-muted/20 rounded w-full"></Skeleton>
             </CardContent>
-        </Card>
+        </div>
+      </FuturisticBorder>
     );
   }
 
   return (
     <div className="max-w-4xl mx-auto">
-      <Card className="futuristic-card">
+      <FuturisticBorder>
+       <div className="bg-background/90 backdrop-blur-sm p-1">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="font-headline text-2xl text-primary tracking-wider">ÖZEL GÖREVLER</CardTitle>
           <CreateTaskDialog onAddTask={addTask} />
@@ -102,7 +106,8 @@ export function TaskManager() {
             )}
           </div>
         </CardContent>
-      </Card>
+        </div>
+      </FuturisticBorder>
     </div>
   );
 }

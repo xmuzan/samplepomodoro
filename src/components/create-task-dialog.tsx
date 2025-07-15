@@ -17,6 +17,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Plus, Wand2 } from 'lucide-react';
 import { suggestTaskAction } from '@/app/tasks/actions';
+import { FuturisticBorder } from './futuristic-border';
 
 interface CreateTaskDialogProps {
     onAddTask: (taskText: string) => void;
@@ -66,36 +67,40 @@ export function CreateTaskDialog({ onAddTask }: CreateTaskDialogProps) {
                     <span className="hidden sm:inline">Görev Oluştur</span>
                 </Button>
             </DialogTrigger>
-            <DialogContent className="futuristic-card sm:max-w-[425px]">
-                <form onSubmit={handleSubmit}>
-                    <DialogHeader className="p-6">
-                        <DialogTitle className="font-headline text-primary">Yeni Görev Ekle</DialogTitle>
-                        <DialogDescription>
-                            Yeni bir görev ekleyerek seviye atlamaya devam et.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <div className="grid gap-4 px-6 pb-4">
-                        <div className="flex flex-col gap-2">
-                            <Label htmlFor="name">
-                                Görev Adı
-                            </Label>
-                            <div className="flex gap-2">
-                                <Input
-                                    id="name"
-                                    value={taskName}
-                                    onChange={(e) => setTaskName(e.target.value)}
-                                    placeholder="Örn: 10km koşu yap"
-                                />
-                                <Button type="button" variant="outline" size="icon" onClick={handleSuggest} disabled={isPending} aria-label="Suggest task with AI">
-                                    <Wand2 className={`h-4 w-4 ${isPending ? 'animate-spin' : ''}`} />
-                                </Button>
+            <DialogContent className="border-none bg-transparent p-0 shadow-none sm:max-w-[425px]">
+                <FuturisticBorder>
+                  <div className='bg-background/90 backdrop-blur-sm p-1'>
+                    <form onSubmit={handleSubmit}>
+                        <DialogHeader className="p-6">
+                            <DialogTitle className="font-headline text-primary">Yeni Görev Ekle</DialogTitle>
+                            <DialogDescription>
+                                Yeni bir görev ekleyerek seviye atlamaya devam et.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <div className="grid gap-4 px-6 pb-4">
+                            <div className="flex flex-col gap-2">
+                                <Label htmlFor="name">
+                                    Görev Adı
+                                </Label>
+                                <div className="flex gap-2">
+                                    <Input
+                                        id="name"
+                                        value={taskName}
+                                        onChange={(e) => setTaskName(e.target.value)}
+                                        placeholder="Örn: 10km koşu yap"
+                                    />
+                                    <Button type="button" variant="outline" size="icon" onClick={handleSuggest} disabled={isPending} aria-label="Suggest task with AI">
+                                        <Wand2 className={`h-4 w-4 ${isPending ? 'animate-spin' : ''}`} />
+                                    </Button>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <DialogFooter className="p-6 pt-0">
-                        <Button type="submit">Kaydet</Button>
-                    </DialogFooter>
-                </form>
+                        <DialogFooter className="p-6 pt-0">
+                            <Button type="submit">Kaydet</Button>
+                        </DialogFooter>
+                    </form>
+                  </div>
+                </FuturisticBorder>
             </DialogContent>
         </Dialog>
     );

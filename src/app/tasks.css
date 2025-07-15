@@ -4,13 +4,13 @@
 
 @layer base {
   :root {
-    --background: 224 71.4% 4.1%;
+    --background: 222 89% 10%;
     --foreground: 210 40% 98%;
     --card: 220 30% 12%;
     --card-foreground: 210 40% 98%;
-    --popover: 224 71.4% 4.1%;
+    --popover: 222 89% 10%;
     --popover-foreground: 210 40% 98%;
-    --primary: 210 100% 50%;
+    --primary: 210 100% 60%;
     --primary-foreground: 210 40% 9.8%;
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
@@ -31,13 +31,13 @@
     --radius: 0.5rem;
   }
   .dark {
-    --background: 220 40% 5%;
+    --background: 222 89% 10%;
     --foreground: 210 40% 98%;
     --card: 220 30% 12%;
     --card-foreground: 210 40% 98%;
-    --popover: 224 71.4% 4.1%;
+    --popover: 222 89% 10%;
     --popover-foreground: 210 40% 98%;
-    --primary: 210 100% 50%;
+    --primary: 210 100% 60%;
     --primary-foreground: 210 40% 9.8%;
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
@@ -59,112 +59,102 @@
   }
   body {
     @apply bg-background text-foreground;
-    background-image:
-      linear-gradient(hsl(var(--primary) / 0.1) 1px, transparent 1px),
-      linear-gradient(to right, hsl(var(--primary) / 0.1) 1px, transparent 1px);
-    background-size: 40px 40px;
-    animation: move-grid 20s linear infinite;
-  }
-
-  @keyframes move-grid {
-    0% {
-      background-position: 0 0;
-    }
-    100% {
-      background-position: 40px 40px;
-    }
   }
 }
 
 @layer components {
-  /* "2.5 Pro" Animated Tech Border Card */
-  @property --angle {
-    syntax: '<angle>';
-    initial-value: 0deg;
-    inherits: false;
+  .futuristic-border-container {
+    --b-glow: 0 0 2px hsl(var(--primary)), 0 0 5px hsl(var(--primary) / 0.8), 0 0 10px hsl(var(--primary) / 0.6);
   }
 
-  @keyframes rotate-gradient {
-    0% {
-      --angle: 0deg;
-    }
-    100% {
-      --angle: 360deg;
-    }
+  .futuristic-border-container > span {
+    position: absolute;
+    background-color: hsl(var(--primary));
+    box-shadow: var(--b-glow);
   }
 
-  .futuristic-card {
-    @apply bg-card/70 backdrop-blur-sm shadow-lg relative p-0;
-    border: 2px solid;
-    border-image-slice: 1;
-    border-image-source: conic-gradient(
-      from var(--angle),
-      hsl(var(--primary) / 0.2),
-      hsl(var(--primary) / 0.8),
-      hsl(var(--primary) / 0.5),
-      hsl(var(--primary) / 0.8),
-      hsl(var(--primary) / 0.2)
-    );
-    animation: rotate-gradient 5s linear infinite;
-    --cut-size: 20px;
-    clip-path: polygon(
-      0% var(--cut-size), 
-      var(--cut-size) 0%, 
-      calc(100% - var(--cut-size)) 0%, 
-      100% var(--cut-size),
-      100% calc(100% - var(--cut-size)), 
-      calc(100% - var(--cut-size)) 100%,
-      var(--cut-size) 100%, 
-      0% calc(100% - var(--cut-size))
-    );
+  .fb-top, .fb-bottom {
+    left: 0;
+    right: 0;
+    height: 2px;
   }
 
-  .futuristic-card::before {
+  .fb-left, .fb-right {
+    top: 0;
+    bottom: 0;
+    width: 2px;
+  }
+
+  .fb-top { top: 0; }
+  .fb-bottom { bottom: 0; }
+  .fb-left { left: 0; }
+  .fb-right { right: 0; }
+
+  /* Corners */
+  .fb-top::before, .fb-top::after, .fb-bottom::before, .fb-bottom::after {
     content: '';
     position: absolute;
-    inset: -3px;
-    background: conic-gradient(
-      from var(--angle),
-      hsl(var(--primary) / 0.5),
-      hsl(var(--primary) / 0.6),
-      hsl(var(--primary) / 0.5)
-    );
-    filter: blur(10px);
-    z-index: -1;
-    clip-path: inherit;
-    animation: rotate-gradient 5s linear infinite;
+    height: 2px;
+    background: hsl(var(--primary));
+    box-shadow: var(--b-glow);
   }
-  
-  .futuristic-card::after {
-    --size: 25px;
-    --weight: 2px;
+
+  .fb-top::before, .fb-bottom::before { left: -14px; }
+  .fb-top::after, .fb-bottom::after { right: -14px; }
+
+  .fb-top::before { top: 0; width: 20px; transform: skewX(-45deg); transform-origin: left; }
+  .fb-top::after { top: 0; width: 20px; transform: skewX(45deg); transform-origin: right; }
+  .fb-bottom::before { bottom: 0; width: 20px; transform: skewX(45deg); transform-origin: left; }
+  .fb-bottom::after { bottom: 0; width: 20px; transform: skewX(-45deg); transform-origin: right; }
+
+  /* Top/Bottom Details */
+  .fb-top-details-1, .fb-bottom-details-1 {
+    position: absolute;
+    left: 10px;
+    right: 10px;
+    height: 3px;
+    background: hsl(var(--primary) / 0.7);
+    box-shadow: var(--b-glow);
+  }
+  .fb-top-details-2, .fb-bottom-details-2 {
+    position: absolute;
+    left: 15px;
+    right: 15px;
+    height: 1px;
+    background: hsl(var(--primary) / 0.5);
+    box-shadow: var(--b-glow);
+  }
+  .fb-top-details-1 { top: 4px; }
+  .fb-top-details-2 { top: 9px; }
+  .fb-bottom-details-1 { bottom: 4px; }
+  .fb-bottom-details-2 { bottom: 9px; }
+
+  /* Side Details */
+  .fb-side-details-1, .fb-side-details-2 {
+    position: absolute;
+    top: 20px;
+    bottom: 20px;
+    width: 2px;
+    background: hsl(var(--primary) / 0.3);
+  }
+  .fb-side-details-1 { left: 6px; }
+  .fb-side-details-2 { right: 6px; }
+
+  /* Side Insets */
+  .fb-left::before, .fb-right::before {
     content: '';
     position: absolute;
-    inset: 0;
-    pointer-events: none;
-    border: var(--weight) solid hsl(var(--primary) / 0.7);
-    clip-path: polygon(
-      /* Top-left */
-      0 0, var(--size) 0, var(--size) var(--weight), var(--weight) var(--weight), var(--weight) var(--size), 0 var(--size),
-      /* Top-right */
-      calc(100% - var(--size)) 0, 100% 0, 100% var(--size), calc(100% - var(--weight)) var(--size), calc(100% - var(--weight)) var(--weight), calc(100% - var(--size)) var(--weight),
-      /* Bottom-left */
-      0 calc(100% - var(--size)), var(--weight) calc(100% - var(--size)), var(--weight) calc(100% - var(--weight)), var(--size) calc(100% - var(--weight)), var(--size) 100%, 0 100%,
-      /* Bottom-right */
-      calc(100% - var(--size)) 100%, calc(100% - var(--weight)) 100%, calc(100% - var(--weight)) calc(100% - var(--size)), 100% calc(100% - var(--size)), 100% calc(100% - 0px), calc(100% - var(--size)) 100%
-    );
-    animation: corner-flicker 3s infinite ease-in-out;
-    opacity: 0.8;
+    width: 2px;
+    height: 30px;
+    background-color: hsl(var(--background));
+    box-shadow: none;
   }
-
-  @keyframes corner-flicker {
-    0%, 100% { opacity: 0.8; }
-    50% { opacity: 0.4; }
+  .fb-left::before {
+    top: 30%;
+    left: 0;
   }
-
-
-  /* Add glow to primary text and icons */
-  .text-primary, .text-primary-foreground, .lucide-icon {
-     text-shadow: 0 0 5px hsl(var(--primary) / 0.7);
+  .fb-right::before {
+    top: 30%;
+    right: 0;
   }
 }
