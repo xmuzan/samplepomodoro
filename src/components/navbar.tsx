@@ -16,7 +16,7 @@ import {
 const navItems = [
   { href: '/', label: 'Görevler', icon: Swords },
   { href: '/profile', label: 'Profil', icon: User },
-  { href: '#', label: 'Mağaza', icon: Store },
+  { href: '/shop', label: 'Mağaza', icon: Store },
 ];
 
 export function Navbar() {
