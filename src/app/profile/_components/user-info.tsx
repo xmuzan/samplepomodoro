@@ -48,8 +48,8 @@ export function UserInfo({ level, job, title, username, avatarUrl, onProfileUpda
                 <p className="text-sm text-muted-foreground uppercase tracking-widest">SEVİYE</p>
             </div>
             <div className="text-left">
-                <p className="text-md"><span className="font-semibold text-muted-foreground">JOB:</span> {job}</p>
-                <p className="text-md"><span className="font-semibold text-muted-foreground">TITLE:</span> {title}</p>
+                <p className="text-md"><span className="font-semibold text-muted-foreground">İŞ:</span> {job}</p>
+                <p className="text-md"><span className="font-semibold text-muted-foreground">ÜNVAN:</span> {title}</p>
             </div>
         </div>
       </div>

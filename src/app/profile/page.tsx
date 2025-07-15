@@ -164,10 +164,6 @@ export default function ProfilePage() {
         <div className="max-w-4xl mx-auto">
           <FuturisticBorder>
             <div className="bg-background/90 backdrop-blur-sm p-4 md:p-6 profile-card-container">
-              <h1 className="text-2xl font-headline tracking-widest text-primary text-center uppercase mb-4">
-                Status
-              </h1>
-              
               <UserInfo 
                 level={level}
                 job={userTitle.job}
