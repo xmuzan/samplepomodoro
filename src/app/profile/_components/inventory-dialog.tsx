@@ -53,8 +53,8 @@ export function InventoryDialog({ children, shopItems }: InventoryDialogProps) {
     
     switch(itemId) {
       case 'potion_energy':
-        updateStats({ hp: 10, mp: 10 });
-        toast({ title: "Enerji Yenilendi", description: "HP ve MP %10 yenilendi." });
+        updateStats({ hp: 10 });
+        toast({ title: "Enerji Yenilendi", description: "HP %10 yenilendi." });
         break;
       case 'potion_mind':
         updateStats({ mp: 15 });
@@ -142,5 +142,3 @@ export function InventoryDialog({ children, shopItems }: InventoryDialogProps) {
     </Dialog>
   );
 }
-
-    
