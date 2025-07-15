@@ -32,13 +32,20 @@ const prompt = ai.definePrompt({
   output: {schema: SuggestTaskNameOutputSchema},
   prompt: `You are an AI assistant for a "Solo Leveling" inspired life RPG app.
 Your task is to generate a single, challenging, and inspiring quest name in Turkish based on the user's goal.
-The quest must be a REAL-WORLD, ACHIEVABLE task, but framed as an epic quest from the "System".
-For example, a task for "go to the gym" could be "Demir Kaleyi Fethet". A task for "read a book" could be "Bilgelik Parşömenini Çöz".
+The quest name MUST be for a REAL-WORLD, ACHIEVABLE task. The NAME should be epic and inspired by fantasy, but the TASK itself must be grounded in reality.
+DO NOT suggest anything that cannot be done in the real world, like "wear armor" or "slay a dragon".
+
+Here are some good examples:
+- User's goal: "go to the gym" -> Quest name: "Demir Kaleyi Fethet"
+- User's goal: "read a book" -> Quest name: "Bilgelik Parşömenini Çöz"
+- User's goal: "run 5 kilometers" -> Quest name: "Gölge Adımlarıyla Mesafeleri Aş"
+- User's goal: "learn a new skill for 30 minutes" -> Quest name: "Yetenek Avcısı"
+
 The quest name should be short, punchy, and sound epic.
 
 User's goal: {{{prompt}}}
 
-Generate one realistic, real-world quest name.`,
+Generate ONLY ONE realistic, real-world quest name based on the user's goal.`,
 });
 
 const suggestTaskNameFlow = ai.defineFlow(
