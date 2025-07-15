@@ -77,41 +77,72 @@
 }
 
 @layer components {
-  /* Ultra Mega Technological Futuristic HUD-style card */
+  /* "2.5 Pro" Animated Tech Border Card */
+  @property --angle {
+    syntax: '<angle>';
+    initial-value: 0deg;
+    inherits: false;
+  }
+
+  @keyframes rotate-gradient {
+    0% {
+      --angle: 0deg;
+    }
+    100% {
+      --angle: 360deg;
+    }
+  }
+
   .futuristic-card {
-    @apply bg-card/60 backdrop-blur-sm border-2 border-primary/20 shadow-lg relative p-0;
+    @apply bg-card/70 backdrop-blur-sm shadow-lg relative p-0;
+    border: 2px solid;
+    border-image-slice: 1;
+    border-image-source: conic-gradient(
+      from var(--angle),
+      hsl(var(--primary) / 0.2),
+      hsl(var(--primary) / 0.8),
+      hsl(var(--accent)),
+      hsl(var(--primary) / 0.8),
+      hsl(var(--primary) / 0.2)
+    );
+    animation: rotate-gradient 5s linear infinite;
+    --cut-size: 20px;
     clip-path: polygon(
-      0% 20px, 20px 0%, calc(100% - 20px) 0%, 100% 20px,
-      100% calc(100% - 20px), calc(100% - 20px) 100%,
-      20px 100%, 0% calc(100% - 20px)
+      0% var(--cut-size), 
+      var(--cut-size) 0%, 
+      calc(100% - var(--cut-size)) 0%, 
+      100% var(--cut-size),
+      100% calc(100% - var(--cut-size)), 
+      calc(100% - var(--cut-size)) 100%,
+      var(--cut-size) 100%, 
+      0% calc(100% - var(--cut-size))
     );
   }
 
-  .futuristic-card::before,
+  .futuristic-card::before {
+    content: '';
+    position: absolute;
+    inset: -3px;
+    background: conic-gradient(
+      from var(--angle),
+      hsl(var(--primary) / 0.5),
+      hsl(var(--accent) / 0.8),
+      hsl(var(--primary) / 0.5)
+    );
+    filter: blur(10px);
+    z-index: -1;
+    clip-path: inherit;
+    animation: rotate-gradient 5s linear infinite;
+  }
+  
   .futuristic-card::after {
+    --size: 25px;
+    --weight: 2px;
     content: '';
     position: absolute;
     inset: 0;
     pointer-events: none;
-  }
-
-  /* Main glowing frame */
-  .futuristic-card::before {
-    border: 1px solid hsl(var(--primary));
-    clip-path: polygon(
-      0% 20px, 20px 0%, calc(50% - 15px) 0%, calc(50% - 10px) 5px, calc(50% + 10px) 5px, calc(50% + 15px) 0%, calc(100% - 20px) 0%, 100% 20px,
-      100% calc(50% - 15px), calc(100% - 5px) calc(50% - 10px), calc(100% - 5px) calc(50% + 10px), 100% calc(50% + 15px),
-      100% calc(100% - 20px), calc(100% - 20px) 100%, calc(50% + 15px) 100%, calc(50% + 10px) calc(100% - 5px), calc(50% - 10px) calc(100% - 5px), calc(50% - 15px) 100%, 20px 100%, 0% calc(100% - 20px),
-      0% calc(50% + 15px), 5px calc(50% + 10px), 5px calc(50% - 10px), 0% calc(50% - 15px)
-    );
-    animation: glow-pulse 4s infinite linear;
-  }
-
-  /* Corner bracket details */
-  .futuristic-card::after {
-    --size: 25px;
-    --weight: 2px;
-    border: var(--weight) solid hsl(var(--accent));
+    border: var(--weight) solid hsl(var(--accent) / 0.7);
     clip-path: polygon(
       /* Top-left */
       0 0, var(--size) 0, var(--size) var(--weight), var(--weight) var(--weight), var(--weight) var(--size), 0 var(--size),
@@ -122,24 +153,13 @@
       /* Bottom-right */
       calc(100% - var(--size)) 100%, calc(100% - var(--weight)) 100%, calc(100% - var(--weight)) calc(100% - var(--size)), 100% calc(100% - var(--size)), 100% calc(100% - 0px), calc(100% - var(--size)) 100%
     );
-    animation: corner-flicker 4s infinite linear;
-  }
-
-  @keyframes glow-pulse {
-    0%, 100% {
-      box-shadow: 0 0 4px hsl(var(--primary)), 0 0 8px hsl(var(--primary)), 0 0 12px hsl(var(--accent));
-      opacity: 0.7;
-    }
-    50% {
-      box-shadow: 0 0 8px hsl(var(--primary)), 0 0 16px hsl(var(--primary)), 0 0 24px hsl(var(--accent));
-      opacity: 1;
-    }
+    animation: corner-flicker 3s infinite ease-in-out;
+    opacity: 0.8;
   }
 
   @keyframes corner-flicker {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.6; }
-    75% { opacity: 0.8; }
+    0%, 100% { opacity: 0.8; }
+    50% { opacity: 0.4; }
   }
 
 
