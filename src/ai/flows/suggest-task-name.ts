@@ -2,7 +2,7 @@
 'use server';
 
 /**
- * @fileOverview Bir isteme dayalı olarak görev adları öneren bir yapay zeka ajanı.
+ * @fileOverview Gerçek hayatta yapılabilecek bir görev öneren yapay zeka ajanı.
  *
  * - suggestTaskName - AI kullanarak bir görev adı öneren bir işlev.
  * - SuggestTaskNameInput - suggestTaskName işlevi için giriş türü.
@@ -30,22 +30,28 @@ const prompt = ai.definePrompt({
   name: 'suggestTaskNamePrompt',
   input: {schema: SuggestTaskNameInputSchema},
   output: {schema: SuggestTaskNameOutputSchema},
-  prompt: `You are an AI assistant for a "Solo Leveling" inspired life RPG app.
-Your task is to generate a single, challenging, and inspiring quest name in Turkish based on the user's goal.
-The quest name MUST be for a REAL-WORLD, ACHIEVABLE task. The NAME should be epic and inspired by fantasy, but the TASK itself must be grounded in reality.
-DO NOT suggest anything that cannot be done in the real world, like "wear armor" or "slay a dragon".
+  prompt: `You are an AI assistant for a life RPG app.
+Your task is to generate a SINGLE, REAL-WORLD, ACHIEVABLE task in Turkish.
+The task MUST be a concrete action a person can do in real life.
 
-Here are some good examples:
-- User's goal: "go to the gym" -> Quest name: "Demir Kaleyi Fethet"
-- User's goal: "read a book" -> Quest name: "Bilgelik Parşömenini Çöz"
-- User's goal: "run 5 kilometers" -> Quest name: "Gölge Adımlarıyla Mesafeleri Aş"
-- User's goal: "learn a new skill for 30 minutes" -> Quest name: "Yetenek Avcısı"
+DO NOT suggest anything that cannot be done in the real world.
+DO NOT use metaphorical or fantasy language for the task itself.
 
-The quest name should be short, punchy, and sound epic.
+Here are some good examples of tasks you should suggest:
+- "30 dakika kitap oku"
+- "5 kilometre koş"
+- "Odanı temizle"
+- "Yeni bir yemek tarifi dene"
+- "Bir saat boyunca dikkat dağılmadan ders çalış"
+- "Markete gidip haftalık alışveriş yap"
 
-User's goal: {{{prompt}}}
+The user's general goal is: {{{prompt}}}
 
-Generate ONLY ONE realistic, real-world quest name based on the user's goal.`,
+Generate ONLY ONE realistic, real-world task name in Turkish based on the user's goal.
+The output MUST BE a direct, actionable task.
+For example, if the user's goal is "be productive", a good suggestion is "25 dakika boyunca Pomodoro tekniğiyle çalış".
+A bad suggestion is "Awaken the eternal wisdom".
+Just suggest the task.`,
 });
 
 const suggestTaskNameFlow = ai.defineFlow(
