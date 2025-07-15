@@ -101,7 +101,7 @@
       from var(--angle),
       hsl(var(--primary) / 0.2),
       hsl(var(--primary) / 0.8),
-      hsl(var(--accent)),
+      hsl(var(--primary) / 0.5),
       hsl(var(--primary) / 0.8),
       hsl(var(--primary) / 0.2)
     );
@@ -126,7 +126,7 @@
     background: conic-gradient(
       from var(--angle),
       hsl(var(--primary) / 0.5),
-      hsl(var(--accent) / 0.8),
+      hsl(var(--primary) / 0.6),
       hsl(var(--primary) / 0.5)
     );
     filter: blur(10px);
@@ -142,7 +142,7 @@
     position: absolute;
     inset: 0;
     pointer-events: none;
-    border: var(--weight) solid hsl(var(--accent) / 0.7);
+    border: var(--weight) solid hsl(var(--primary) / 0.7);
     clip-path: polygon(
       /* Top-left */
       0 0, var(--size) 0, var(--size) var(--weight), var(--weight) var(--weight), var(--weight) var(--size), 0 var(--size),
