@@ -8,6 +8,7 @@ import { CreateTaskDialog } from './create-task-dialog';
 import { TaskItem } from './task-item';
 import { Skeleton } from './ui/skeleton';
 import { FuturisticBorder } from './futuristic-border';
+import { AlarmClock } from 'lucide-react';
 
 export type Task = {
   id: string;
@@ -15,9 +16,46 @@ export type Task = {
   completed: boolean;
 };
 
+function PenaltyTimer({ endTime }: { endTime: number }) {
+  const [timeLeft, setTimeLeft] = useState(endTime - Date.now());
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const remaining = endTime - Date.now();
+      if (remaining <= 0) {
+        clearInterval(interval);
+        setTimeLeft(0);
+      } else {
+        setTimeLeft(remaining);
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [endTime]);
+
+  if (timeLeft <= 0) {
+    return null;
+  }
+
+  const hours = Math.floor((timeLeft / (1000 * 60 * 60)) % 24);
+  const minutes = Math.floor((timeLeft / (1000 * 60)) % 60);
+  const seconds = Math.floor((timeLeft / 1000) % 60);
+
+  return (
+    <div className="mt-4 flex items-center justify-center gap-2 rounded-md border border-destructive/50 bg-destructive/10 p-3 text-destructive shadow-[0_0_15px_hsl(var(--destructive)/0.5)]">
+      <AlarmClock className="h-5 w-5" />
+      <p className="font-mono text-sm font-medium tracking-wider">
+        CEZA SÜRESİ: {String(hours).padStart(2, '0')}:{String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
+      </p>
+    </div>
+  );
+}
+
+
 export function TaskManager() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isMounted, setIsMounted] = useState(false);
+  const [penaltyEndTime, setPenaltyEndTime] = useState<number | null>(null);
 
   useEffect(() => {
     setIsMounted(true);
@@ -32,8 +70,17 @@ export function TaskManager() {
           { id: '3', text: 'Practice a new skill for 30 minutes', completed: false },
         ]);
       }
+      
+      const storedPenaltyTime = localStorage.getItem('penaltyEndTime');
+      if (storedPenaltyTime) {
+        const endTime = parseInt(storedPenaltyTime, 10);
+        if (endTime > Date.now()) {
+          setPenaltyEndTime(endTime);
+        }
+      }
+
     } catch (error) {
-      console.error("Failed to parse tasks from localStorage", error);
+      console.error("Failed to parse from localStorage", error);
        setTasks([
           { id: '1', text: 'Daily Workout: 100 Push-ups, 100 Sit-ups', completed: true },
           { id: '2', text: 'Read a chapter of a new book', completed: false },
@@ -48,6 +95,12 @@ export function TaskManager() {
     }
   }, [tasks, isMounted]);
 
+  useEffect(() => {
+    if (isMounted && penaltyEndTime) {
+      localStorage.setItem('penaltyEndTime', penaltyEndTime.toString());
+    }
+  }, [penaltyEndTime, isMounted]);
+
   const addTask = (taskText: string) => {
     const newTask: Task = {
       id: crypto.randomUUID(),
@@ -55,6 +108,10 @@ export function TaskManager() {
       completed: false,
     };
     setTasks(prev => [newTask, ...prev]);
+
+    // Set penalty timer for 24 hours from now
+    const endTime = Date.now() + 24 * 60 * 60 * 1000;
+    setPenaltyEndTime(endTime);
   };
 
   const toggleTask = (id: string) => {
@@ -108,6 +165,7 @@ export function TaskManager() {
         </CardContent>
         </div>
       </FuturisticBorder>
+      {penaltyEndTime && penaltyEndTime > Date.now() && <PenaltyTimer endTime={penaltyEndTime} />}
     </div>
   );
 }
