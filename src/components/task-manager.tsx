@@ -8,7 +8,7 @@ import { CreateTaskDialog } from './create-task-dialog';
 import { TaskItem } from './task-item';
 import { Skeleton } from './ui/skeleton';
 import { FuturisticBorder } from './futuristic-border';
-import { AlarmClock, ShieldAlert } from 'lucide-react';
+import { AlarmClock } from 'lucide-react';
 import type { SkillCategory } from '@/lib/skills';
 import { useToast } from '@/hooks/use-toast';
 
@@ -21,7 +21,7 @@ export type Task = {
   category: SkillCategory;
 };
 
-function TimerDisplay({ endTime, label, labelColor }: { endTime: number, label: string, labelColor: string }) {
+function TimerDisplay({ endTime, isPenalty }: { endTime: number, isPenalty: boolean }) {
   const [timeLeft, setTimeLeft] = useState(endTime - Date.now());
 
   useEffect(() => {
@@ -52,6 +52,9 @@ function TimerDisplay({ endTime, label, labelColor }: { endTime: number, label: 
   const hours = Math.floor((timeLeft / (1000 * 60 * 60)));
   const minutes = Math.floor((timeLeft / (1000 * 60)) % 60);
   const seconds = Math.floor((timeLeft / 1000) % 60);
+
+  const label = isPenalty ? "CEZA SÜRESİ" : "KALAN SÜRE";
+  const labelColor = isPenalty ? "text-destructive" : "text-amber-400";
 
   return (
     <div className={`flex items-center justify-center gap-2 p-3 ${labelColor}`}>
@@ -142,7 +145,6 @@ export function TaskManager() {
 
     localStorage.setItem('tasks', JSON.stringify(tasks));
     
-    // Görev yoksa tüm sayaçları temizle
     if (tasks.length === 0) {
         if (localStorage.getItem('taskDeadline') || localStorage.getItem('penaltyEndTime')) {
             localStorage.removeItem('taskDeadline');
@@ -157,19 +159,16 @@ export function TaskManager() {
     const isPenaltyActive = penaltyEndTime && penaltyEndTime > Date.now();
     const hasIncompleteTasks = tasks.some(task => !task.completed);
     
-    // Tüm görevler tamamlandıysa, görev süresini temizle
     if (!hasIncompleteTasks) {
         if (localStorage.getItem('taskDeadline')) {
             localStorage.removeItem('taskDeadline');
             setTaskDeadline(null);
-            if (taskDeadline) { // Sadece önceden bir deadline varsa toast göster
+            if (taskDeadline) { 
                 toast({ title: "Tüm Görevler Tamamlandı!", description: "Ceza görevi başarıyla önlendi." });
             }
             window.dispatchEvent(new Event('storage'));
         }
     }
-    
-    // Tamamlanmamış görevler varsa ve aktif bir deadline/ceza yoksa yeni deadline başlat
     else if (hasIncompleteTasks && !taskDeadline && !isPenaltyActive) {
         const newDeadline = Date.now() + 24 * 60 * 60 * 1000;
         localStorage.setItem('taskDeadline', newDeadline.toString());
@@ -344,11 +343,15 @@ export function TaskManager() {
             )}
           </div>
         </CardContent>
-        {isPenaltyActive ? (
-            penaltyEndTime && <TimerDisplay endTime={penaltyEndTime} label="CEZA SÜRESİ" labelColor="text-destructive" />
-        ) : (
-            taskDeadline && tasks.some(t => !t.completed) && <TimerDisplay endTime={taskDeadline} label="KALAN SÜRE" labelColor="text-amber-400" />
+        
+        {isPenaltyActive && penaltyEndTime && (
+            <TimerDisplay endTime={penaltyEndTime} isPenalty={true} />
         )}
+        
+        {!isPenaltyActive && taskDeadline && tasks.some(t => !t.completed) && (
+            <TimerDisplay endTime={taskDeadline} isPenalty={false} />
+        )}
+
         </div>
       </FuturisticBorder>
     </div>
