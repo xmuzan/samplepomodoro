@@ -12,7 +12,7 @@ export const shopItemsData: ShopItemData[] = [
   {
     id: 'potion_energy',
     name: 'Mana İksiri',
-    description: 'Tükenmiş enerjiyi anında yeniler. Zihinsel ve fiziksel gücü tazelemek için hızlı bir çözüm.',
+    description: 'Envanterden kullanarak bir bardak içecek veya bir paket atıştırmalık tüket. Zihinsel ve fiziksel gücünü tazeler.',
     price: 100,
     imageUrl: 'https://placehold.co/600x400.png',
     aiHint: 'glowing potion'
@@ -20,7 +20,7 @@ export const shopItemsData: ShopItemData[] = [
   {
     id: 'scroll_cinema',
     name: 'Gölge Sineması',
-    description: 'Zihni dinlendirmek ve farklı dünyalara kaçmak için 20 dakikalık görsel bir deneyim sunar.',
+    description: 'Envanterden kullanarak 20 dakikalık bir film, dizi veya video izle. Zihnini dinlendirir ve farklı dünyalara kaçmanı sağlar.',
     price: 120,
     imageUrl: 'https://placehold.co/600x400.png',
     aiHint: 'futuristic screen'
@@ -28,7 +28,7 @@ export const shopItemsData: ShopItemData[] = [
   {
     id: 'tome_psychology',
     name: 'Zihin Güçlendirme Parşömeni',
-    description: '25 dakikalık yoğun odaklanma ile zihinsel dayanıklılığı ve anlayışı artırır. Psikolojik engelleri aşmaya yardımcı olur.',
+    description: 'Envanterden kullanarak 25 dakika boyunca psikoloji hakkında bir video izle veya makale oku. Zihinsel dayanıklılığını artırır.',
     price: 150,
     imageUrl: 'https://placehold.co/600x400.png',
     aiHint: 'magic scroll'
@@ -36,7 +36,7 @@ export const shopItemsData: ShopItemData[] = [
   {
     id: 'book_wisdom',
     name: 'Bilgelik Tomarı',
-    description: '25 dakika boyunca kadim bilgileri özümseyerek entelektüel kapasiteyi ve algıyı yükseltir.',
+    description: 'Envanterden kullanarak 25 dakika boyunca kendini geliştirecek bir kitap oku. Entelektüel kapasiteni ve algını yükseltir.',
     price: 200,
     imageUrl: 'https://placehold.co/600x400.png',
     aiHint: 'ancient book'
