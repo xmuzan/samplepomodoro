@@ -8,7 +8,7 @@ import { CreateTaskDialog } from './create-task-dialog';
 import { TaskItem } from './task-item';
 import { Skeleton } from './ui/skeleton';
 import { FuturisticBorder } from './futuristic-border';
-import { AlarmClock } from 'lucide-react';
+import { AlarmClock, Coins } from 'lucide-react';
 import type { SkillCategory } from '@/lib/skills';
 import { useToast } from '@/hooks/use-toast';
 
@@ -102,20 +102,6 @@ export function TaskManager() {
         } else {
             localStorage.removeItem('taskDeadline');
             setTaskDeadline(null);
-            
-            const hasIncompleteTasks = parsedTasks.some((t: Task) => !t.completed);
-            const isPenaltyActive = localStorage.getItem('penaltyEndTime');
-
-            if (hasIncompleteTasks && !isPenaltyActive) {
-                const newPenaltyTime = Date.now() + 24 * 60 * 60 * 1000;
-                localStorage.setItem('penaltyEndTime', newPenaltyTime.toString());
-                setPenaltyEndTime(newPenaltyTime);
-                toast({
-                    title: "Ceza Görevi Başladı!",
-                    description: "Görevleri zamanında tamamlayamadın. 24 saatliğine özelliklerin kilitlendi.",
-                    variant: "destructive"
-                });
-            }
         }
       } else {
         setTaskDeadline(null);
@@ -127,16 +113,33 @@ export function TaskManager() {
       setPenaltyEndTime(null);
       setTaskDeadline(null);
     }
-  }, [toast]);
+  }, []);
 
+  const handleDeadlinePenalty = useCallback(() => {
+    const hasIncompleteTasks = tasks.some((t: Task) => !t.completed);
+    const isPenaltyActive = localStorage.getItem('penaltyEndTime');
+
+    if (hasIncompleteTasks && !isPenaltyActive) {
+        const newPenaltyTime = Date.now() + 24 * 60 * 60 * 1000;
+        localStorage.setItem('penaltyEndTime', newPenaltyTime.toString());
+        setPenaltyEndTime(newPenaltyTime);
+        toast({
+            title: "Ceza Görevi Başladı!",
+            description: "Görevleri zamanında tamamlayamadın. 24 saatliğine özelliklerin kilitlendi.",
+            variant: "destructive"
+        });
+    }
+  }, [tasks, toast]);
 
   useEffect(() => {
     setIsMounted(true);
     loadFromStorage();
     
-    window.addEventListener('storage', loadFromStorage);
+    const storageListener = () => loadFromStorage();
+    window.addEventListener('storage', storageListener);
+    
     return () => {
-      window.removeEventListener('storage', loadFromStorage);
+      window.removeEventListener('storage', storageListener);
     }
   }, [loadFromStorage]);
   
@@ -145,7 +148,8 @@ export function TaskManager() {
 
     localStorage.setItem('tasks', JSON.stringify(tasks));
     
-    if (tasks.length === 0) {
+    const hasTasks = tasks.length > 0;
+    if (!hasTasks) {
       if (localStorage.getItem('taskDeadline') || localStorage.getItem('penaltyEndTime')) {
           localStorage.removeItem('taskDeadline');
           localStorage.removeItem('penaltyEndTime');
@@ -163,20 +167,23 @@ export function TaskManager() {
         if (localStorage.getItem('taskDeadline')) {
             localStorage.removeItem('taskDeadline');
             setTaskDeadline(null);
-            if (taskDeadline) { 
-                toast({ title: "Tüm Görevler Tamamlandı!", description: "Ceza görevi başarıyla önlendi." });
-            }
+            // Removed the "All tasks completed" toast
             window.dispatchEvent(new Event('storage'));
         }
-    }
-    else if (hasIncompleteTasks && !taskDeadline && !currentPenalty) {
+    } else if (hasIncompleteTasks && !taskDeadline && !currentPenalty) {
         const newDeadline = Date.now() + 24 * 60 * 60 * 1000;
         localStorage.setItem('taskDeadline', newDeadline.toString());
         setTaskDeadline(newDeadline);
         window.dispatchEvent(new Event('storage'));
     }
+
+    if (taskDeadline && taskDeadline < Date.now()) {
+      handleDeadlinePenalty();
+      setTaskDeadline(null);
+      localStorage.removeItem('taskDeadline');
+    }
     
-  }, [tasks, isMounted, toast, penaltyEndTime, taskDeadline]);
+  }, [tasks, isMounted, toast, penaltyEndTime, taskDeadline, handleDeadlinePenalty]);
 
 
   const updateGold = (amount: number) => {
@@ -278,6 +285,15 @@ export function TaskManager() {
                 if(!isPenaltyActiveNow){
                   updateGold(updatedTask.reward);
                   handleTaskCompletionProgress(updatedTask.category);
+                  toast({
+                    title: "Görev Tamamlandı!",
+                    description: (
+                      <div className="flex items-center justify-center w-full gap-2 text-yellow-400">
+                        <Coins className="h-5 w-5" />
+                        <span className="font-bold">+{updatedTask.reward} Altın</span>
+                      </div>
+                    )
+                  })
                 } else {
                   toast({
                     title: "Ceza Aktif!",
@@ -286,6 +302,8 @@ export function TaskManager() {
                   });
                 }
             } else if (!updatedTask.completed && wasCompleted) {
+                // This part is tricky. Reverting progress could be complex.
+                // For now, we only revert the gold to keep it simple.
                 updateGold(-updatedTask.reward);
             }
             return updatedTask;
@@ -297,7 +315,9 @@ export function TaskManager() {
   const deleteTask = (id: string) => {
     const taskToDelete = tasks.find(task => task.id === id);
     if (taskToDelete && taskToDelete.completed) {
+      // If a completed task is deleted, revert the gold.
       updateGold(-taskToDelete.reward);
+      // Note: Reverting level/skill progress is more complex and not implemented here.
     }
     const newTasks = tasks.filter(task => task.id !== id);
     setTasks(newTasks);
