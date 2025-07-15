@@ -142,32 +142,39 @@ export function TaskManager() {
 
     localStorage.setItem('tasks', JSON.stringify(tasks));
     
+    // Görev yoksa tüm sayaçları temizle
+    if (tasks.length === 0) {
+        if (localStorage.getItem('taskDeadline') || localStorage.getItem('penaltyEndTime')) {
+            localStorage.removeItem('taskDeadline');
+            localStorage.removeItem('penaltyEndTime');
+            setTaskDeadline(null);
+            setPenaltyEndTime(null);
+            window.dispatchEvent(new Event('storage'));
+        }
+        return;
+    }
+
     const isPenaltyActive = penaltyEndTime && penaltyEndTime > Date.now();
     const hasIncompleteTasks = tasks.some(task => !task.completed);
     
-    // RULE: If there are no tasks, clear all timers.
-    if (tasks.length === 0) {
-        localStorage.removeItem('taskDeadline');
-        localStorage.removeItem('penaltyEndTime');
-        setTaskDeadline(null);
-        setPenaltyEndTime(null);
-        return;
-    }
-    
-    // RULE: If all tasks are completed, clear the deadline.
+    // Tüm görevler tamamlandıysa, görev süresini temizle
     if (!hasIncompleteTasks) {
-        localStorage.removeItem('taskDeadline');
-        setTaskDeadline(null);
-         if (taskDeadline) {
-            toast({ title: "Tüm Görevler Tamamlandı!", description: "Ceza görevi başarıyla önlendi." });
+        if (localStorage.getItem('taskDeadline')) {
+            localStorage.removeItem('taskDeadline');
+            setTaskDeadline(null);
+            if (taskDeadline) { // Sadece önceden bir deadline varsa toast göster
+                toast({ title: "Tüm Görevler Tamamlandı!", description: "Ceza görevi başarıyla önlendi." });
+            }
+            window.dispatchEvent(new Event('storage'));
         }
     }
     
-    // RULE: If there are tasks, but no deadline and no penalty, start a new deadline.
-    if (hasIncompleteTasks && !taskDeadline && !isPenaltyActive) {
+    // Tamamlanmamış görevler varsa ve aktif bir deadline/ceza yoksa yeni deadline başlat
+    else if (hasIncompleteTasks && !taskDeadline && !isPenaltyActive) {
         const newDeadline = Date.now() + 24 * 60 * 60 * 1000;
         localStorage.setItem('taskDeadline', newDeadline.toString());
         setTaskDeadline(newDeadline);
+        window.dispatchEvent(new Event('storage'));
     }
     
   }, [tasks, isMounted, toast, penaltyEndTime, taskDeadline]);
@@ -290,16 +297,8 @@ export function TaskManager() {
     if (taskToDelete && taskToDelete.completed) {
       updateGold(-taskToDelete.reward);
     }
-    const newTasks = tasks.filter(task => task.id !== id)
+    const newTasks = tasks.filter(task => task.id !== id);
     setTasks(newTasks);
-    // Trigger useEffect to check if timers need to be cleared
-    if(newTasks.length === 0) {
-      localStorage.removeItem('taskDeadline');
-      localStorage.removeItem('penaltyEndTime');
-      setTaskDeadline(null);
-      setPenaltyEndTime(null);
-      window.dispatchEvent(new Event('storage'));
-    }
   };
 
   if (!isMounted) {
