@@ -73,7 +73,7 @@ export function TaskManager() {
                 <Skeleton className="h-8 bg-muted/20 rounded w-1/2"></Skeleton>
                 <Skeleton className="h-10 bg-muted/20 rounded w-36"></Skeleton>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 px-2">
                 <Skeleton className="h-12 bg-muted/20 rounded w-full"></Skeleton>
                 <Skeleton className="h-12 bg-muted/20 rounded w-full"></Skeleton>
                 <Skeleton className="h-12 bg-muted/20 rounded w-full"></Skeleton>
@@ -91,7 +91,7 @@ export function TaskManager() {
           <CardTitle className="font-headline text-2xl text-primary tracking-wider">ÖZEL GÖREVLER</CardTitle>
           <CreateTaskDialog onAddTask={addTask} />
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-2">
           <div className="">
             {tasks.length > 0 ? (
               <div className="space-y-0">
