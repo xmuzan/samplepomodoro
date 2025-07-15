@@ -12,8 +12,13 @@ import { shopItemsData } from '@/app/shop/page';
 
 import './profile.css';
 
+const defaultUsername = "Sung Jin-Woo";
+const defaultAvatarUrl = "https://placehold.co/100x100.png";
+
 export default function ProfilePage() {
   const [gold, setGold] = useState(150);
+  const [username, setUsername] = useState(defaultUsername);
+  const [avatarUrl, setAvatarUrl] = useState(defaultAvatarUrl);
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
@@ -23,9 +28,16 @@ export default function ProfilePage() {
       if (storedGold) {
         setGold(JSON.parse(storedGold));
       }
+      const storedUsername = localStorage.getItem('username');
+      if (storedUsername) {
+        setUsername(storedUsername);
+      }
+      const storedAvatarUrl = localStorage.getItem('avatarUrl');
+      if (storedAvatarUrl) {
+        setAvatarUrl(storedAvatarUrl);
+      }
     } catch (error) {
-      console.error("Failed to parse gold from localStorage", error);
-      setGold(150);
+      console.error("Failed to parse from localStorage", error);
     }
   }, []);
 
@@ -45,6 +57,13 @@ export default function ProfilePage() {
         };
     }
   }, [isMounted]);
+
+  const handleProfileUpdate = (newUsername: string, newAvatarUrl: string) => {
+    setUsername(newUsername);
+    setAvatarUrl(newAvatarUrl);
+    localStorage.setItem('username', newUsername);
+    localStorage.setItem('avatarUrl', newAvatarUrl);
+  };
 
 
   if (!isMounted) {
@@ -73,8 +92,9 @@ export default function ProfilePage() {
                 level={18}
                 job="None"
                 title="Wolf Assassin"
-                username="Sung Jin-Woo"
-                avatarUrl="https://placehold.co/100x100.png"
+                username={username}
+                avatarUrl={avatarUrl}
+                onProfileUpdate={handleProfileUpdate}
               />
 
               <Separator className="my-4 bg-border/20" />
