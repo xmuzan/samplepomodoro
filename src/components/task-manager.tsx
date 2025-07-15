@@ -92,9 +92,9 @@ export function TaskManager() {
           <CreateTaskDialog onAddTask={addTask} />
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
+          <div className="">
             {tasks.length > 0 ? (
-              <div className="space-y-2">
+              <div className="space-y-0">
                 {tasks.map(task => (
                   <TaskItem key={task.id} task={task} onToggle={toggleTask} onDelete={deleteTask} />
                 ))}
