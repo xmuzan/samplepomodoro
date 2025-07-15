@@ -1,4 +1,5 @@
-import { Dumbbell, Shield, Wind, Brain, Eye } from "lucide-react";
+import { Dumbbell, Shield, Wind, Brain, Eye, Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface AttributesProps {
   stats: {
@@ -25,9 +26,12 @@ export function Attributes({ stats }: AttributesProps) {
         <div key={key} className="attribute-item">
           <Icon className="h-6 w-6 icon" />
           <span className="flex-1 text-lg font-semibold text-muted-foreground">{label}</span>
-          <span className="text-xl font-mono font-bold text-foreground">
+          <span className="text-xl font-mono font-bold text-foreground w-8 text-right">
             {stats[key as keyof typeof stats]}
           </span>
+          <Button variant="ghost" size="icon" className="h-7 w-7 text-primary hover:bg-primary/20 hover:text-primary">
+            <Plus className="h-4 w-4" />
+          </Button>
         </div>
       ))}
     </div>
