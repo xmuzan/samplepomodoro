@@ -61,7 +61,6 @@ function PenaltyTimer({ endTime }: { endTime: number }) {
 
 export function TaskManager() {
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [gold, setGold] = useState(150);
   const [isMounted, setIsMounted] = useState(false);
   const [penaltyEndTime, setPenaltyEndTime] = useState<number | null>(null);
 
@@ -69,11 +68,7 @@ export function TaskManager() {
     setIsMounted(true);
     try {
       const storedTasks = localStorage.getItem('tasks');
-      if (storedTasks) {
-        setTasks(JSON.parse(storedTasks));
-      } else {
-        setTasks([]);
-      }
+      setTasks(storedTasks ? JSON.parse(storedTasks) : []);
       
       const storedPenaltyTime = localStorage.getItem('penaltyEndTime');
       if (storedPenaltyTime) {
@@ -83,17 +78,16 @@ export function TaskManager() {
         }
       }
 
-      const storedGold = localStorage.getItem('userGold');
-      if (storedGold) {
-        setGold(JSON.parse(storedGold));
-      } else {
-         localStorage.setItem('userGold', JSON.stringify(150));
-      }
+      // Initialize user data if it doesn't exist
+      if (!localStorage.getItem('userGold')) localStorage.setItem('userGold', JSON.stringify(150));
+      if (!localStorage.getItem('level')) localStorage.setItem('level', JSON.stringify(0));
+      if (!localStorage.getItem('completedTasksCount')) localStorage.setItem('completedTasksCount', JSON.stringify(0));
+      if (!localStorage.getItem('attributePoints')) localStorage.setItem('attributePoints', JSON.stringify(0));
+      if (!localStorage.getItem('stats')) localStorage.setItem('stats', JSON.stringify({ str: 0, vit: 0, agi: 0, int: 0, per: 0 }));
 
     } catch (error) {
       console.error("Failed to parse from localStorage", error);
        setTasks([]);
-       setGold(150);
     }
   }, []);
 
@@ -113,12 +107,38 @@ export function TaskManager() {
     }
   }, [penaltyEndTime, isMounted]);
 
-  useEffect(() => {
-     if (isMounted) {
-        localStorage.setItem('userGold', JSON.stringify(gold));
+  const updateGold = (amount: number) => {
+    try {
+      const currentGold = JSON.parse(localStorage.getItem('userGold') || '0');
+      const newGold = currentGold + amount;
+      localStorage.setItem('userGold', JSON.stringify(newGold));
+      window.dispatchEvent(new Event('storage'));
+    } catch (error) {
+      console.error("Failed to update gold in localStorage", error);
+    }
+  }
+
+  const handleTaskCompletion = () => {
+    try {
+        let completedCount = JSON.parse(localStorage.getItem('completedTasksCount') || '0');
+        completedCount += 1;
+        
+        if (completedCount % 32 === 0) {
+            let level = JSON.parse(localStorage.getItem('level') || '0');
+            level += 1;
+            localStorage.setItem('level', JSON.stringify(level));
+
+            let attributePoints = JSON.parse(localStorage.getItem('attributePoints') || '0');
+            attributePoints += 1;
+            localStorage.setItem('attributePoints', JSON.stringify(attributePoints));
+        }
+
+        localStorage.setItem('completedTasksCount', JSON.stringify(completedCount));
         window.dispatchEvent(new Event('storage'));
-     }
-  }, [gold, isMounted]);
+    } catch(error) {
+      console.error("Failed to update level/points in localStorage", error);
+    }
+  };
 
   const addTask = (taskText: string, difficulty: 'easy' | 'hard') => {
     const reward = difficulty === 'easy' ? 50 : 200;
@@ -129,9 +149,11 @@ export function TaskManager() {
       difficulty,
       reward,
     };
+    
+    const isFirstTask = tasks.length === 0;
     setTasks(prev => [newTask, ...prev]);
 
-    if(tasks.length === 0){
+    if(isFirstTask){
         const endTime = Date.now() + 24 * 60 * 60 * 1000;
         setPenaltyEndTime(endTime);
     }
@@ -140,11 +162,16 @@ export function TaskManager() {
   const toggleTask = (id: string) => {
     setTasks(tasks.map(task => {
         if (task.id === id) {
+            const wasCompleted = task.completed;
             const updatedTask = { ...task, completed: !task.completed };
-            if (updatedTask.completed) {
-                setGold(prevGold => prevGold + updatedTask.reward);
-            } else {
-                setGold(prevGold => prevGold - updatedTask.reward);
+            
+            if (updatedTask.completed && !wasCompleted) {
+                updateGold(updatedTask.reward);
+                handleTaskCompletion();
+            } else if (!updatedTask.completed && wasCompleted) {
+                updateGold(-updatedTask.reward);
+                // Note: We might not want to decrement level progress on un-checking. 
+                // This is a design choice. For now, we won't decrement.
             }
             return updatedTask;
         }
@@ -153,6 +180,11 @@ export function TaskManager() {
   };
   
   const deleteTask = (id: string) => {
+    const taskToDelete = tasks.find(task => task.id === id);
+    if (taskToDelete && taskToDelete.completed) {
+      updateGold(-taskToDelete.reward);
+      // Optional: Decrement completion count if a completed task is deleted.
+    }
     setTasks(tasks.filter(task => task.id !== id));
   };
 

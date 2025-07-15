@@ -14,55 +14,82 @@ import './profile.css';
 
 const defaultUsername = "Sung Jin-Woo";
 const defaultAvatarUrl = "https://placehold.co/100x100.png";
+const defaultStats = { str: 0, vit: 0, agi: 0, int: 0, per: 0 };
+
 
 export default function ProfilePage() {
+  const [isMounted, setIsMounted] = useState(false);
+  
+  // States for all user data
   const [gold, setGold] = useState(150);
   const [username, setUsername] = useState(defaultUsername);
   const [avatarUrl, setAvatarUrl] = useState(defaultAvatarUrl);
-  const [isMounted, setIsMounted] = useState(false);
+  const [level, setLevel] = useState(0);
+  const [attributePoints, setAttributePoints] = useState(0);
+  const [stats, setStats] = useState(defaultStats);
 
-  useEffect(() => {
-    setIsMounted(true);
+
+  const safelyParseJSON = (key: string, defaultValue: any) => {
     try {
-      const storedGold = localStorage.getItem('userGold');
-      if (storedGold) {
-        setGold(JSON.parse(storedGold));
-      }
-      const storedUsername = localStorage.getItem('username');
-      if (storedUsername) {
-        setUsername(storedUsername);
-      }
-      const storedAvatarUrl = localStorage.getItem('avatarUrl');
-      if (storedAvatarUrl) {
-        setAvatarUrl(storedAvatarUrl);
-      }
+        const storedValue = localStorage.getItem(key);
+        return storedValue ? JSON.parse(storedValue) : defaultValue;
     } catch (error) {
-      console.error("Failed to parse from localStorage", error);
+        console.error(`Failed to parse ${key} from localStorage`, error);
+        return defaultValue;
     }
+  };
+
+  // Effect to load data from localStorage on mount
+  useEffect(() => {
+    setGold(safelyParseJSON('userGold', 150));
+    setUsername(safelyParseJSON('username', defaultUsername));
+    setAvatarUrl(safelyParseJSON('avatarUrl', defaultAvatarUrl));
+    setLevel(safelyParseJSON('level', 0));
+    setAttributePoints(safelyParseJSON('attributePoints', 0));
+    setStats(safelyParseJSON('stats', defaultStats));
+    setIsMounted(true);
   }, []);
 
+  // Effect to listen for storage changes from other tabs/windows
   useEffect(() => {
-    if (isMounted) {
-        const handleStorageChange = () => {
-            const storedGold = localStorage.getItem('userGold');
-            if (storedGold) {
-                setGold(JSON.parse(storedGold));
-            }
-        };
+    if (!isMounted) return;
 
-        window.addEventListener('storage', handleStorageChange);
+    const handleStorageChange = (event: StorageEvent) => {
+        // Update all states if any of them change in localStorage
+        if (event.key === 'userGold') setGold(safelyParseJSON('userGold', 150));
+        if (event.key === 'username') setUsername(safelyParseJSON('username', defaultUsername));
+        if (event.key === 'avatarUrl') setAvatarUrl(safelyParseJSON('avatarUrl', defaultAvatarUrl));
+        if (event.key === 'level') setLevel(safelyParseJSON('level', 0));
+        if (event.key === 'attributePoints') setAttributePoints(safelyParseJSON('attributePoints', 0));
+        if (event.key === 'stats') setStats(safelyParseJSON('stats', defaultStats));
+    };
 
-        return () => {
-            window.removeEventListener('storage', handleStorageChange);
-        };
-    }
+    window.addEventListener('storage', handleStorageChange);
+    return () => {
+        window.removeEventListener('storage', handleStorageChange);
+    };
   }, [isMounted]);
 
   const handleProfileUpdate = (newUsername: string, newAvatarUrl: string) => {
     setUsername(newUsername);
     setAvatarUrl(newAvatarUrl);
-    localStorage.setItem('username', newUsername);
-    localStorage.setItem('avatarUrl', newAvatarUrl);
+    localStorage.setItem('username', JSON.stringify(newUsername));
+    localStorage.setItem('avatarUrl', JSON.stringify(newAvatarUrl));
+    window.dispatchEvent(new Event('storage'));
+  };
+  
+  const handleSpendPoint = (statKey: keyof typeof stats) => {
+    if (attributePoints > 0) {
+      const newPoints = attributePoints - 1;
+      const newStats = { ...stats, [statKey]: stats[statKey] + 1 };
+      
+      setAttributePoints(newPoints);
+      setStats(newStats);
+      
+      localStorage.setItem('attributePoints', JSON.stringify(newPoints));
+      localStorage.setItem('stats', JSON.stringify(newStats));
+      window.dispatchEvent(new Event('storage'));
+    }
   };
 
 
@@ -89,7 +116,7 @@ export default function ProfilePage() {
               </h1>
               
               <UserInfo 
-                level={18}
+                level={level}
                 job="None"
                 title="Wolf Assassin"
                 username={username}
@@ -108,18 +135,18 @@ export default function ProfilePage() {
               <Separator className="my-4 bg-border/20" />
 
               <Attributes 
-                stats={{
-                  str: 0,
-                  vit: 0,
-                  agi: 0,
-                  int: 0,
-                  per: 0,
-                }}
+                stats={stats}
+                attributePoints={attributePoints}
+                onSpendPoint={handleSpendPoint}
               />
 
                <Separator className="my-4 bg-border/20" />
 
-              <FooterActions gold={gold} shopItems={shopItemsData} />
+              <FooterActions 
+                gold={gold} 
+                shopItems={shopItemsData}
+                availablePoints={attributePoints}
+              />
             </div>
           </FuturisticBorder>
         </div>

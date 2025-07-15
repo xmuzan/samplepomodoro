@@ -9,6 +9,8 @@ interface AttributesProps {
     int: number;
     per: number;
   };
+  attributePoints: number;
+  onSpendPoint: (statKey: keyof AttributesProps['stats']) => void;
 }
 
 const attributeData = [
@@ -19,7 +21,9 @@ const attributeData = [
   { key: 'per', label: 'PER', icon: Eye },
 ];
 
-export function Attributes({ stats }: AttributesProps) {
+export function Attributes({ stats, attributePoints, onSpendPoint }: AttributesProps) {
+  const canUpgrade = attributePoints > 0;
+
   return (
     <div className="attribute-grid">
       {attributeData.map(({ key, label, icon: Icon }) => (
@@ -29,7 +33,13 @@ export function Attributes({ stats }: AttributesProps) {
           <span className="text-xl font-mono font-bold text-foreground w-8 text-right">
             {stats[key as keyof typeof stats]}
           </span>
-          <Button variant="ghost" size="icon" className="h-7 w-7 text-primary hover:bg-primary/20 hover:text-primary">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="h-7 w-7 text-primary hover:bg-primary/20 hover:text-primary disabled:text-muted-foreground/30 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+            onClick={() => onSpendPoint(key as keyof typeof stats)}
+            disabled={!canUpgrade}
+          >
             <Plus className="h-4 w-4" />
           </Button>
         </div>
