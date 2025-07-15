@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Bot, Store, Swords, User } from 'lucide-react';
+import { Bot, Store, Swords, User, FileText } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 import {
@@ -17,6 +17,7 @@ const navItems = [
   { href: '/', label: 'Görevler', icon: Swords },
   { href: '/profile', label: 'Profil', icon: User },
   { href: '/shop', label: 'Mağaza', icon: Store },
+  { href: '/report', label: 'Rapor', icon: FileText },
 ];
 
 export function Navbar() {

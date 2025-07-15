@@ -11,12 +11,14 @@ import { Separator } from '@/components/ui/separator';
 import { shopItemsData } from '@/app/shop/page';
 import { SKILL_CATEGORIES } from '@/lib/skills';
 import { getTitleForLevel } from '@/lib/titles';
+import { getStats, type UserStats } from '@/lib/stats';
+
 
 import './profile.css';
 
 const defaultUsername = "Sung Jin-Woo";
 const defaultAvatarUrl = "https://placehold.co/100x100.png";
-const defaultStats = { str: 0, vit: 0, agi: 0, int: 0, per: 0 };
+const defaultStatsData = { str: 0, vit: 0, agi: 0, int: 0, per: 0 };
 const defaultSkillData = Object.keys(SKILL_CATEGORIES).reduce((acc, key) => {
     if (key !== 'other') {
       acc[key as keyof typeof SKILL_CATEGORIES] = { completedTasks: 0, rankIndex: 0 };
@@ -34,7 +36,8 @@ export default function ProfilePage() {
   const [avatarUrl, setAvatarUrl] = useState(defaultAvatarUrl);
   const [level, setLevel] = useState(0);
   const [attributePoints, setAttributePoints] = useState(0);
-  const [stats, setStats] = useState(defaultStats);
+  const [stats, setStats] = useState(defaultStatsData);
+  const [baseStats, setBaseStats] = useState<UserStats>({ hp: 100, mp: 100, ir: 100 });
 
 
   const loadDataFromStorage = () => {
@@ -75,9 +78,9 @@ export default function ProfilePage() {
       
     try {
       const storedStats = localStorage.getItem('stats');
-      setStats(storedStats ? JSON.parse(storedStats) : defaultStats);
+      setStats(storedStats ? JSON.parse(storedStats) : defaultStatsData);
     } catch {
-        setStats(defaultStats);
+        setStats(defaultStatsData);
     }
 
     try {
@@ -88,6 +91,8 @@ export default function ProfilePage() {
     } catch {
         localStorage.setItem('skillData', JSON.stringify(defaultSkillData));
     }
+
+    setBaseStats(getStats());
   };
 
   // Effect to load data from localStorage on mount
@@ -101,8 +106,11 @@ export default function ProfilePage() {
     if (!isMounted) return;
 
     const handleStorageChange = (event: StorageEvent) => {
-        // Re-load all data if any of our keys change
-        if (['userGold', 'username', 'avatarUrl', 'level', 'attributePoints', 'stats', 'skillData', 'tasksCompletedThisLevel', 'tasksRequiredForNextLevel'].includes(event.key || '')) {
+        if ([
+          'userGold', 'username', 'avatarUrl', 'level', 
+          'attributePoints', 'stats', 'skillData', 'tasksCompletedThisLevel', 
+          'tasksRequiredForNextLevel', 'baseStats'
+        ].includes(event.key || '')) {
           loadDataFromStorage();
         }
     };
@@ -172,9 +180,9 @@ export default function ProfilePage() {
               <Separator className="my-4 bg-border/20" />
 
               <StatBars 
-                hp={{current: 100, max: 100}}
-                mp={{current: 100, max: 100}}
-                ir={{current: 100, max: 100}}
+                hp={{current: baseStats.hp, max: 100}}
+                mp={{current: baseStats.mp, max: 100}}
+                ir={{current: baseStats.ir, max: 100}}
               />
 
               <Separator className="my-4 bg-border/20" />
