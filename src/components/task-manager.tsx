@@ -47,7 +47,7 @@ function PenaltyTimer({ endTime }: { endTime: number }) {
   const seconds = Math.floor((timeLeft / 1000) % 60);
 
   return (
-    <div className="flex items-center justify-center gap-2 bg-destructive/10 p-3 text-destructive shadow-[0_0_15px_hsl(var(--destructive)/0.5)]">
+    <div className="flex items-center justify-center gap-2 p-3 text-destructive">
       <AlarmClock className="h-5 w-5" />
       <p className="font-mono text-sm font-medium tracking-wider">
         CEZA SÜRESİ: {String(hours).padStart(2, '0')}:{String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
@@ -171,7 +171,11 @@ export function TaskManager() {
             )}
           </div>
         </CardContent>
-        {penaltyEndTime && <div className="p-2 pt-0"><PenaltyTimer endTime={penaltyEndTime} /></div>}
+        {penaltyEndTime && (
+          <div className="p-2 pt-0">
+            <PenaltyTimer endTime={penaltyEndTime} />
+          </div>
+        )}
         </div>
       </FuturisticBorder>
     </div>
