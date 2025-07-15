@@ -27,6 +27,7 @@ function TimerDisplay({ endTime, label, labelColor }: { endTime: number, label: 
   useEffect(() => {
     if (endTime <= Date.now()) {
       setTimeLeft(0);
+      window.dispatchEvent(new Event('storage'));
       return;
     }
     
@@ -35,7 +36,6 @@ function TimerDisplay({ endTime, label, labelColor }: { endTime: number, label: 
       if (remaining <= 0) {
         clearInterval(interval);
         setTimeLeft(0);
-        // Force a re-render/re-check in parent component
         window.dispatchEvent(new Event('storage'));
       } else {
         setTimeLeft(remaining);
@@ -71,12 +71,8 @@ export function TaskManager() {
   const [taskDeadline, setTaskDeadline] = useState<number | null>(null);
   const { toast } = useToast();
 
-  const isPenaltyActive = useCallback(() => {
-    if (!penaltyEndTime) return false;
-    return penaltyEndTime > Date.now();
-  }, [penaltyEndTime]);
-
   const loadFromStorage = useCallback(() => {
+    if (typeof window === 'undefined') return;
     try {
       const storedTasks = localStorage.getItem('tasks');
       const parsedTasks = storedTasks ? JSON.parse(storedTasks) : [];
@@ -96,15 +92,18 @@ export function TaskManager() {
       }
 
       const storedDeadline = localStorage.getItem('taskDeadline');
-      if(storedDeadline) {
+      if (storedDeadline) {
         const deadline = parseInt(storedDeadline, 10);
         if (deadline > Date.now()) {
            setTaskDeadline(deadline);
         } else {
-            // Deadline has passed
+            localStorage.removeItem('taskDeadline');
+            setTaskDeadline(null);
+            
             const hasIncompleteTasks = parsedTasks.some((t: Task) => !t.completed);
-            if (hasIncompleteTasks) {
-                // Apply penalty
+            const isPenaltyActive = localStorage.getItem('penaltyEndTime');
+
+            if (hasIncompleteTasks && !isPenaltyActive) {
                 const newPenaltyTime = Date.now() + 24 * 60 * 60 * 1000;
                 localStorage.setItem('penaltyEndTime', newPenaltyTime.toString());
                 setPenaltyEndTime(newPenaltyTime);
@@ -114,8 +113,6 @@ export function TaskManager() {
                     variant: "destructive"
                 });
             }
-            localStorage.removeItem('taskDeadline');
-            setTaskDeadline(null);
         }
       } else {
         setTaskDeadline(null);
@@ -134,51 +131,50 @@ export function TaskManager() {
     setIsMounted(true);
     loadFromStorage();
     
-    // Listen for storage changes from other tabs
     window.addEventListener('storage', loadFromStorage);
     return () => {
       window.removeEventListener('storage', loadFromStorage);
     }
   }, [loadFromStorage]);
   
-  // This effect runs when the tasks array changes.
   useEffect(() => {
     if (!isMounted) return;
 
     localStorage.setItem('tasks', JSON.stringify(tasks));
-
+    
+    const isPenaltyActive = penaltyEndTime && penaltyEndTime > Date.now();
     const hasIncompleteTasks = tasks.some(task => !task.completed);
-
-    // If there are no incomplete tasks, clear the deadline.
-    if (!hasIncompleteTasks && tasks.length > 0) {
-      localStorage.removeItem('taskDeadline');
-      setTaskDeadline(null);
-      if (taskDeadline) { // Only show toast if there was an active deadline
-        toast({ title: "Tüm Görevler Tamamlandı!", description: "Ceza görevi başarıyla önlendi." });
-      }
+    
+    // RULE: If there are no tasks, clear all timers.
+    if (tasks.length === 0) {
+        localStorage.removeItem('taskDeadline');
+        localStorage.removeItem('penaltyEndTime');
+        setTaskDeadline(null);
+        setPenaltyEndTime(null);
+        return;
     }
     
-    // If we add a task to an empty list, and there's no penalty, start a new deadline.
-    if (tasks.length > 0 && !taskDeadline && !isPenaltyActive()) {
-        const wasEmpty = (JSON.parse(localStorage.getItem('tasks') || '[]')).length === 0;
-        if(wasEmpty) {
-            const newDeadline = Date.now() + 24 * 60 * 60 * 1000;
-            localStorage.setItem('taskDeadline', newDeadline.toString());
-            setTaskDeadline(newDeadline);
-        }
-    }
-
-    // If all tasks are deleted, clear the deadline
-    if(tasks.length === 0) {
+    // RULE: If all tasks are completed, clear the deadline.
+    if (!hasIncompleteTasks) {
         localStorage.removeItem('taskDeadline');
         setTaskDeadline(null);
+         if (taskDeadline) {
+            toast({ title: "Tüm Görevler Tamamlandı!", description: "Ceza görevi başarıyla önlendi." });
+        }
     }
     
-  }, [tasks, isMounted, taskDeadline, isPenaltyActive, toast]);
+    // RULE: If there are tasks, but no deadline and no penalty, start a new deadline.
+    if (hasIncompleteTasks && !taskDeadline && !isPenaltyActive) {
+        const newDeadline = Date.now() + 24 * 60 * 60 * 1000;
+        localStorage.setItem('taskDeadline', newDeadline.toString());
+        setTaskDeadline(newDeadline);
+    }
+    
+  }, [tasks, isMounted, toast, penaltyEndTime, taskDeadline]);
 
 
   const updateGold = (amount: number) => {
-    if (isPenaltyActive()) return;
+    if (penaltyEndTime && penaltyEndTime > Date.now()) return;
     try {
       const currentGold = JSON.parse(localStorage.getItem('userGold') || '0');
       const newGold = currentGold + amount;
@@ -190,7 +186,7 @@ export function TaskManager() {
   }
   
   const handleSkillProgress = (category: SkillCategory) => {
-    if (isPenaltyActive() || category === 'other') return;
+    if ((penaltyEndTime && penaltyEndTime > Date.now()) || category === 'other') return;
   
     try {
       let skillData = JSON.parse(localStorage.getItem('skillData') || '{}');
@@ -218,7 +214,7 @@ export function TaskManager() {
 
 
   const handleTaskCompletionProgress = (category: SkillCategory) => {
-    if (isPenaltyActive()) return;
+    if (penaltyEndTime && penaltyEndTime > Date.now()) return;
     try {
         let tasksCompleted = JSON.parse(localStorage.getItem('tasksCompletedThisLevel') || '0');
         tasksCompleted += 1;
@@ -267,8 +263,10 @@ export function TaskManager() {
             const wasCompleted = task.completed;
             const updatedTask = { ...task, completed: !task.completed };
             
+            const isPenaltyActiveNow = penaltyEndTime && penaltyEndTime > Date.now();
+            
             if (updatedTask.completed && !wasCompleted) {
-                if(!isPenaltyActive()){
+                if(!isPenaltyActiveNow){
                   updateGold(updatedTask.reward);
                   handleTaskCompletionProgress(updatedTask.category);
                 } else {
@@ -279,7 +277,6 @@ export function TaskManager() {
                   });
                 }
             } else if (!updatedTask.completed && wasCompleted) {
-                // We don't penalize for un-checking a task during a penalty period
                 updateGold(-updatedTask.reward);
             }
             return updatedTask;
@@ -293,7 +290,16 @@ export function TaskManager() {
     if (taskToDelete && taskToDelete.completed) {
       updateGold(-taskToDelete.reward);
     }
-    setTasks(tasks.filter(task => task.id !== id));
+    const newTasks = tasks.filter(task => task.id !== id)
+    setTasks(newTasks);
+    // Trigger useEffect to check if timers need to be cleared
+    if(newTasks.length === 0) {
+      localStorage.removeItem('taskDeadline');
+      localStorage.removeItem('penaltyEndTime');
+      setTaskDeadline(null);
+      setPenaltyEndTime(null);
+      window.dispatchEvent(new Event('storage'));
+    }
   };
 
   if (!isMounted) {
@@ -313,6 +319,8 @@ export function TaskManager() {
       </FuturisticBorder>
     );
   }
+  
+  const isPenaltyActive = penaltyEndTime && penaltyEndTime > Date.now();
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -337,10 +345,10 @@ export function TaskManager() {
             )}
           </div>
         </CardContent>
-        {isPenaltyActive() && penaltyEndTime && (
+        {isPenaltyActive && penaltyEndTime && (
             <TimerDisplay endTime={penaltyEndTime} label="CEZA SÜRESİ" labelColor="text-destructive" />
         )}
-        {!isPenaltyActive() && taskDeadline && tasks.some(t => !t.completed) && (
+        {!isPenaltyActive && taskDeadline && tasks.some(t => !t.completed) && (
             <TimerDisplay endTime={taskDeadline} label="KALAN SÜRE" labelColor="text-amber-400" />
         )}
         </div>
@@ -348,5 +356,3 @@ export function TaskManager() {
     </div>
   );
 }
-
-    
