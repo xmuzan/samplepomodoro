@@ -171,7 +171,7 @@ export function TaskManager() {
             )}
           </div>
         </CardContent>
-        {penaltyEndTime && (
+        {penaltyEndTime && tasks.length > 0 && (
           <div className="p-2 pt-0">
             <PenaltyTimer endTime={penaltyEndTime} />
           </div>
