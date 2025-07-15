@@ -29,7 +29,7 @@ export const shopItemsData: ShopItemData[] = [
     id: 'scroll_cinema',
     name: 'Gölge Sineması',
     description: 'Envanterden kullanarak 20 dakikalık bir film, dizi veya video izle. Zihnini dinlendirir ve farklı dünyalara kaçmanı sağlar.',
-    price: 120,
+    price: 250,
     imageUrl: 'https://placehold.co/600x400.png',
     aiHint: 'futuristic screen'
   },
@@ -37,7 +37,7 @@ export const shopItemsData: ShopItemData[] = [
     id: 'tome_psychology',
     name: 'Zihin Güçlendirme Parşömeni',
     description: 'Envanterden kullanarak 25 dakika boyunca psikoloji hakkında bir video izle veya makale oku. Zihinsel dayanıklılığını artırır.',
-    price: 150,
+    price: 250,
     imageUrl: 'https://placehold.co/600x400.png',
     aiHint: 'magic scroll'
   },
@@ -45,7 +45,7 @@ export const shopItemsData: ShopItemData[] = [
     id: 'book_wisdom',
     name: 'Bilgelik Tomarı',
     description: 'Envanterden kullanarak 25 dakika boyunca kendini geliştirecek bir kitap oku. Entelektüel kapasiteni ve algını yükseltir.',
-    price: 200,
+    price: 300,
     imageUrl: 'https://placehold.co/600x400.png',
     aiHint: 'ancient book'
   },
@@ -223,5 +223,3 @@ export default function ShopPage() {
     </div>
   );
 }
-
-    
