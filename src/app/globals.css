@@ -60,72 +60,74 @@
   body {
     @apply bg-background text-foreground;
   }
-  body::before {
-    content: "";
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-image: 
-      linear-gradient(hsl(var(--primary) / 0.1) 1px, transparent 1px),
-      linear-gradient(to right, hsl(var(--primary) / 0.1) 1px, transparent 1px);
-    background-size: 40px 40px;
-    animation: move-grid 20s linear infinite;
-    z-index: -1;
-    pointer-events: none;
-  }
-  
-  @keyframes move-grid {
-    0% {
-      background-position: 0 0;
-    }
-    100% {
-      background-position: 40px 40px;
-    }
-  }
 }
 
 @layer components {
-  /* Futuristic HUD-style card */
+  /* Ultra Mega Technological Futuristic HUD-style card */
   .futuristic-card {
-    @apply bg-card/80 backdrop-blur-sm border-2 border-primary/30 shadow-lg relative p-0;
+    @apply bg-card/60 backdrop-blur-sm border-2 border-primary/20 shadow-lg relative p-0;
     clip-path: polygon(
-      0% 15px, 15px 0%, calc(100% - 15px) 0%, 100% 15px,
-      100% calc(100% - 15px), calc(100% - 15px) 100%, 15px 100%, 0% calc(100% - 15px)
+      0% 20px, 20px 0%, calc(100% - 20px) 0%, 100% 20px,
+      100% calc(100% - 20px), calc(100% - 20px) 100%,
+      20px 100%, 0% calc(100% - 20px)
     );
   }
-  
+
   .futuristic-card::before,
   .futuristic-card::after {
     content: '';
     position: absolute;
     inset: 0;
     pointer-events: none;
-    border-radius: var(--radius);
   }
 
+  /* Main glowing frame */
   .futuristic-card::before {
-    border: 2px solid hsl(var(--primary));
+    border: 1px solid hsl(var(--primary));
     clip-path: polygon(
-      0% 15px, 15px 0%, calc(100% - 15px) 0%, 100% 15px,
-      100% calc(100% - 15px), calc(100% - 15px) 100%, 15px 100%, 0% calc(100% - 15px),
-      /* inner cutout */
-      0% 17px, 2px calc(100% - 15px), 2px 100%, calc(100% - 17px) 100%, calc(100% - 15px) calc(100% - 2px), 100% calc(100% - 17px), 100% 17px, calc(100% - 2px) 15px, calc(100% - 2px) 0px, 17px 0px, 15px 2px, 0% 17px
+      0% 20px, 20px 0%, calc(50% - 15px) 0%, calc(50% - 10px) 5px, calc(50% + 10px) 5px, calc(50% + 15px) 0%, calc(100% - 20px) 0%, 100% 20px,
+      100% calc(50% - 15px), calc(100% - 5px) calc(50% - 10px), calc(100% - 5px) calc(50% + 10px), 100% calc(50% + 15px),
+      100% calc(100% - 20px), calc(100% - 20px) 100%, calc(50% + 15px) 100%, calc(50% + 10px) calc(100% - 5px), calc(50% - 10px) calc(100% - 5px), calc(50% - 15px) 100%, 20px 100%, 0% calc(100% - 20px),
+      0% calc(50% + 15px), 5px calc(50% + 10px), 5px calc(50% - 10px), 0% calc(50% - 15px)
     );
-    animation: glow-pulse 3s infinite ease-in-out;
+    animation: glow-pulse 4s infinite linear;
   }
-  
+
+  /* Corner bracket details */
+  .futuristic-card::after {
+    --size: 25px;
+    --weight: 2px;
+    border: var(--weight) solid hsl(var(--accent));
+    clip-path: polygon(
+      /* Top-left */
+      0 0, var(--size) 0, var(--size) var(--weight), var(--weight) var(--weight), var(--weight) var(--size), 0 var(--size),
+      /* Top-right */
+      calc(100% - var(--size)) 0, 100% 0, 100% var(--size), calc(100% - var(--weight)) var(--size), calc(100% - var(--weight)) var(--weight), calc(100% - var(--size)) var(--weight),
+      /* Bottom-left */
+      0 calc(100% - var(--size)), var(--weight) calc(100% - var(--size)), var(--weight) calc(100% - var(--weight)), var(--size) calc(100% - var(--weight)), var(--size) 100%, 0 100%,
+      /* Bottom-right */
+      calc(100% - var(--size)) 100%, calc(100% - var(--weight)) 100%, calc(100% - var(--weight)) calc(100% - var(--size)), 100% calc(100% - var(--size)), 100% calc(100% - 0px), calc(100% - var(--size)) 100%
+    );
+    animation: corner-flicker 4s infinite linear;
+  }
+
   @keyframes glow-pulse {
     0%, 100% {
-      box-shadow: 0 0 5px hsl(var(--primary)), 0 0 10px hsl(var(--primary)), 0 0 15px hsl(var(--accent));
-      opacity: 0.8;
+      box-shadow: 0 0 4px hsl(var(--primary)), 0 0 8px hsl(var(--primary)), 0 0 12px hsl(var(--accent));
+      opacity: 0.7;
     }
     50% {
-      box-shadow: 0 0 10px hsl(var(--primary)), 0 0 20px hsl(var(--primary)), 0 0 30px hsl(var(--accent));
+      box-shadow: 0 0 8px hsl(var(--primary)), 0 0 16px hsl(var(--primary)), 0 0 24px hsl(var(--accent));
       opacity: 1;
     }
   }
+
+  @keyframes corner-flicker {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+    75% { opacity: 0.8; }
+  }
+
 
   /* Add glow to primary text and icons */
   .text-primary, .text-primary-foreground, .lucide-icon {
