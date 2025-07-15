@@ -379,7 +379,7 @@ export function TaskManager() {
   return (
     <div className="max-w-4xl mx-auto">
       <FuturisticBorder>
-       <div className="bg-background/80 backdrop-blur-md p-1">
+       <div className="bg-background/60 backdrop-blur-md p-1">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="font-headline text-2xl text-primary tracking-wider">ÖZEL GÖREVLER</CardTitle>
           <CreateTaskDialog onAddTask={addTask} />
