@@ -9,12 +9,19 @@ import { Attributes } from './_components/attributes';
 import { FooterActions } from './_components/footer-actions';
 import { Separator } from '@/components/ui/separator';
 import { shopItemsData } from '@/app/shop/page';
+import { SKILL_CATEGORIES } from '@/lib/skills';
 
 import './profile.css';
 
 const defaultUsername = "Sung Jin-Woo";
 const defaultAvatarUrl = "https://placehold.co/100x100.png";
 const defaultStats = { str: 0, vit: 0, agi: 0, int: 0, per: 0 };
+const defaultSkillData = Object.keys(SKILL_CATEGORIES).reduce((acc, key) => {
+    if (key !== 'other') {
+      acc[key] = { completedTasks: 0, rankIndex: 0 };
+    }
+    return acc;
+  }, {} as Record<string, { completedTasks: number; rankIndex: number }>);
 
 
 export default function ProfilePage() {
@@ -71,6 +78,15 @@ export default function ProfilePage() {
     } catch {
         setStats(defaultStats);
     }
+
+    try {
+        const storedSkillData = localStorage.getItem('skillData');
+        if (!storedSkillData) {
+            localStorage.setItem('skillData', JSON.stringify(defaultSkillData));
+        }
+    } catch {
+        localStorage.setItem('skillData', JSON.stringify(defaultSkillData));
+    }
   };
 
   // Effect to load data from localStorage on mount
@@ -85,7 +101,7 @@ export default function ProfilePage() {
 
     const handleStorageChange = (event: StorageEvent) => {
         // Re-load all data if any of our keys change
-        if (['userGold', 'username', 'avatarUrl', 'level', 'attributePoints', 'stats'].includes(event.key || '')) {
+        if (['userGold', 'username', 'avatarUrl', 'level', 'attributePoints', 'stats', 'skillData'].includes(event.key || '')) {
           loadDataFromStorage();
         }
     };

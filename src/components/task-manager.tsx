@@ -9,6 +9,7 @@ import { TaskItem } from './task-item';
 import { Skeleton } from './ui/skeleton';
 import { FuturisticBorder } from './futuristic-border';
 import { AlarmClock } from 'lucide-react';
+import type { SkillCategory } from '@/lib/skills';
 
 export type Task = {
   id: string;
@@ -16,6 +17,7 @@ export type Task = {
   completed: boolean;
   difficulty: 'easy' | 'hard';
   reward: number;
+  category: SkillCategory;
 };
 
 function PenaltyTimer({ endTime }: { endTime: number }) {
@@ -117,13 +119,40 @@ export function TaskManager() {
       console.error("Failed to update gold in localStorage", error);
     }
   }
+  
+  const handleSkillProgress = (category: SkillCategory) => {
+    if (category === 'other') return;
+  
+    try {
+      let skillData = JSON.parse(localStorage.getItem('skillData') || '{}');
+      
+      if (!skillData[category]) {
+        skillData[category] = { completedTasks: 0, rankIndex: 0 };
+      }
+      
+      skillData[category].completedTasks += 1;
+      
+      if (skillData[category].completedTasks >= 20) {
+        if(skillData[category].rankIndex < 9) { // Max rank is 9 (index)
+            skillData[category].rankIndex += 1;
+            skillData[category].completedTasks = 0;
+        }
+      }
+      
+      localStorage.setItem('skillData', JSON.stringify(skillData));
+      window.dispatchEvent(new Event('storage'));
+    } catch(error) {
+      console.error("Failed to update skill data in localStorage", error);
+    }
+  };
 
-  const handleTaskCompletion = () => {
+
+  const handleTaskCompletion = (category: SkillCategory) => {
     try {
         let completedCount = JSON.parse(localStorage.getItem('completedTasksCount') || '0');
         completedCount += 1;
         
-        if (completedCount % 32 === 0) {
+        if (completedCount > 0 && completedCount % 32 === 0) {
             let level = JSON.parse(localStorage.getItem('level') || '0');
             level += 1;
             localStorage.setItem('level', JSON.stringify(level));
@@ -134,13 +163,14 @@ export function TaskManager() {
         }
 
         localStorage.setItem('completedTasksCount', JSON.stringify(completedCount));
+        handleSkillProgress(category);
         window.dispatchEvent(new Event('storage'));
     } catch(error) {
       console.error("Failed to update level/points in localStorage", error);
     }
   };
 
-  const addTask = (taskText: string, difficulty: 'easy' | 'hard') => {
+  const addTask = (taskText: string, difficulty: 'easy' | 'hard', category: SkillCategory) => {
     const reward = difficulty === 'easy' ? 50 : 200;
     const newTask: Task = {
       id: crypto.randomUUID(),
@@ -148,6 +178,7 @@ export function TaskManager() {
       completed: false,
       difficulty,
       reward,
+      category,
     };
     
     const isFirstTask = tasks.length === 0;
@@ -167,7 +198,7 @@ export function TaskManager() {
             
             if (updatedTask.completed && !wasCompleted) {
                 updateGold(updatedTask.reward);
-                handleTaskCompletion();
+                handleTaskCompletion(updatedTask.category);
             } else if (!updatedTask.completed && wasCompleted) {
                 updateGold(-updatedTask.reward);
                 // Note: We might not want to decrement level progress on un-checking. 

@@ -20,15 +20,24 @@ import { useToast } from '@/hooks/use-toast';
 import { Plus, Wand2, ShieldAlert } from 'lucide-react';
 import { suggestTaskAction } from '@/app/tasks/actions';
 import { FuturisticBorder } from './futuristic-border';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { SKILL_CATEGORIES } from '@/lib/skills';
+import type { SkillCategory } from '@/lib/skills';
 
 interface CreateTaskDialogProps {
-    onAddTask: (taskText: string, difficulty: 'easy' | 'hard') => void;
+    onAddTask: (taskText: string, difficulty: 'easy' | 'hard', category: SkillCategory) => void;
 }
+
+const skillOptions = Object.entries(SKILL_CATEGORIES).map(([key, value]) => ({
+    value: key as SkillCategory,
+    label: value.label,
+}));
 
 export function CreateTaskDialog({ onAddTask }: CreateTaskDialogProps) {
     const [open, setOpen] = useState(false);
     const [taskName, setTaskName] = useState('');
     const [difficulty, setDifficulty] = useState<'easy' | 'hard' | null>(null);
+    const [category, setCategory] = useState<SkillCategory | null>(null);
     const [isPending, startTransition] = useTransition();
     const { toast } = useToast();
 
@@ -50,24 +59,21 @@ export function CreateTaskDialog({ onAddTask }: CreateTaskDialogProps) {
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (taskName.trim() === '') {
-            toast({
-                title: 'Error',
-                description: 'Task name cannot be empty.',
-                variant: 'destructive',
-            });
+            toast({ title: 'Error', description: 'Task name cannot be empty.', variant: 'destructive' });
             return;
         }
         if (!difficulty) {
-            toast({
-                title: 'Error',
-                description: 'Please select a task difficulty.',
-                variant: 'destructive',
-            });
+            toast({ title: 'Error', description: 'Please select a task difficulty.', variant: 'destructive' });
             return;
         }
-        onAddTask(taskName.trim(), difficulty);
+        if (!category) {
+            toast({ title: 'Error', description: 'Please select a task category.', variant: 'destructive' });
+            return;
+        }
+        onAddTask(taskName.trim(), difficulty, category);
         setTaskName('');
         setDifficulty(null);
+        setCategory(null);
         setOpen(false);
     };
 
@@ -106,6 +112,21 @@ export function CreateTaskDialog({ onAddTask }: CreateTaskDialogProps) {
                                     </Button>
                                 </div>
                             </div>
+
+                            <div className="flex flex-col gap-2">
+                                <Label>Kategori</Label>
+                                <Select onValueChange={(value: SkillCategory) => setCategory(value)} value={category ?? undefined}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Bir kategori seçin..." />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {skillOptions.map(option => (
+                                            <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
                              <div className="flex flex-col gap-2">
                                 <Label>Zorluk</Label>
                                 <RadioGroup 

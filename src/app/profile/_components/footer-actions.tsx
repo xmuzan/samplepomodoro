@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button";
-import { ShieldQuestion, Coins, Star } from "lucide-react";
+import { Coins, Star, ShieldQuestion } from "lucide-react";
 import { InventoryDialog } from "./inventory-dialog";
 import type { ShopItemData } from "@/app/shop/_components/shop-item";
+import { SkillsDialog } from "./skills-dialog";
 
 interface FooterActionsProps {
   gold: number;
@@ -17,18 +18,20 @@ export function FooterActions({ gold, shopItems, availablePoints }: FooterAction
         <span className="font-bold text-yellow-200">{new Intl.NumberFormat().format(gold)}</span>
       </div>
       <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
-        <Button 
-            size="lg" 
-            className="gap-2 bg-purple-600 text-white hover:bg-purple-500 shadow-[0_0_15px_#a855f7] w-full relative"
-        >
-            <Star className="h-6 w-6" />
-            Yetenekler
-            {availablePoints > 0 && (
-                <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold animate-pulse">
-                    {availablePoints}
-                </span>
-            )}
-        </Button>
+        <SkillsDialog>
+            <Button 
+                size="lg" 
+                className="gap-2 bg-purple-600 text-white hover:bg-purple-500 shadow-[0_0_15px_#a855f7] w-full relative"
+            >
+                <Star className="h-6 w-6" />
+                Yetenekler
+                {availablePoints > 0 && (
+                    <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold animate-pulse">
+                        {availablePoints}
+                    </span>
+                )}
+            </Button>
+        </SkillsDialog>
         <InventoryDialog shopItems={shopItems}>
           <Button size="lg" className="gap-2 bg-primary text-primary-foreground hover:bg-primary/80 shadow-[0_0_15px_hsl(var(--primary)/0.5)] w-full">
             <ShieldQuestion className="h-6 w-6" />
