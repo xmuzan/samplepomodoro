@@ -8,6 +8,7 @@ import { StatBars } from './_components/stat-bars';
 import { Attributes } from './_components/attributes';
 import { FooterActions } from './_components/footer-actions';
 import { Separator } from '@/components/ui/separator';
+import { shopItemsData } from '@/app/shop/page';
 
 import './profile.css';
 
@@ -98,7 +99,7 @@ export default function ProfilePage() {
 
                <Separator className="my-4 bg-border/20" />
 
-              <FooterActions gold={gold} />
+              <FooterActions gold={gold} shopItems={shopItemsData} />
             </div>
           </FuturisticBorder>
         </div>

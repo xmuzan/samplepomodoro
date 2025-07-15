@@ -4,7 +4,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Coins } from "lucide-react";
 
-interface ShopItemData {
+export interface ShopItemData {
   id: string;
   name: string;
   description: string;
@@ -16,7 +16,7 @@ interface ShopItemData {
 interface ShopItemProps {
   item: ShopItemData;
   currentGold: number;
-  onPurchase: (price: number) => void;
+  onPurchase: (item: ShopItemData) => void;
 }
 
 export function ShopItem({ item, currentGold, onPurchase }: ShopItemProps) {
@@ -48,7 +48,7 @@ export function ShopItem({ item, currentGold, onPurchase }: ShopItemProps) {
           <Button 
             size="sm"
             disabled={!canAfford}
-            onClick={() => onPurchase(item.price)}
+            onClick={() => onPurchase(item)}
             className="bg-primary/10 border border-primary/50 text-primary hover:bg-primary/20 disabled:bg-muted/20 disabled:text-muted-foreground disabled:border-muted/30 disabled:cursor-not-allowed"
           >
             Satın Al

@@ -3,12 +3,12 @@
 import { useState, useEffect } from 'react';
 import { Navbar } from '@/components/navbar';
 import { FuturisticBorder } from '@/components/futuristic-border';
-import { ShopItem } from './_components/shop-item';
+import { ShopItem, type ShopItemData } from './_components/shop-item';
 import { Coins } from 'lucide-react';
 
 import './shop.css';
 
-const shopItemsData = [
+export const shopItemsData: ShopItemData[] = [
   {
     id: 'potion_energy',
     name: 'Mana İksiri',
@@ -75,10 +75,26 @@ export default function ShopPage() {
     }
   }, [isMounted]);
 
-  const handlePurchase = (price: number) => {
-    const newGold = gold - price;
+  const handlePurchase = (item: ShopItemData) => {
+    const newGold = gold - item.price;
     setGold(newGold);
     localStorage.setItem('userGold', JSON.stringify(newGold));
+    
+    // Add to inventory
+    try {
+      const currentInventory = JSON.parse(localStorage.getItem('inventory') || '[]');
+      const itemInInventory = currentInventory.find((invItem: {id: string}) => invItem.id === item.id);
+
+      if (itemInInventory) {
+        itemInInventory.quantity += 1;
+      } else {
+        currentInventory.push({ id: item.id, quantity: 1 });
+      }
+      localStorage.setItem('inventory', JSON.stringify(currentInventory));
+    } catch(error) {
+      console.error("Failed to update inventory in localStorage", error);
+    }
+
     window.dispatchEvent(new Event('storage'));
   };
 
