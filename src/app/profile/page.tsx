@@ -109,11 +109,11 @@ export default function ProfilePage() {
 
               <Attributes 
                 stats={{
-                  str: 48,
-                  vit: 27,
-                  agi: 27,
-                  int: 27,
-                  per: 27,
+                  str: 0,
+                  vit: 0,
+                  agi: 0,
+                  int: 0,
+                  per: 0,
                 }}
               />
 
