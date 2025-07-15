@@ -1,0 +1,83 @@
+
+'use client';
+
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { Bot, Store, Swords, User } from 'lucide-react';
+
+import { cn } from '@/lib/utils';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+
+const navItems = [
+  { href: '/', label: 'Görevler', icon: Swords },
+  { href: '#', label: 'Profil', icon: User },
+  { href: '#', label: 'Mağaza', icon: Store },
+];
+
+export function Navbar() {
+  const pathname = usePathname();
+
+  const commonLinkClasses = "flex items-center justify-center gap-1 rounded-md transition-colors duration-200 md:justify-start md:w-full md:h-12 md:px-3";
+  const activeClasses = "text-accent bg-accent/10";
+  const inactiveClasses = "text-muted-foreground hover:bg-accent/5 hover:text-accent";
+  const iconGlow = "drop-shadow-[0_0_5px_currentColor]";
+  
+  return (
+    <>
+      {/* Bottom Navbar for mobile */}
+      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-primary/20 bg-background/80 p-1 backdrop-blur-lg md:hidden">
+        <div className="flex justify-around">
+          {navItems.map(({ href, label, icon: Icon }) => (
+            <Link key={label} href={href} className={cn(
+              commonLinkClasses,
+              pathname === href ? activeClasses : inactiveClasses,
+              'flex-1 flex-col text-xs h-14'
+            )}>
+              <Icon className={cn('h-6 w-6', pathname === href && iconGlow)} />
+              <span>{label}</span>
+            </Link>
+          ))}
+        </div>
+      </nav>
+
+      {/* Sidebar for desktop */}
+      <TooltipProvider>
+        <nav className="hidden md:fixed md:left-0 md:top-0 md:z-50 md:flex md:h-screen md:w-20 md:flex-col md:border-r md:border-primary/20 md:bg-background lg:w-64">
+            <div className="flex h-20 items-center justify-center border-b border-primary/20">
+                <Link href="/" className="flex items-center justify-center">
+                    <Bot className="h-8 w-8 text-accent" />
+                    <span className="font-headline ml-4 hidden text-xl font-bold text-accent lg:block">LevelUp</span>
+                </Link>
+            </div>
+            <div className="flex flex-1 flex-col gap-y-2 overflow-y-auto p-2">
+                <ul className="flex flex-col gap-2">
+                    {navItems.map(({ href, label, icon: Icon }) => (
+                        <li key={label}>
+                          <Tooltip>
+                              <TooltipTrigger asChild>
+                                  <Link href={href} className={cn(
+                                    commonLinkClasses,
+                                    pathname === href ? activeClasses : inactiveClasses
+                                  )}>
+                                      <Icon className={cn('h-6 w-6 shrink-0', pathname === href && iconGlow)} />
+                                      <span className="hidden lg:block">{label}</span>
+                                  </Link>
+                              </TooltipTrigger>
+                              <TooltipContent side="right" className="lg:hidden">
+                                <p>{label}</p>
+                              </TooltipContent>
+                           </Tooltip>
+                        </li>
+                    ))}
+                </ul>
+            </div>
+        </nav>
+      </TooltipProvider>
+    </>
+  );
+}
