@@ -15,7 +15,7 @@ import {
 
 const navItems = [
   { href: '/', label: 'Görevler', icon: Swords },
-  { href: '#', label: 'Profil', icon: User },
+  { href: '/profile', label: 'Profil', icon: User },
   { href: '#', label: 'Mağaza', icon: Store },
 ];
 
