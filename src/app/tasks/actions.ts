@@ -5,7 +5,7 @@ import { suggestTaskName } from '@/ai/flows/suggest-task-name';
 
 export async function suggestTaskAction(): Promise<{ success: boolean; taskName?: string; error?: string; }> {
     try {
-        const result = await suggestTaskName({ prompt: 'Suggest a challenging, actionable, and inspiring quest for a player on the path to becoming a shadow monarch.' });
+        const result = await suggestTaskName({ prompt: 'Gerçek hayatta yapılabilecek, ilham verici bir görev öner.' });
         if (result.taskName) {
              return { success: true, taskName: result.taskName };
         }
