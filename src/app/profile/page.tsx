@@ -33,30 +33,43 @@ export default function ProfilePage() {
     try {
       const storedGold = localStorage.getItem('userGold');
       setGold(storedGold ? JSON.parse(storedGold) : 150);
+    } catch {
+      setGold(150);
+    }
 
+    try {
       const storedUsername = localStorage.getItem('username');
       setUsername(storedUsername ? JSON.parse(storedUsername) : defaultUsername);
-
+    } catch {
+       setUsername(defaultUsername);
+    }
+    
+    try {
       const storedAvatarUrl = localStorage.getItem('avatarUrl');
       setAvatarUrl(storedAvatarUrl ? JSON.parse(storedAvatarUrl) : defaultAvatarUrl);
+    } catch {
+        setAvatarUrl(defaultAvatarUrl);
+    }
 
+    try {
       const storedLevel = localStorage.getItem('level');
       setLevel(storedLevel ? JSON.parse(storedLevel) : 0);
+    } catch {
+        setLevel(0);
+    }
 
+    try {
       const storedAttributePoints = localStorage.getItem('attributePoints');
       setAttributePoints(storedAttributePoints ? JSON.parse(storedAttributePoints) : 0);
+    } catch {
+        setAttributePoints(0);
+    }
       
+    try {
       const storedStats = localStorage.getItem('stats');
       setStats(storedStats ? JSON.parse(storedStats) : defaultStats);
-    } catch (error) {
-      console.error("Failed to parse data from localStorage, resetting to defaults.", error);
-      // Reset to defaults if parsing fails
-      setGold(150);
-      setUsername(defaultUsername);
-      setAvatarUrl(defaultAvatarUrl);
-      setLevel(0);
-      setAttributePoints(0);
-      setStats(defaultStats);
+    } catch {
+        setStats(defaultStats);
     }
   };
 
