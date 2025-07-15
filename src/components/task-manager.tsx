@@ -180,7 +180,8 @@ export function TaskManager() {
 
 
   const updateGold = (amount: number) => {
-    if (penaltyEndTime && penaltyEndTime > Date.now()) return;
+    const isPenaltyActive = penaltyEndTime && penaltyEndTime > Date.now();
+    if (isPenaltyActive) return;
     try {
       const currentGold = JSON.parse(localStorage.getItem('userGold') || '0');
       const newGold = currentGold + amount;
@@ -192,7 +193,8 @@ export function TaskManager() {
   }
   
   const handleSkillProgress = (category: SkillCategory) => {
-    if ((penaltyEndTime && penaltyEndTime > Date.now()) || category === 'other') return;
+    const isPenaltyActive = penaltyEndTime && penaltyEndTime > Date.now();
+    if (isPenaltyActive || category === 'other') return;
   
     try {
       let skillData = JSON.parse(localStorage.getItem('skillData') || '{}');
@@ -220,7 +222,8 @@ export function TaskManager() {
 
 
   const handleTaskCompletionProgress = (category: SkillCategory) => {
-    if (penaltyEndTime && penaltyEndTime > Date.now()) return;
+    const isPenaltyActive = penaltyEndTime && penaltyEndTime > Date.now();
+    if (isPenaltyActive) return;
     try {
         let tasksCompleted = JSON.parse(localStorage.getItem('tasksCompletedThisLevel') || '0');
         tasksCompleted += 1;
@@ -318,7 +321,19 @@ export function TaskManager() {
     );
   }
   
-  const isPenaltyActive = penaltyEndTime && penaltyEndTime > Date.now();
+  const renderTimer = () => {
+    const isPenaltyActive = penaltyEndTime && penaltyEndTime > Date.now();
+    if (isPenaltyActive) {
+      return <TimerDisplay endTime={penaltyEndTime!} isPenalty={true} />;
+    }
+
+    const isDeadlineActive = taskDeadline && taskDeadline > Date.now() && tasks.some(t => !t.completed);
+    if (isDeadlineActive) {
+      return <TimerDisplay endTime={taskDeadline!} isPenalty={false} />;
+    }
+    
+    return null;
+  };
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -344,13 +359,7 @@ export function TaskManager() {
           </div>
         </CardContent>
         
-        {isPenaltyActive && penaltyEndTime && (
-            <TimerDisplay endTime={penaltyEndTime} isPenalty={true} />
-        )}
-        
-        {!isPenaltyActive && taskDeadline && tasks.some(t => !t.completed) && (
-            <TimerDisplay endTime={taskDeadline} isPenalty={false} />
-        )}
+        {renderTimer()}
 
         </div>
       </FuturisticBorder>
