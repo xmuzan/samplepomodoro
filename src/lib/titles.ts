@@ -1,3 +1,4 @@
+
 export const TITLES_BY_LEVEL: Record<number, { job: string; title: string }> = {
     0: { job: 'Vatandaş', title: 'Hiç Kimse' },
     1: { job: 'Acemi', title: 'Çaylak Avcı' },
@@ -62,10 +63,10 @@ export const TITLES_BY_LEVEL: Record<number, { job: string; title: string }> = {
     60: { job: 'İgris', title: 'Kan Kırmızı Komutan' },
     61: { job: 'Tank', title: 'Yıkılmaz Savunma' },
     62: { job: 'Greed', title: 'Açgözlü Gölge' },
-    63: 'Beru', title: 'Karınca Kral' },
-    64: 'Tusk', title: 'Yüce Şaman' },
-    65: 'Jima', title: 'Naga Lideri' },
-    66: 'Kaisel', title: 'Ejderha Yoldaş' },
+    63: { job: 'Beru', title: 'Karınca Kral' },
+    64: { job: 'Tusk', title: 'Yüce Şaman' },
+    65: { job: 'Jima', title: 'Naga Lideri' },
+    66: { job: 'Kaisel', title: 'Ejderha Yoldaş' },
     67: { job: 'Şifacı', title: 'Hayat Veren' },
     68: { job: 'Destek', title: 'Takım Oyuncusu' },
     69: { job: 'Suikastçı', title: 'Sessiz Ölüm' },
@@ -103,8 +104,8 @@ export const TITLES_BY_LEVEL: Record<number, { job: string; title: string }> = {
 };
 
 export function getTitleForLevel(level: number): { job: string; title: string } {
-    if (level > 100) {
-        return TITLES_BY_LEVEL[100];
-    }
-    return TITLES_BY_LEVEL[level] || TITLES_BY_LEVEL[0];
+    const safeLevel = Math.min(Math.max(level, 0), 100);
+    return TITLES_BY_LEVEL[safeLevel] || TITLES_BY_LEVEL[0];
 }
+
+    
