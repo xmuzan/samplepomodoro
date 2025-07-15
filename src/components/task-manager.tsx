@@ -146,17 +146,17 @@ export function TaskManager() {
     localStorage.setItem('tasks', JSON.stringify(tasks));
     
     if (tasks.length === 0) {
-        if (localStorage.getItem('taskDeadline') || localStorage.getItem('penaltyEndTime')) {
-            localStorage.removeItem('taskDeadline');
-            localStorage.removeItem('penaltyEndTime');
-            setTaskDeadline(null);
-            setPenaltyEndTime(null);
-            window.dispatchEvent(new Event('storage'));
-        }
-        return;
+      if (localStorage.getItem('taskDeadline') || localStorage.getItem('penaltyEndTime')) {
+          localStorage.removeItem('taskDeadline');
+          localStorage.removeItem('penaltyEndTime');
+          setTaskDeadline(null);
+          setPenaltyEndTime(null);
+          window.dispatchEvent(new Event('storage'));
+      }
+      return;
     }
-
-    const isPenaltyActive = penaltyEndTime && penaltyEndTime > Date.now();
+    
+    const currentPenalty = penaltyEndTime && penaltyEndTime > Date.now();
     const hasIncompleteTasks = tasks.some(task => !task.completed);
     
     if (!hasIncompleteTasks) {
@@ -169,7 +169,7 @@ export function TaskManager() {
             window.dispatchEvent(new Event('storage'));
         }
     }
-    else if (hasIncompleteTasks && !taskDeadline && !isPenaltyActive) {
+    else if (hasIncompleteTasks && !taskDeadline && !currentPenalty) {
         const newDeadline = Date.now() + 24 * 60 * 60 * 1000;
         localStorage.setItem('taskDeadline', newDeadline.toString());
         setTaskDeadline(newDeadline);
@@ -321,19 +321,8 @@ export function TaskManager() {
     );
   }
   
-  const renderTimer = () => {
-    const isPenaltyActive = penaltyEndTime && penaltyEndTime > Date.now();
-    if (isPenaltyActive) {
-      return <TimerDisplay endTime={penaltyEndTime!} isPenalty={true} />;
-    }
-
-    const isDeadlineActive = taskDeadline && taskDeadline > Date.now() && tasks.some(t => !t.completed);
-    if (isDeadlineActive) {
-      return <TimerDisplay endTime={taskDeadline!} isPenalty={false} />;
-    }
-    
-    return null;
-  };
+  const isPenaltyActive = penaltyEndTime && penaltyEndTime > Date.now();
+  const isDeadlineActive = taskDeadline && taskDeadline > Date.now() && tasks.some(t => !t.completed);
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -359,7 +348,11 @@ export function TaskManager() {
           </div>
         </CardContent>
         
-        {renderTimer()}
+        {isPenaltyActive ? (
+          <TimerDisplay endTime={penaltyEndTime} isPenalty={true} />
+        ) : isDeadlineActive ? (
+          <TimerDisplay endTime={taskDeadline} isPenalty={false} />
+        ) : null}
 
         </div>
       </FuturisticBorder>
