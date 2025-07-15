@@ -344,11 +344,10 @@ export function TaskManager() {
             )}
           </div>
         </CardContent>
-        {isPenaltyActive && penaltyEndTime && (
-            <TimerDisplay endTime={penaltyEndTime} label="CEZA SÜRESİ" labelColor="text-destructive" />
-        )}
-        {!isPenaltyActive && taskDeadline && tasks.some(t => !t.completed) && (
-            <TimerDisplay endTime={taskDeadline} label="KALAN SÜRE" labelColor="text-amber-400" />
+        {isPenaltyActive ? (
+            penaltyEndTime && <TimerDisplay endTime={penaltyEndTime} label="CEZA SÜRESİ" labelColor="text-destructive" />
+        ) : (
+            taskDeadline && tasks.some(t => !t.completed) && <TimerDisplay endTime={taskDeadline} label="KALAN SÜRE" labelColor="text-amber-400" />
         )}
         </div>
       </FuturisticBorder>
