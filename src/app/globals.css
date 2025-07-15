@@ -4,25 +4,25 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 224 71.4% 4.1%;
-    --card: 0 0% 100%;
-    --card-foreground: 224 71.4% 4.1%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 224 71.4% 4.1%;
-    --primary: 270 90% 60%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 220 14.3% 95.9%;
-    --secondary-foreground: 220 26.3% 10.8%;
-    --muted: 220 14.3% 95.9%;
-    --muted-foreground: 220 8.9% 46.1%;
-    --accent: 300 100% 50%;
-    --accent-foreground: 224 71.4% 4.1%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 270 90% 50%;
-    --input: 270 90% 40%;
-    --ring: 270 90% 65%;
+    --background: 224 71.4% 4.1%;
+    --foreground: 210 40% 98%;
+    --card: 220 30% 12%;
+    --card-foreground: 210 40% 98%;
+    --popover: 224 71.4% 4.1%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 210 100% 50%;
+    --primary-foreground: 210 40% 9.8%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 190 100% 50%;
+    --accent-foreground: 210 40% 9.8%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 210 100% 40%;
+    --input: 210 100% 30%;
+    --ring: 210 100% 65%;
     --chart-1: 12 76% 61%;
     --chart-2: 173 58% 39%;
     --chart-3: 197 37% 24%;
@@ -31,25 +31,25 @@
     --radius: 0.5rem;
   }
   .dark {
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 240 8% 10%;
-    --card-foreground: 0 0% 98%;
-    --popover: 240 10% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 270 90% 60%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 240 4% 15%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 4% 15%;
-    --muted-foreground: 0 0% 63.9%;
-    --accent: 300 100% 50%;
-    --accent-foreground: 0 0% 98%;
+    --background: 220 40% 5%;
+    --foreground: 210 40% 98%;
+    --card: 220 30% 12%;
+    --card-foreground: 210 40% 98%;
+    --popover: 224 71.4% 4.1%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 210 100% 50%;
+    --primary-foreground: 210 40% 9.8%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 190 100% 50%;
+    --accent-foreground: 210 40% 9.8%;
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 270 90% 50%;
-    --input: 270 90% 25%;
-    --ring: 270 90% 65%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 210 100% 40%;
+    --input: 210 100% 30%;
+    --ring: 210 100% 65%;
   }
 }
 
@@ -60,42 +60,75 @@
   body {
     @apply bg-background text-foreground;
   }
+  body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: 
+      linear-gradient(hsl(var(--primary) / 0.1) 1px, transparent 1px),
+      linear-gradient(to right, hsl(var(--primary) / 0.1) 1px, transparent 1px);
+    background-size: 40px 40px;
+    animation: move-grid 20s linear infinite;
+    z-index: -1;
+    pointer-events: none;
+  }
+  
+  @keyframes move-grid {
+    0% {
+      background-position: 0 0;
+    }
+    100% {
+      background-position: 40px 40px;
+    }
+  }
 }
 
 @layer components {
-  /* Futuristic clipped-corner effect for cards and dialogs */
+  /* Futuristic HUD-style card */
   .futuristic-card {
-    @apply bg-card border border-primary/50 shadow-lg relative;
+    @apply bg-card/80 backdrop-blur-sm border-2 border-primary/30 shadow-lg relative p-0;
     clip-path: polygon(
-      15px 0,
-      100% 0,
-      100% calc(100% - 15px),
-      calc(100% - 15px) 100%,
-      0 100%,
-      0 15px
+      0% 15px, 15px 0%, calc(100% - 15px) 0%, 100% 15px,
+      100% calc(100% - 15px), calc(100% - 15px) 100%, 15px 100%, 0% calc(100% - 15px)
     );
   }
   
-  .futuristic-card::before {
+  .futuristic-card::before,
+  .futuristic-card::after {
     content: '';
     position: absolute;
     inset: 0;
-    border-radius: var(--radius);
-    padding: 2px; /* border width */
-    background: linear-gradient(145deg, hsl(var(--primary) / 0.7), hsl(var(--accent) / 0.7));
-    -webkit-mask: 
-      linear-gradient(#fff 0 0) content-box, 
-      linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-            mask-composite: exclude;
     pointer-events: none;
+    border-radius: var(--radius);
+  }
+
+  .futuristic-card::before {
+    border: 2px solid hsl(var(--primary));
     clip-path: polygon(
-      15px 0,
-      100% 0,
-      100% calc(100% - 15px),
-      calc(100% - 15px) 100%,
-      0 100%,
-      0 15px
+      0% 15px, 15px 0%, calc(100% - 15px) 0%, 100% 15px,
+      100% calc(100% - 15px), calc(100% - 15px) 100%, 15px 100%, 0% calc(100% - 15px),
+      /* inner cutout */
+      0% 17px, 2px calc(100% - 15px), 2px 100%, calc(100% - 17px) 100%, calc(100% - 15px) calc(100% - 2px), 100% calc(100% - 17px), 100% 17px, calc(100% - 2px) 15px, calc(100% - 2px) 0px, 17px 0px, 15px 2px, 0% 17px
     );
+    animation: glow-pulse 3s infinite ease-in-out;
+  }
+  
+  @keyframes glow-pulse {
+    0%, 100% {
+      box-shadow: 0 0 5px hsl(var(--primary)), 0 0 10px hsl(var(--primary)), 0 0 15px hsl(var(--accent));
+      opacity: 0.8;
+    }
+    50% {
+      box-shadow: 0 0 10px hsl(var(--primary)), 0 0 20px hsl(var(--primary)), 0 0 30px hsl(var(--accent));
+      opacity: 1;
+    }
+  }
+
+  /* Add glow to primary text and icons */
+  .text-primary, .text-primary-foreground, .lucide-icon {
+     text-shadow: 0 0 5px hsl(var(--primary) / 0.7);
   }
 }

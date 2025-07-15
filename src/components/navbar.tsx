@@ -25,7 +25,7 @@ export function Navbar() {
   const commonLinkClasses = "flex items-center justify-center gap-1 rounded-md transition-colors duration-200 md:justify-start md:w-full md:h-12 md:px-3";
   const activeClasses = "text-primary bg-primary/10";
   const inactiveClasses = "text-muted-foreground hover:bg-primary/5 hover:text-primary";
-  const iconGlow = "drop-shadow-[0_0_5px_currentColor]";
+  const iconGlow = "drop-shadow-[0_0_8px_hsl(var(--primary))]";
   
   return (
     <>
@@ -38,7 +38,7 @@ export function Navbar() {
               pathname === href ? activeClasses : inactiveClasses,
               'flex-1 flex-col text-xs h-14'
             )}>
-              <Icon className={cn('h-6 w-6', pathname === href && iconGlow)} />
+              <Icon className={cn('h-6 w-6 lucide-icon', pathname === href && iconGlow)} />
               <span>{label}</span>
             </Link>
           ))}
@@ -47,10 +47,10 @@ export function Navbar() {
 
       {/* Sidebar for desktop */}
       <TooltipProvider>
-        <nav className="hidden md:fixed md:left-0 md:top-0 md:z-50 md:flex md:h-screen md:w-20 md:flex-col md:border-r md:border-primary/20 md:bg-background lg:w-64">
+        <nav className="hidden md:fixed md:left-0 md:top-0 md:z-50 md:flex md:h-screen md:w-20 md:flex-col md:border-r md:border-primary/20 md:bg-background/90 backdrop-blur-sm lg:w-64">
             <div className="flex h-20 items-center justify-center border-b border-primary/20">
                 <Link href="/" className="flex items-center justify-center">
-                    <Bot className="h-8 w-8 text-primary" />
+                    <Bot className={cn("h-8 w-8 text-primary", iconGlow)} />
                     <span className="font-headline ml-4 hidden text-xl font-bold text-primary lg:block">LevelUp</span>
                 </Link>
             </div>
@@ -64,11 +64,11 @@ export function Navbar() {
                                     commonLinkClasses,
                                     pathname === href ? activeClasses : inactiveClasses
                                   )}>
-                                      <Icon className={cn('h-6 w-6 shrink-0', pathname === href && iconGlow)} />
+                                      <Icon className={cn('h-6 w-6 shrink-0 lucide-icon', pathname === href && iconGlow)} />
                                       <span className="hidden lg:block">{label}</span>
                                   </Link>
                               </TooltipTrigger>
-                              <TooltipContent side="right" className="lg:hidden">
+                              <TooltipContent side="right" className="lg:hidden futuristic-card !p-2 !border-primary/50">
                                 <p>{label}</p>
                               </TooltipContent>
                            </Tooltip>
