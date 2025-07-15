@@ -51,22 +51,19 @@ export function InventoryDialog({ children, shopItems }: InventoryDialogProps) {
     const itemData = shopItems.find(item => item.id === itemId);
     if (!itemData) return;
     
-    // Apply item effects
     switch(itemId) {
       case 'potion_energy':
-        updateStats({ hp: 10, mp: 0 }); // Assuming this is for the task, not direct stat boost.
-        toast({ title: "Enerji Yenilendi", description: "Fiziksel ve zihinsel gücün tazelendi." });
+        updateStats({ hp: 10, mp: 10 });
+        toast({ title: "Enerji Yenilendi", description: "HP ve MP %10 yenilendi." });
         break;
       case 'potion_mind':
         updateStats({ mp: 15 });
         toast({ title: "Zihin Canlandı", description: "MP %15 yenilendi." });
         break;
-      // Other items don't have direct stat effects on use, they enable actions.
       default:
          toast({ title: itemData.name, description: "Bu eşya bir eylemi tamamlamak için kullanılır." });
     }
 
-    // Update inventory
     let updatedInventory = [...inventory];
     const itemIndex = updatedInventory.findIndex(item => item.id === itemId);
 
@@ -145,3 +142,5 @@ export function InventoryDialog({ children, shopItems }: InventoryDialogProps) {
     </Dialog>
   );
 }
+
+    

@@ -3,7 +3,8 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Bot, Store, Swords, User, FileText } from 'lucide-react';
+import { Bot, Store, Swords, User, FileText, Lock } from 'lucide-react';
+import { useState, useEffect } from 'react';
 
 import { cn } from '@/lib/utils';
 import {
@@ -22,6 +23,27 @@ const navItems = [
 
 export function Navbar() {
   const pathname = usePathname();
+  const [isPenaltyActive, setIsPenaltyActive] = useState(false);
+
+  useEffect(() => {
+    const checkPenalty = () => {
+      const penaltyEndTime = localStorage.getItem('penaltyEndTime');
+      if (penaltyEndTime && parseInt(penaltyEndTime) > Date.now()) {
+        setIsPenaltyActive(true);
+      } else {
+        setIsPenaltyActive(false);
+      }
+    };
+
+    checkPenalty();
+    window.addEventListener('storage', checkPenalty);
+    const interval = setInterval(checkPenalty, 1000);
+
+    return () => {
+      window.removeEventListener('storage', checkPenalty);
+      clearInterval(interval);
+    };
+  }, []);
 
   const commonLinkClasses = "flex items-center justify-center gap-1 rounded-md transition-colors duration-200 md:justify-start md:w-full md:h-12 md:px-3";
   const activeClasses = "text-primary bg-primary/10";
@@ -33,16 +55,20 @@ export function Navbar() {
       {/* Bottom Navbar for mobile */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-primary/20 bg-background/80 p-1 backdrop-blur-lg md:hidden">
         <div className="flex justify-around">
-          {navItems.map(({ href, label, icon: Icon }) => (
-            <Link key={label} href={href} className={cn(
-              commonLinkClasses,
-              pathname === href ? activeClasses : inactiveClasses,
-              'flex-1 flex-col text-xs h-14'
-            )}>
-              <Icon className={cn('h-6 w-6 lucide-icon', pathname === href && iconGlow)} />
-              <span>{label}</span>
-            </Link>
-          ))}
+          {navItems.map(({ href, label, icon: Icon }) => {
+            const isShop = label === 'Mağaza';
+            return (
+              <Link key={label} href={href} className={cn(
+                commonLinkClasses,
+                pathname === href ? activeClasses : inactiveClasses,
+                'flex-1 flex-col text-xs h-14 relative'
+              )}>
+                <Icon className={cn('h-6 w-6 lucide-icon', pathname === href && iconGlow)} />
+                <span>{label}</span>
+                {isShop && isPenaltyActive && <Lock className="absolute top-1 right-1 h-3 w-3 text-destructive" />}
+              </Link>
+            )
+          })}
         </div>
       </nav>
 
@@ -57,16 +83,20 @@ export function Navbar() {
             </div>
             <div className="flex flex-1 flex-col gap-y-2 overflow-y-auto p-2">
                 <ul className="flex flex-col gap-2">
-                    {navItems.map(({ href, label, icon: Icon }) => (
+                    {navItems.map(({ href, label, icon: Icon }) => {
+                       const isShop = label === 'Mağaza';
+                       return (
                         <li key={label}>
                           <Tooltip>
                               <TooltipTrigger asChild>
                                   <Link href={href} className={cn(
                                     commonLinkClasses,
-                                    pathname === href ? activeClasses : inactiveClasses
+                                    pathname === href ? activeClasses : inactiveClasses,
+                                    "relative"
                                   )}>
                                       <Icon className={cn('h-6 w-6 shrink-0 lucide-icon', pathname === href && iconGlow)} />
                                       <span className="hidden lg:block">{label}</span>
+                                      {isShop && isPenaltyActive && <Lock className="h-4 w-4 text-destructive absolute right-3 lg:right-2" />}
                                   </Link>
                               </TooltipTrigger>
                               <TooltipContent side="right" className="lg:hidden futuristic-card !p-2 !border-primary/50">
@@ -74,7 +104,8 @@ export function Navbar() {
                               </TooltipContent>
                            </Tooltip>
                         </li>
-                    ))}
+                       )
+                    })}
                 </ul>
             </div>
         </nav>
@@ -82,3 +113,5 @@ export function Navbar() {
     </>
   );
 }
+
+    

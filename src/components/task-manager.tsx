@@ -1,15 +1,16 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 import { CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CreateTaskDialog } from './create-task-dialog';
 import { TaskItem } from './task-item';
 import { Skeleton } from './ui/skeleton';
 import { FuturisticBorder } from './futuristic-border';
-import { AlarmClock } from 'lucide-react';
+import { AlarmClock, ShieldAlert } from 'lucide-react';
 import type { SkillCategory } from '@/lib/skills';
+import { useToast } from '@/hooks/use-toast';
 
 export type Task = {
   id: string;
@@ -20,7 +21,7 @@ export type Task = {
   category: SkillCategory;
 };
 
-function PenaltyTimer({ endTime }: { endTime: number }) {
+function TimerDisplay({ endTime, label, labelColor }: { endTime: number, label: string, labelColor: string }) {
   const [timeLeft, setTimeLeft] = useState(endTime - Date.now());
 
   useEffect(() => {
@@ -34,7 +35,8 @@ function PenaltyTimer({ endTime }: { endTime: number }) {
       if (remaining <= 0) {
         clearInterval(interval);
         setTimeLeft(0);
-        // TODO: Implement penalty logic here, e.g., decrease IR
+        // Force a re-render/re-check in parent component
+        window.dispatchEvent(new Event('storage'));
       } else {
         setTimeLeft(remaining);
       }
@@ -47,15 +49,15 @@ function PenaltyTimer({ endTime }: { endTime: number }) {
     return null;
   }
 
-  const hours = Math.floor((timeLeft / (1000 * 60 * 60)) % 24);
+  const hours = Math.floor((timeLeft / (1000 * 60 * 60)));
   const minutes = Math.floor((timeLeft / (1000 * 60)) % 60);
   const seconds = Math.floor((timeLeft / 1000) % 60);
 
   return (
-    <div className="flex items-center justify-center gap-2 p-3 text-destructive">
+    <div className={`flex items-center justify-center gap-2 p-3 ${labelColor}`}>
       <AlarmClock className="h-5 w-5" />
       <p className="font-mono text-sm font-medium tracking-wider">
-        CEZA SÜRESİ: {String(hours).padStart(2, '0')}:{String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
+        {label}: {String(hours).padStart(2, '0')}:{String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
       </p>
     </div>
   );
@@ -66,64 +68,117 @@ export function TaskManager() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isMounted, setIsMounted] = useState(false);
   const [penaltyEndTime, setPenaltyEndTime] = useState<number | null>(null);
+  const [taskDeadline, setTaskDeadline] = useState<number | null>(null);
+  const { toast } = useToast();
 
-  useEffect(() => {
-    setIsMounted(true);
+  const isPenaltyActive = useCallback(() => {
+    if (!penaltyEndTime) return false;
+    return penaltyEndTime > Date.now();
+  }, [penaltyEndTime]);
+
+  const loadFromStorage = useCallback(() => {
     try {
       const storedTasks = localStorage.getItem('tasks');
       const parsedTasks = storedTasks ? JSON.parse(storedTasks) : [];
       setTasks(parsedTasks);
-      
+
       const storedPenaltyTime = localStorage.getItem('penaltyEndTime');
       if (storedPenaltyTime) {
         const endTime = parseInt(storedPenaltyTime, 10);
-        if (!isNaN(endTime) && endTime > Date.now()) {
+        if (endTime > Date.now()) {
           setPenaltyEndTime(endTime);
         } else {
-           localStorage.removeItem('penaltyEndTime');
+          localStorage.removeItem('penaltyEndTime');
+          setPenaltyEndTime(null);
         }
+      } else {
+        setPenaltyEndTime(null);
       }
 
-      // Initialize user data if it doesn't exist
-      if (!localStorage.getItem('userGold')) localStorage.setItem('userGold', JSON.stringify(150));
-      if (!localStorage.getItem('level')) localStorage.setItem('level', JSON.stringify(0));
-      if (!localStorage.getItem('attributePoints')) localStorage.setItem('attributePoints', JSON.stringify(0));
-      if (!localStorage.getItem('stats')) localStorage.setItem('stats', JSON.stringify({ str: 0, vit: 0, agi: 0, int: 0, per: 0 }));
-      
-      if (!localStorage.getItem('tasksCompletedThisLevel')) localStorage.setItem('tasksCompletedThisLevel', JSON.stringify(0));
-      const currentLevel = JSON.parse(localStorage.getItem('level') || '0');
-      if (!localStorage.getItem('tasksRequiredForNextLevel')) localStorage.setItem('tasksRequiredForNextLevel', JSON.stringify(32 + currentLevel));
-
+      const storedDeadline = localStorage.getItem('taskDeadline');
+      if(storedDeadline) {
+        const deadline = parseInt(storedDeadline, 10);
+        if (deadline > Date.now()) {
+           setTaskDeadline(deadline);
+        } else {
+            // Deadline has passed
+            const hasIncompleteTasks = parsedTasks.some((t: Task) => !t.completed);
+            if (hasIncompleteTasks) {
+                // Apply penalty
+                const newPenaltyTime = Date.now() + 24 * 60 * 60 * 1000;
+                localStorage.setItem('penaltyEndTime', newPenaltyTime.toString());
+                setPenaltyEndTime(newPenaltyTime);
+                toast({
+                    title: "Ceza Görevi Başladı!",
+                    description: "Görevleri zamanında tamamlayamadın. 24 saatliğine özelliklerin kilitlendi.",
+                    variant: "destructive"
+                });
+            }
+            localStorage.removeItem('taskDeadline');
+            setTaskDeadline(null);
+        }
+      } else {
+        setTaskDeadline(null);
+      }
 
     } catch (error) {
       console.error("Failed to parse from localStorage", error);
-       setTasks([]);
+      setTasks([]);
+      setPenaltyEndTime(null);
+      setTaskDeadline(null);
     }
-  }, []);
+  }, [toast]);
+
 
   useEffect(() => {
-    if (isMounted) {
-      localStorage.setItem('tasks', JSON.stringify(tasks));
-      
-      // If there are no tasks, clear the penalty timer
-      if (tasks.length === 0 && penaltyEndTime) {
-        setPenaltyEndTime(null);
-        localStorage.removeItem('penaltyEndTime');
-      }
+    setIsMounted(true);
+    loadFromStorage();
+    
+    // Listen for storage changes from other tabs
+    window.addEventListener('storage', loadFromStorage);
+    return () => {
+      window.removeEventListener('storage', loadFromStorage);
     }
-  }, [tasks, isMounted, penaltyEndTime]);
-
+  }, [loadFromStorage]);
+  
+  // This effect runs when the tasks array changes.
   useEffect(() => {
-    if (isMounted) {
-      if (penaltyEndTime && penaltyEndTime > Date.now()) {
-        localStorage.setItem('penaltyEndTime', penaltyEndTime.toString());
-      } else if (penaltyEndTime) {
-        localStorage.removeItem('penaltyEndTime');
+    if (!isMounted) return;
+
+    localStorage.setItem('tasks', JSON.stringify(tasks));
+
+    const hasIncompleteTasks = tasks.some(task => !task.completed);
+
+    // If there are no incomplete tasks, clear the deadline.
+    if (!hasIncompleteTasks && tasks.length > 0) {
+      localStorage.removeItem('taskDeadline');
+      setTaskDeadline(null);
+      if (taskDeadline) { // Only show toast if there was an active deadline
+        toast({ title: "Tüm Görevler Tamamlandı!", description: "Ceza görevi başarıyla önlendi." });
       }
     }
-  }, [penaltyEndTime, isMounted]);
+    
+    // If we add a task to an empty list, and there's no penalty, start a new deadline.
+    if (tasks.length > 0 && !taskDeadline && !isPenaltyActive()) {
+        const wasEmpty = (JSON.parse(localStorage.getItem('tasks') || '[]')).length === 0;
+        if(wasEmpty) {
+            const newDeadline = Date.now() + 24 * 60 * 60 * 1000;
+            localStorage.setItem('taskDeadline', newDeadline.toString());
+            setTaskDeadline(newDeadline);
+        }
+    }
+
+    // If all tasks are deleted, clear the deadline
+    if(tasks.length === 0) {
+        localStorage.removeItem('taskDeadline');
+        setTaskDeadline(null);
+    }
+    
+  }, [tasks, isMounted, taskDeadline, isPenaltyActive, toast]);
+
 
   const updateGold = (amount: number) => {
+    if (isPenaltyActive()) return;
     try {
       const currentGold = JSON.parse(localStorage.getItem('userGold') || '0');
       const newGold = currentGold + amount;
@@ -135,7 +190,7 @@ export function TaskManager() {
   }
   
   const handleSkillProgress = (category: SkillCategory) => {
-    if (category === 'other') return;
+    if (isPenaltyActive() || category === 'other') return;
   
     try {
       let skillData = JSON.parse(localStorage.getItem('skillData') || '{}');
@@ -148,7 +203,7 @@ export function TaskManager() {
       
       const TASKS_PER_RANK = 20;
       if (skillData[category].completedTasks >= TASKS_PER_RANK) {
-        if(skillData[category].rankIndex < 9) { // Max rank is 9 (index)
+        if(skillData[category].rankIndex < 9) {
             skillData[category].rankIndex += 1;
             skillData[category].completedTasks = 0;
         }
@@ -163,6 +218,7 @@ export function TaskManager() {
 
 
   const handleTaskCompletionProgress = (category: SkillCategory) => {
+    if (isPenaltyActive()) return;
     try {
         let tasksCompleted = JSON.parse(localStorage.getItem('tasksCompletedThisLevel') || '0');
         tasksCompleted += 1;
@@ -172,8 +228,8 @@ export function TaskManager() {
 
         if (tasksCompleted >= tasksRequired) {
             level += 1;
-            tasksCompleted = 0; // Reset for next level
-            tasksRequired = 32 + level; // New requirement
+            tasksCompleted = 0;
+            tasksRequired = 32 + level;
 
             localStorage.setItem('level', JSON.stringify(level));
             localStorage.setItem('tasksRequiredForNextLevel', JSON.stringify(tasksRequired));
@@ -202,13 +258,6 @@ export function TaskManager() {
       category,
     };
     
-    // If this is the very first task being added (or the list was empty)
-    // and there's no active penalty timer, start one.
-    if (tasks.length === 0 && !penaltyEndTime) {
-        const endTime = Date.now() + 24 * 60 * 60 * 1000;
-        setPenaltyEndTime(endTime);
-    }
-    
     setTasks(prev => [newTask, ...prev]);
   };
 
@@ -219,12 +268,19 @@ export function TaskManager() {
             const updatedTask = { ...task, completed: !task.completed };
             
             if (updatedTask.completed && !wasCompleted) {
-                updateGold(updatedTask.reward);
-                handleTaskCompletionProgress(updatedTask.category);
+                if(!isPenaltyActive()){
+                  updateGold(updatedTask.reward);
+                  handleTaskCompletionProgress(updatedTask.category);
+                } else {
+                  toast({
+                    title: "Ceza Aktif!",
+                    description: "Ceza süresi bitene kadar ödül kazanamazsın.",
+                    variant: "destructive"
+                  });
+                }
             } else if (!updatedTask.completed && wasCompleted) {
+                // We don't penalize for un-checking a task during a penalty period
                 updateGold(-updatedTask.reward);
-                // Note: We might not want to decrement level progress on un-checking. 
-                // This is a design choice. For now, we won't decrement.
             }
             return updatedTask;
         }
@@ -236,7 +292,6 @@ export function TaskManager() {
     const taskToDelete = tasks.find(task => task.id === id);
     if (taskToDelete && taskToDelete.completed) {
       updateGold(-taskToDelete.reward);
-      // Optional: Decrement completion count if a completed task is deleted.
     }
     setTasks(tasks.filter(task => task.id !== id));
   };
@@ -258,8 +313,6 @@ export function TaskManager() {
       </FuturisticBorder>
     );
   }
-
-  const hasIncompleteTasks = tasks.some(task => !task.completed);
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -284,13 +337,16 @@ export function TaskManager() {
             )}
           </div>
         </CardContent>
-        {penaltyEndTime && hasIncompleteTasks && (
-          <div className="p-2 pt-0">
-            <PenaltyTimer endTime={penaltyEndTime} />
-          </div>
+        {isPenaltyActive() && penaltyEndTime && (
+            <TimerDisplay endTime={penaltyEndTime} label="CEZA SÜRESİ" labelColor="text-destructive" />
+        )}
+        {!isPenaltyActive() && taskDeadline && tasks.some(t => !t.completed) && (
+            <TimerDisplay endTime={taskDeadline} label="KALAN SÜRE" labelColor="text-amber-400" />
         )}
         </div>
       </FuturisticBorder>
     </div>
   );
 }
+
+    
