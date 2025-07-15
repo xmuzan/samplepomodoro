@@ -29,24 +29,40 @@ export default function ProfilePage() {
   const [stats, setStats] = useState(defaultStats);
 
 
-  const safelyParseJSON = (key: string, defaultValue: any) => {
+  const loadDataFromStorage = () => {
     try {
-        const storedValue = localStorage.getItem(key);
-        return storedValue ? JSON.parse(storedValue) : defaultValue;
+      const storedGold = localStorage.getItem('userGold');
+      setGold(storedGold ? JSON.parse(storedGold) : 150);
+
+      const storedUsername = localStorage.getItem('username');
+      setUsername(storedUsername ? JSON.parse(storedUsername) : defaultUsername);
+
+      const storedAvatarUrl = localStorage.getItem('avatarUrl');
+      setAvatarUrl(storedAvatarUrl ? JSON.parse(storedAvatarUrl) : defaultAvatarUrl);
+
+      const storedLevel = localStorage.getItem('level');
+      setLevel(storedLevel ? JSON.parse(storedLevel) : 0);
+
+      const storedAttributePoints = localStorage.getItem('attributePoints');
+      setAttributePoints(storedAttributePoints ? JSON.parse(storedAttributePoints) : 0);
+      
+      const storedStats = localStorage.getItem('stats');
+      setStats(storedStats ? JSON.parse(storedStats) : defaultStats);
     } catch (error) {
-        console.error(`Failed to parse ${key} from localStorage`, error);
-        return defaultValue;
+      console.error("Failed to parse data from localStorage, resetting to defaults.", error);
+      // Reset to defaults if parsing fails
+      setGold(150);
+      setUsername(defaultUsername);
+      setAvatarUrl(defaultAvatarUrl);
+      setLevel(0);
+      setAttributePoints(0);
+      setStats(defaultStats);
     }
   };
 
   // Effect to load data from localStorage on mount
   useEffect(() => {
-    setGold(safelyParseJSON('userGold', 150));
-    setUsername(safelyParseJSON('username', defaultUsername));
-    setAvatarUrl(safelyParseJSON('avatarUrl', defaultAvatarUrl));
-    setLevel(safelyParseJSON('level', 0));
-    setAttributePoints(safelyParseJSON('attributePoints', 0));
-    setStats(safelyParseJSON('stats', defaultStats));
+    loadDataFromStorage();
     setIsMounted(true);
   }, []);
 
@@ -55,13 +71,10 @@ export default function ProfilePage() {
     if (!isMounted) return;
 
     const handleStorageChange = (event: StorageEvent) => {
-        // Update all states if any of them change in localStorage
-        if (event.key === 'userGold') setGold(safelyParseJSON('userGold', 150));
-        if (event.key === 'username') setUsername(safelyParseJSON('username', defaultUsername));
-        if (event.key === 'avatarUrl') setAvatarUrl(safelyParseJSON('avatarUrl', defaultAvatarUrl));
-        if (event.key === 'level') setLevel(safelyParseJSON('level', 0));
-        if (event.key === 'attributePoints') setAttributePoints(safelyParseJSON('attributePoints', 0));
-        if (event.key === 'stats') setStats(safelyParseJSON('stats', defaultStats));
+        // Re-load all data if any of our keys change
+        if (['userGold', 'username', 'avatarUrl', 'level', 'attributePoints', 'stats'].includes(event.key || '')) {
+          loadDataFromStorage();
+        }
     };
 
     window.addEventListener('storage', handleStorageChange);
