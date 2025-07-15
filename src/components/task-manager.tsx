@@ -14,6 +14,8 @@ export type Task = {
   id: string;
   text: string;
   completed: boolean;
+  difficulty: 'easy' | 'hard';
+  reward: number;
 };
 
 function PenaltyTimer({ endTime }: { endTime: number }) {
@@ -59,6 +61,7 @@ function PenaltyTimer({ endTime }: { endTime: number }) {
 
 export function TaskManager() {
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [gold, setGold] = useState(150);
   const [isMounted, setIsMounted] = useState(false);
   const [penaltyEndTime, setPenaltyEndTime] = useState<number | null>(null);
 
@@ -69,11 +72,7 @@ export function TaskManager() {
       if (storedTasks) {
         setTasks(JSON.parse(storedTasks));
       } else {
-        setTasks([
-          { id: '1', text: 'Daily Workout: 100 Push-ups, 100 Sit-ups', completed: true },
-          { id: '2', text: 'Read a chapter of a new book', completed: false },
-          { id: '3', text: 'Practice a new skill for 30 minutes', completed: false },
-        ]);
+        setTasks([]);
       }
       
       const storedPenaltyTime = localStorage.getItem('penaltyEndTime');
@@ -84,13 +83,17 @@ export function TaskManager() {
         }
       }
 
+      const storedGold = localStorage.getItem('userGold');
+      if (storedGold) {
+        setGold(JSON.parse(storedGold));
+      } else {
+         localStorage.setItem('userGold', JSON.stringify(150));
+      }
+
     } catch (error) {
       console.error("Failed to parse from localStorage", error);
-       setTasks([
-          { id: '1', text: 'Daily Workout: 100 Push-ups, 100 Sit-ups', completed: true },
-          { id: '2', text: 'Read a chapter of a new book', completed: false },
-          { id: '3', text: 'Practice a new skill for 30 minutes', completed: false },
-        ]);
+       setTasks([]);
+       setGold(150);
     }
   }, []);
 
@@ -110,20 +113,43 @@ export function TaskManager() {
     }
   }, [penaltyEndTime, isMounted]);
 
-  const addTask = (taskText: string) => {
+  useEffect(() => {
+     if (isMounted) {
+        localStorage.setItem('userGold', JSON.stringify(gold));
+        window.dispatchEvent(new Event('storage'));
+     }
+  }, [gold, isMounted]);
+
+  const addTask = (taskText: string, difficulty: 'easy' | 'hard') => {
+    const reward = difficulty === 'easy' ? 50 : 200;
     const newTask: Task = {
       id: crypto.randomUUID(),
       text: taskText,
       completed: false,
+      difficulty,
+      reward,
     };
     setTasks(prev => [newTask, ...prev]);
 
-    const endTime = Date.now() + 24 * 60 * 60 * 1000;
-    setPenaltyEndTime(endTime);
+    if(tasks.length === 0){
+        const endTime = Date.now() + 24 * 60 * 60 * 1000;
+        setPenaltyEndTime(endTime);
+    }
   };
 
   const toggleTask = (id: string) => {
-    setTasks(tasks.map(task => task.id === id ? { ...task, completed: !task.completed } : task));
+    setTasks(tasks.map(task => {
+        if (task.id === id) {
+            const updatedTask = { ...task, completed: !task.completed };
+            if (updatedTask.completed) {
+                setGold(prevGold => prevGold + updatedTask.reward);
+            } else {
+                setGold(prevGold => prevGold - updatedTask.reward);
+            }
+            return updatedTask;
+        }
+        return task;
+    }));
   };
   
   const deleteTask = (id: string) => {

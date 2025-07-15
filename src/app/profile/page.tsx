@@ -1,3 +1,6 @@
+
+'use client';
+import { useState, useEffect } from 'react';
 import { Navbar } from '@/components/navbar';
 import { FuturisticBorder } from '@/components/futuristic-border';
 import { UserInfo } from './_components/user-info';
@@ -9,6 +12,51 @@ import { Separator } from '@/components/ui/separator';
 import './profile.css';
 
 export default function ProfilePage() {
+  const [gold, setGold] = useState(150);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+    try {
+      const storedGold = localStorage.getItem('userGold');
+      if (storedGold) {
+        setGold(JSON.parse(storedGold));
+      }
+    } catch (error) {
+      console.error("Failed to parse gold from localStorage", error);
+      setGold(150);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isMounted) {
+        const handleStorageChange = () => {
+            const storedGold = localStorage.getItem('userGold');
+            if (storedGold) {
+                setGold(JSON.parse(storedGold));
+            }
+        };
+
+        window.addEventListener('storage', handleStorageChange);
+
+        return () => {
+            window.removeEventListener('storage', handleStorageChange);
+        };
+    }
+  }, [isMounted]);
+
+
+  if (!isMounted) {
+    return (
+        <div className="flex min-h-screen flex-col bg-transparent text-foreground md:flex-row">
+            <Navbar />
+            <main className="flex-1 p-4 pb-24 md:ml-20 md:pb-4 lg:ml-64">
+                {/* You can add a skeleton loader here if you want */}
+            </main>
+        </div>
+    );
+  }
+
   return (
     <div className="flex min-h-screen flex-col bg-transparent text-foreground md:flex-row">
       <Navbar />
@@ -50,7 +98,7 @@ export default function ProfilePage() {
 
                <Separator className="my-4 bg-border/20" />
 
-              <FooterActions gold={150320} />
+              <FooterActions gold={gold} />
             </div>
           </FuturisticBorder>
         </div>

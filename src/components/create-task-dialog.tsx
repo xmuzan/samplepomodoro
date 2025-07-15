@@ -10,22 +10,24 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Wand2 } from 'lucide-react';
+import { Plus, Wand2, ShieldAlert } from 'lucide-react';
 import { suggestTaskAction } from '@/app/tasks/actions';
 import { FuturisticBorder } from './futuristic-border';
 
 interface CreateTaskDialogProps {
-    onAddTask: (taskText: string) => void;
+    onAddTask: (taskText: string, difficulty: 'easy' | 'hard') => void;
 }
 
 export function CreateTaskDialog({ onAddTask }: CreateTaskDialogProps) {
     const [open, setOpen] = useState(false);
     const [taskName, setTaskName] = useState('');
+    const [difficulty, setDifficulty] = useState<'easy' | 'hard' | null>(null);
     const [isPending, startTransition] = useTransition();
     const { toast } = useToast();
 
@@ -54,8 +56,17 @@ export function CreateTaskDialog({ onAddTask }: CreateTaskDialogProps) {
             });
             return;
         }
-        onAddTask(taskName.trim());
+        if (!difficulty) {
+            toast({
+                title: 'Error',
+                description: 'Please select a task difficulty.',
+                variant: 'destructive',
+            });
+            return;
+        }
+        onAddTask(taskName.trim(), difficulty);
         setTaskName('');
+        setDifficulty(null);
         setOpen(false);
     };
 
@@ -94,6 +105,30 @@ export function CreateTaskDialog({ onAddTask }: CreateTaskDialogProps) {
                                     </Button>
                                 </div>
                             </div>
+                             <div className="flex flex-col gap-2">
+                                <Label>Zorluk</Label>
+                                <RadioGroup 
+                                    onValueChange={(value: 'easy' | 'hard') => setDifficulty(value)} 
+                                    className="flex gap-4"
+                                    value={difficulty ?? undefined}
+                                >
+                                    <div className="flex items-center space-x-2">
+                                        <RadioGroupItem value="easy" id="r1" />
+                                        <Label htmlFor="r1">Kolay (50 Altın)</Label>
+                                    </div>
+                                    <div className="flex items-center space-x-2">
+                                        <RadioGroupItem value="hard" id="r2" />
+                                        <Label htmlFor="r2">Zor (200 Altın)</Label>
+                                    </div>
+                                </RadioGroup>
+                            </div>
+
+                             <Alert variant="destructive" className="border-amber-500/50 text-amber-200 [&>svg]:text-amber-400">
+                                <ShieldAlert className="h-4 w-4" />
+                                <AlertDescription>
+                                   Lütfen görev zorluğunu seçerken kendine karşı dürüst ol. Bu sistem senin gelişimini takip etmek için var.
+                                </AlertDescription>
+                            </Alert>
                         </div>
                         <DialogFooter className="p-6 pt-0">
                             <Button type="submit">Kaydet</Button>
