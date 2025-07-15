@@ -15,13 +15,13 @@ interface TaskItemProps {
 export function TaskItem({ task, onToggle, onDelete }: TaskItemProps) {
   return (
     <div
-      className="flex items-center gap-4 p-3 rounded-lg bg-background/50 hover:bg-primary/10 transition-colors group"
+      className="flex items-center gap-4 p-3 rounded-lg bg-card/50 hover:bg-primary/10 transition-colors group"
     >
       <Checkbox
         id={`task-${task.id}`}
         checked={task.completed}
         onCheckedChange={() => onToggle(task.id)}
-        className="border-accent data-[state=checked]:bg-accent data-[state=checked]:text-background"
+        className="border-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
         aria-label={task.completed ? "Mark task as incomplete" : "Mark task as complete"}
       />
       <label

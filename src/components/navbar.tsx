@@ -23,8 +23,8 @@ export function Navbar() {
   const pathname = usePathname();
 
   const commonLinkClasses = "flex items-center justify-center gap-1 rounded-md transition-colors duration-200 md:justify-start md:w-full md:h-12 md:px-3";
-  const activeClasses = "text-accent bg-accent/10";
-  const inactiveClasses = "text-muted-foreground hover:bg-accent/5 hover:text-accent";
+  const activeClasses = "text-primary bg-primary/10";
+  const inactiveClasses = "text-muted-foreground hover:bg-primary/5 hover:text-primary";
   const iconGlow = "drop-shadow-[0_0_5px_currentColor]";
   
   return (
@@ -50,8 +50,8 @@ export function Navbar() {
         <nav className="hidden md:fixed md:left-0 md:top-0 md:z-50 md:flex md:h-screen md:w-20 md:flex-col md:border-r md:border-primary/20 md:bg-background lg:w-64">
             <div className="flex h-20 items-center justify-center border-b border-primary/20">
                 <Link href="/" className="flex items-center justify-center">
-                    <Bot className="h-8 w-8 text-accent" />
-                    <span className="font-headline ml-4 hidden text-xl font-bold text-accent lg:block">LevelUp</span>
+                    <Bot className="h-8 w-8 text-primary" />
+                    <span className="font-headline ml-4 hidden text-xl font-bold text-primary lg:block">LevelUp</span>
                 </Link>
             </div>
             <div className="flex flex-1 flex-col gap-y-2 overflow-y-auto p-2">

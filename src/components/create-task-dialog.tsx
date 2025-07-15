@@ -61,15 +61,15 @@ export function CreateTaskDialog({ onAddTask }: CreateTaskDialogProps) {
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button size="sm" className="gap-2 bg-accent text-accent-foreground hover:bg-accent/80">
+                <Button size="sm" className="gap-2 bg-primary text-primary-foreground hover:bg-primary/80">
                     <Plus className="h-4 w-4" />
                     <span className="hidden sm:inline">Görev Oluştur</span>
                 </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
+            <DialogContent className="sm:max-w-[425px] border-primary/50 shadow-[0_0_25px_hsl(var(--primary)/0.4)]">
                 <form onSubmit={handleSubmit}>
                     <DialogHeader>
-                        <DialogTitle className="font-headline text-accent">Yeni Görev Ekle</DialogTitle>
+                        <DialogTitle className="font-headline text-primary">Yeni Görev Ekle</DialogTitle>
                         <DialogDescription>
                             Yeni bir görev ekleyerek seviye atlamaya devam et.
                         </DialogDescription>
