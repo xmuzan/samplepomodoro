@@ -34,6 +34,7 @@ function PenaltyTimer({ endTime }: { endTime: number }) {
       if (remaining <= 0) {
         clearInterval(interval);
         setTimeLeft(0);
+        // TODO: Implement penalty logic here, e.g., decrease IR
       } else {
         setTimeLeft(remaining);
       }
@@ -70,13 +71,16 @@ export function TaskManager() {
     setIsMounted(true);
     try {
       const storedTasks = localStorage.getItem('tasks');
-      setTasks(storedTasks ? JSON.parse(storedTasks) : []);
+      const parsedTasks = storedTasks ? JSON.parse(storedTasks) : [];
+      setTasks(parsedTasks);
       
       const storedPenaltyTime = localStorage.getItem('penaltyEndTime');
       if (storedPenaltyTime) {
         const endTime = parseInt(storedPenaltyTime, 10);
         if (!isNaN(endTime) && endTime > Date.now()) {
           setPenaltyEndTime(endTime);
+        } else {
+           localStorage.removeItem('penaltyEndTime');
         }
       }
 
@@ -100,14 +104,20 @@ export function TaskManager() {
   useEffect(() => {
     if (isMounted) {
       localStorage.setItem('tasks', JSON.stringify(tasks));
+      
+      // If there are no tasks, clear the penalty timer
+      if (tasks.length === 0 && penaltyEndTime) {
+        setPenaltyEndTime(null);
+        localStorage.removeItem('penaltyEndTime');
+      }
     }
-  }, [tasks, isMounted]);
+  }, [tasks, isMounted, penaltyEndTime]);
 
   useEffect(() => {
     if (isMounted) {
       if (penaltyEndTime && penaltyEndTime > Date.now()) {
         localStorage.setItem('penaltyEndTime', penaltyEndTime.toString());
-      } else {
+      } else if (penaltyEndTime) {
         localStorage.removeItem('penaltyEndTime');
       }
     }
@@ -136,7 +146,8 @@ export function TaskManager() {
       
       skillData[category].completedTasks += 1;
       
-      if (skillData[category].completedTasks >= 20) {
+      const TASKS_PER_RANK = 20;
+      if (skillData[category].completedTasks >= TASKS_PER_RANK) {
         if(skillData[category].rankIndex < 9) { // Max rank is 9 (index)
             skillData[category].rankIndex += 1;
             skillData[category].completedTasks = 0;
@@ -151,7 +162,7 @@ export function TaskManager() {
   };
 
 
-  const handleTaskCompletion = (category: SkillCategory) => {
+  const handleTaskCompletionProgress = (category: SkillCategory) => {
     try {
         let tasksCompleted = JSON.parse(localStorage.getItem('tasksCompletedThisLevel') || '0');
         tasksCompleted += 1;
@@ -191,13 +202,14 @@ export function TaskManager() {
       category,
     };
     
-    const isFirstTask = tasks.length === 0;
-    setTasks(prev => [newTask, ...prev]);
-
-    if(isFirstTask){
+    // If this is the very first task being added (or the list was empty)
+    // and there's no active penalty timer, start one.
+    if (tasks.length === 0 && !penaltyEndTime) {
         const endTime = Date.now() + 24 * 60 * 60 * 1000;
         setPenaltyEndTime(endTime);
     }
+    
+    setTasks(prev => [newTask, ...prev]);
   };
 
   const toggleTask = (id: string) => {
@@ -208,7 +220,7 @@ export function TaskManager() {
             
             if (updatedTask.completed && !wasCompleted) {
                 updateGold(updatedTask.reward);
-                handleTaskCompletion(updatedTask.category);
+                handleTaskCompletionProgress(updatedTask.category);
             } else if (!updatedTask.completed && wasCompleted) {
                 updateGold(-updatedTask.reward);
                 // Note: We might not want to decrement level progress on un-checking. 
@@ -247,6 +259,8 @@ export function TaskManager() {
     );
   }
 
+  const hasIncompleteTasks = tasks.some(task => !task.completed);
+
   return (
     <div className="max-w-4xl mx-auto">
       <FuturisticBorder>
@@ -270,7 +284,7 @@ export function TaskManager() {
             )}
           </div>
         </CardContent>
-        {penaltyEndTime && tasks.length > 0 && (
+        {penaltyEndTime && hasIncompleteTasks && (
           <div className="p-2 pt-0">
             <PenaltyTimer endTime={penaltyEndTime} />
           </div>
