@@ -1,0 +1,7 @@
+toml
+    [build]
+      command = "npm run build" # veya kullandığınız build komutu
+      publish = ".next" # veya build çıktınızın olduğu dizin
+
+    [[plugins]]
+      package = "@netlify/plugin-nextjs"
