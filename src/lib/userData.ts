@@ -1,5 +1,6 @@
+
 import { db } from './firebase';
-import { doc, getDoc, setDoc, updateDoc, collection, getDocs, writeBatch } from 'firebase/firestore/lite';
+import { doc, getDoc, setDoc, updateDoc, collection, getDocs, writeBatch } from 'firebase/firestore';
 import type { User } from '@/types';
 import type { Task } from '@/components/task-manager';
 import type { InventoryItem } from '@/app/(protected)/profile/_components/inventory-dialog';
@@ -60,9 +61,9 @@ export async function createNewUser(username: string, password?: string): Promis
             return { success: false, message: "Bu kullanıcı adı zaten alınmış." };
         }
 
-        const newUserAuthData: User & { password?: string } = {
+        const newUserAuthData = {
             username,
-            password,
+            password, // Password will be stored directly
             isAdmin: false,
             status: 'pending'
         };
@@ -118,6 +119,7 @@ export async function getUserData(username: string): Promise<UserData | null> {
     const docSnap = await getDoc(userRef);
 
     if (docSnap.exists()) {
+        // Exclude sensitive or auth-related fields
         const { password, isAdmin, status, ...progressData } = docSnap.data();
         return progressData as UserData;
     } else {
