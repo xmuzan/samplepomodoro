@@ -1,25 +1,22 @@
 
 'use client';
-import { getCookie } from 'cookies-next';
-import { logoutAction } from '@/app/login/actions';
+import { getCookie, deleteCookie } from 'cookies-next';
 import type { User } from '@/types';
 
 /**
- * Logs the user out by calling the server action to delete the cookie
- * and then forces a page reload to clear all state.
+ * Logs the user out by deleting the cookie
+ * and then redirecting to the login page.
  */
-export async function logout() {
-    await logoutAction();
-    // Use window.location to force a full refresh and clear all client state
+export function logout() {
+    deleteCookie('currentUser', { path: '/' });
     window.location.href = '/login';
 }
 
 /**
  * Gets the current user from the cookie.
- * This is a client-side function. For server-side, read the cookie directly.
+ * This is a client-side function. For server-side, read the cookie directly from headers.
  */
 export function getCurrentUser(): User | null {
-    // This function can only run on the client where cookies are accessible
     if (typeof window === 'undefined') {
         return null;
     }
@@ -34,7 +31,6 @@ export function getCurrentUser(): User | null {
         const session = JSON.parse(cookieValue);
         // Check if the session is expired
         if (session.expiry && session.expiry < Date.now()) {
-            // Optionally, we could also trigger a logout action here to clear the expired cookie
             return null;
         }
         return session.user;

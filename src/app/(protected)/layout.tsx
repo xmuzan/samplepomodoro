@@ -23,6 +23,7 @@ export default async function ProtectedLayout({
           }
       } catch (e) {
           console.error("Failed to parse session cookie on server:", e);
+          user = null;
       }
   }
 

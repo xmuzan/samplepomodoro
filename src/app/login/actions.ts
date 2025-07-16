@@ -22,7 +22,6 @@ export async function loginUserAction(credentials: { username?: string, password
             expiry: Date.now() + 24 * 60 * 60 * 1000, // 24 hours
         };
 
-        // Set the cookie on the server
         cookies().set('currentUser', JSON.stringify(session), {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
@@ -30,11 +29,8 @@ export async function loginUserAction(credentials: { username?: string, password
             path: '/',
         });
 
-        // Redirect from the server action
+        // Redirect from the server action is the most reliable way.
         redirect('/tasks');
-
-        // This part will not be reached due to the redirect, but it's good practice
-        // return { success: true }; 
     }
 
     return { success: false, message: result.message };
