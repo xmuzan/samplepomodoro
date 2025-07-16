@@ -23,7 +23,7 @@ export const shopItemsData: ShopItemData[] = [
     name: 'Gölge Sineması',
     description: 'Envanterden kullanarak 20 dakikalık bir film, dizi veya video izle. Zihnini dinlendirir ve farklı dünyalara kaçmanı sağlar.',
     price: 250,
-    imageUrl: '/golgesinemasi.png',
+    imageUrl: '/sinema.png',
     aiHint: 'futuristic screen'
   },
   {
