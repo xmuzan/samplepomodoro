@@ -1,6 +1,6 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
+import { getFirestore } from "firebase/firestore/lite";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -12,10 +12,9 @@ const firebaseConfig = {
 };
 
 // Check for missing environment variables
-for (const [key, value] of Object.entries(firebaseConfig)) {
-    if (!value) {
-        console.error(`Firebase config error: Missing environment variable NEXT_PUBLIC_${key.replace(/([A-Z])/g, '_$1').toUpperCase()}`);
-    }
+if (typeof window !== 'undefined' && !process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID) {
+    console.error("Firebase config error: Missing environment variables.");
+    alert("Firebase yapılandırması eksik. Lütfen .env dosyasını kontrol edin.");
 }
 
 // Initialize Firebase for SSR and SSG, preventing duplicate app instances
