@@ -19,6 +19,7 @@ export async function logout() {
  * This is a client-side function. For server-side, read the cookie directly.
  */
 export function getCurrentUser(): User | null {
+    // This function can only run on the client where cookies are accessible
     if (typeof window === 'undefined') {
         return null;
     }
@@ -31,12 +32,13 @@ export function getCurrentUser(): User | null {
 
     try {
         const session = JSON.parse(cookieValue);
-        if (session.expiry < Date.now()) {
+        // Check if the session is expired
+        if (session.expiry && session.expiry < Date.now()) {
             return null;
         }
         return session.user;
     } catch (error) {
-        console.error("Failed to parse user session", error);
+        console.error("Failed to parse user session from cookie", error);
         return null;
     }
 }

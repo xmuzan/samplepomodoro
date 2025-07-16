@@ -37,11 +37,13 @@ export default function LoginPage() {
                     description: 'Görevler sayfasına yönlendiriliyorsunuz...',
                 });
                 router.push('/tasks');
+                // Refresh the server-side data to ensure the layout recognizes the new session
+                router.refresh(); 
             } else {
                 toast({
                     variant: 'destructive',
                     title: 'Giriş Başarısız',
-                    description: result.message,
+                    description: result.message || "Lütfen bilgilerinizi kontrol edin.",
                 });
             }
         } catch (error) {
