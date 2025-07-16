@@ -1,8 +1,12 @@
 
-import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
+'use client';
+
+import { useState, useEffect, useCallback } from 'react';
+import { redirect, useRouter } from 'next/navigation';
 import { getGlobalBossData, getUserData, getBossDefinition, initializeBossDefinition } from '@/lib/userData';
 import { BossManager } from './_components/boss-manager';
+import type { User } from '@/types';
+import { getCurrentUser } from '@/lib/auth';
 
 export interface Boss {
   id: string;
@@ -20,46 +24,99 @@ const defaultBoss: Boss = {
   maxHp: 100,
 };
 
-// This is now a Server Component
-export default async function BossPage() {
-  const cookieStore = cookies();
-  const sessionCookie = cookieStore.get('currentUser');
+export default function BossPage() {
+  const [isLoading, setIsLoading] = useState(true);
+  const [pageData, setPageData] = useState<{
+    user: User;
+    initialUserStats: any;
+    initialUserGold: number;
+    initialBossHp: number;
+    initialRespawnTime: number | null;
+    currentBoss: Boss;
+  } | null>(null);
+  const router = useRouter();
 
-  if (!sessionCookie) {
-    redirect('/login');
-  }
+  const loadBossData = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const currentUser = getCurrentUser();
+      if (!currentUser) {
+        router.push('/login');
+        return;
+      }
 
-  const currentUser = JSON.parse(sessionCookie.value).user;
-  const userData = await getUserData(currentUser.username);
+      const userData = await getUserData(currentUser.username);
+      if (!userData || !userData.baseStats) {
+        console.error("User data or baseStats not found for:", currentUser.username);
+        return;
+      }
 
-  // Fetch boss definition from DB, or initialize it if it doesn't exist
-  let currentBoss = await getBossDefinition(BOSS_ID);
-  if (!currentBoss) {
-    await initializeBossDefinition(BOSS_ID, defaultBoss);
-    currentBoss = defaultBoss;
-  }
+      let currentBoss = await getBossDefinition(BOSS_ID);
+      if (!currentBoss) {
+        await initializeBossDefinition(BOSS_ID, defaultBoss);
+        currentBoss = defaultBoss;
+      }
+      
+      const bossData = await getGlobalBossData(currentBoss.id);
+
+      const initialBossHp = bossData.hp !== undefined ? bossData.hp : currentBoss.maxHp;
+      const initialRespawnTime = bossData.respawnTime && bossData.respawnTime > Date.now() ? bossData.respawnTime : null;
+
+      setPageData({
+        user: currentUser,
+        initialUserStats: userData.baseStats,
+        initialUserGold: userData.userGold || 0,
+        initialBossHp,
+        initialRespawnTime,
+        currentBoss
+      });
+
+    } catch (error) {
+      console.error("Failed to load boss page data:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [router]);
+
+  useEffect(() => {
+    loadBossData();
+  }, [loadBossData]);
   
-  const bossData = await getGlobalBossData(currentBoss.id);
+  useEffect(() => {
+    // Listen for storage changes to re-fetch data if needed
+    const handleStorageChange = () => {
+      loadBossData();
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, [loadBossData]);
 
-  if (!userData?.baseStats) {
-     return (
-        <main className="flex-1 p-4 pb-24 md:ml-20 md:pb-4 lg:ml-64 flex items-center justify-center">
-            <p>Kullanıcı istatistikleri yüklenemedi. Lütfen daha sonra tekrar deneyin.</p>
-        </main>
+  if (isLoading) {
+    return (
+      <main className="flex-1 p-4 pb-24 md:ml-20 md:pb-4 lg:ml-64 flex items-center justify-center">
+        <p>Yükleniyor...</p>
+      </main>
     );
   }
 
-  const initialBossHp = bossData.hp !== undefined ? bossData.hp : currentBoss.maxHp;
-  const initialRespawnTime = bossData.respawnTime && bossData.respawnTime > Date.now() ? bossData.respawnTime : null;
-  
+  if (!pageData) {
+    return (
+       <main className="flex-1 p-4 pb-24 md:ml-20 md:pb-4 lg:ml-64 flex items-center justify-center">
+           <p>Kullanıcı veya boss verileri yüklenemedi. Lütfen daha sonra tekrar deneyin.</p>
+       </main>
+   );
+  }
+
   return (
     <BossManager 
-        user={currentUser}
-        initialUserStats={userData.baseStats}
-        initialUserGold={userData.userGold || 0}
-        initialBossHp={initialBossHp}
-        initialRespawnTime={initialRespawnTime}
-        currentBoss={currentBoss}
+        user={pageData.user}
+        initialUserStats={pageData.initialUserStats}
+        initialUserGold={pageData.initialUserGold}
+        initialBossHp={pageData.initialBossHp}
+        initialRespawnTime={pageData.initialRespawnTime}
+        currentBoss={pageData.currentBoss}
     />
   );
 }

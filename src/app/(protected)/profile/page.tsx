@@ -1,4 +1,8 @@
 
+'use client';
+
+import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { FuturisticBorder } from '@/components/futuristic-border';
 import { UserInfo } from './_components/user-info';
 import { StatBars } from './_components/stat-bars';
@@ -10,39 +14,65 @@ import { getTitleForLevel } from '@/lib/titles';
 import { getTierForLevel } from '@/lib/ranks';
 import { getCurrentUser } from '@/lib/auth';
 import { getUserData, type UserData } from '@/lib/userData';
+import type { User } from '@/types';
 
 import './profile.css';
-import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
 
+// This is now a Client Component
+export default function ProfilePage() {
+  const [userData, setUserData] = useState<UserData | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
+  
+  const loadProfileData = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const currentUser = getCurrentUser();
+      if (!currentUser) {
+        router.push('/login');
+        return;
+      }
+      setUser(currentUser);
+      
+      const data = await getUserData(currentUser.username);
+      if (data) {
+        setUserData(data);
+      }
+    } catch(error) {
+      console.error("Failed to load profile data:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [router]);
 
-const defaultUserData: UserData = {
-    userGold: 0,
-    avatarUrl: "https://placehold.co/100x100.png",
-    level: 0,
-    tasksCompletedThisLevel: 0,
-    tasksRequiredForNextLevel: 32,
-    attributePoints: 0,
-    stats: { str: 0, vit: 0, agi: 0, int: 0, per: 0 },
-    baseStats: { hp: 100, mp: 100, ir: 100 },
-    skillData: {},
-    tasks: [],
-    inventory: [],
-};
+  useEffect(() => {
+    loadProfileData();
+  }, [loadProfileData]);
+  
+  useEffect(() => {
+    // Listen for storage changes to re-fetch data
+    const handleStorageChange = (event: StorageEvent) => {
+      // A simple way to trigger re-fetch on any relevant change
+      if(event.key === 'currentUser' || event.key === 'user-data-updated') {
+        loadProfileData();
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, [loadProfileData]);
 
-// This is now a Server Component
-export default async function ProfilePage() {
-  const cookieStore = cookies();
-  const sessionCookie = cookieStore.get('currentUser');
-
-  if (!sessionCookie) {
-    redirect('/login');
+  if (isLoading) {
+    return (
+        <main className="flex-1 p-4 pb-24 md:ml-20 md:pb-4 lg:ml-64 flex items-center justify-center">
+            <p>Yükleniyor...</p>
+        </main>
+    );
   }
 
-  const currentUser = JSON.parse(sessionCookie.value).user;
-  const userData = await getUserData(currentUser.username);
-
-  if (!userData) {
+  if (!userData || !user) {
     return (
         <main className="flex-1 p-4 pb-24 md:ml-20 md:pb-4 lg:ml-64 flex items-center justify-center">
             <p>Kullanıcı verisi bulunamadı.</p>
@@ -63,7 +93,7 @@ export default async function ProfilePage() {
               tier={userTier}
               job={userTitle.job}
               title={userTitle.title}
-              username={currentUser.username}
+              username={user.username}
               avatarUrl={userData.avatarUrl}
             />
 

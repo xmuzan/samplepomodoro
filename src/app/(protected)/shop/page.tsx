@@ -109,12 +109,13 @@ export default function ShopPage() {
   const router = useRouter();
 
   const loadData = useCallback(async () => {
-    if (!currentUser) {
-        setIsLoading(false);
-        return;
-    }
     setIsLoading(true);
     try {
+        if (!currentUser) {
+            router.push('/login');
+            return;
+        }
+        
         const data = await getUserData(currentUser.username);
         setGold(data?.userGold || 0);
         
@@ -131,7 +132,7 @@ export default function ShopPage() {
     } finally {
         setIsLoading(false);
     }
-  }, [currentUser]);
+  }, [currentUser, router]);
 
   useEffect(() => {
     loadData();
@@ -159,8 +160,9 @@ export default function ShopPage() {
       });
       
       setGold(newGold);
-      router.refresh();
-
+      // No need to call router.refresh() on client components unless you're invalidating a server cache.
+      // The state update will re-render the component.
+      
     } catch(error) {
       console.error("Failed to update inventory in Firestore", error);
     }
