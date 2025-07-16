@@ -30,7 +30,7 @@ export default function RootLayout({
                 loop
                 muted
                 playsInline
-                className="absolute inset-0 h-full w-full object-cover opacity-[0.35] -z-10"
+                className="absolute inset-0 h-full w-full object-cover opacity-50 -z-10"
             >
                 <source src="/sung.mp4" type="video/mp4" />
             </video>
