@@ -1,4 +1,6 @@
 
+'use client'; // Make this a client-side module for the test
+
 import { db } from './firebase';
 import { doc, getDoc, setDoc, updateDoc, collection, getDocs, writeBatch } from 'firebase/firestore';
 import type { User } from '@/types';
@@ -102,6 +104,9 @@ export async function getUserForLogin(username: string, password?: string): Prom
 }
 
 export async function createNewUser(username: string, password?: string): Promise<{ success: boolean, message: string }> {
+    if (!username || !password) {
+        return { success: false, message: "Kullanıcı adı ve şifre gereklidir." };
+    }
     const userRef = doc(db, "users", username);
     const docSnap = await getDoc(userRef);
 

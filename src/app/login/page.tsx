@@ -11,8 +11,9 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { loginUserAction, registerUserAction } from './actions';
+import { loginUserAction } from './actions';
 import { login } from '@/lib/auth';
+import { createNewUser } from '@/lib/userData'; // Import directly
 
 export default function LoginPage() {
     const [loginUsername, setLoginUsername] = useState('');
@@ -48,16 +49,25 @@ export default function LoginPage() {
         e.preventDefault();
         setIsRegistering(true);
         setRegistrationMessage(null);
-        const result = await registerUserAction({ username: registerUsername, password: registerPassword });
-        if (result.success) {
-            setRegistrationMessage(result.message);
-            setRegisterUsername('');
-            setRegisterPassword('');
-        } else {
-            toast({
+        try {
+            const result = await createNewUser(registerUsername, registerPassword);
+            if (result.success) {
+                setRegistrationMessage(result.message);
+                setRegisterUsername('');
+                setRegisterPassword('');
+            } else {
+                toast({
+                    variant: 'destructive',
+                    title: 'Kayıt Başarısız',
+                    description: result.message,
+                });
+            }
+        } catch (error) {
+             console.error("Registration error:", error);
+             toast({
                 variant: 'destructive',
                 title: 'Kayıt Başarısız',
-                description: result.message,
+                description: 'Kayıt sırasında beklenmedik bir hata oluştu.',
             });
         }
         setIsRegistering(false);

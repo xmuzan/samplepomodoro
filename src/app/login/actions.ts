@@ -16,21 +16,12 @@ type AuthResult = {
     user?: User;
 }
 
+// This Server Action is now only used for the login page, as registration is handled on the client for testing.
 export async function registerUserAction(credentials: unknown): Promise<Omit<AuthResult, 'user'>> {
-    const validated = AuthSchema.safeParse(credentials);
-    if (!validated.success) {
-        return { success: false, message: validated.error.errors[0].message };
-    }
-    
-    const { username, password } = validated.data;
-
-    try {
-        const result = await createNewUser(username, password);
-        return result;
-    } catch (error) {
-        console.error("Registration action error:", error);
-        return { success: false, message: 'Kayıt sırasında sunucuda beklenmedik bir hata oluştu.' };
-    }
+   // This function is temporarily disabled for the client-side test.
+   // In a real scenario, this would call createNewUser.
+   console.error("registerUserAction is called, but registration is handled client-side for this test.");
+   return { success: false, message: "Sunucu tarafı kayıt devre dışı." };
 }
 
 export async function loginUserAction(credentials: unknown): Promise<AuthResult> {
