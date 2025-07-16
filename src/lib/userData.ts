@@ -50,11 +50,12 @@ const defaultUserData: Omit<UserData, 'password'> = {
 // --- User Authentication and Management ---
 
 export async function createNewUser(username: string, password?: string): Promise<{ success: boolean, message: string }> {
-    if (!username || !password) {
+    const trimmedUsername = username.trim();
+    if (!trimmedUsername || !password) {
         return { success: false, message: "Kullanıcı adı ve şifre gereklidir." };
     }
 
-    const userRef = doc(db, "users", username.trim());
+    const userRef = doc(db, "users", trimmedUsername);
     
     try {
         const docSnap = await getDoc(userRef);
@@ -64,10 +65,10 @@ export async function createNewUser(username: string, password?: string): Promis
         }
 
         const newUserAuthData = {
-            username: username.trim(),
-            password, // Password will be stored directly
-            isAdmin: username.trim() === 'fatihbey', // Automatically make 'fatihbey' an admin
-            status: username.trim() === 'fatihbey' ? 'active' : 'pending' // Automatically activate admin
+            username: trimmedUsername,
+            password, 
+            isAdmin: false,
+            status: 'pending'
         };
         
         const fullUserData = {
