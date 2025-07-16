@@ -32,7 +32,9 @@ export default function LoginPage() {
             const result = await loginUserAction({ username: loginUsername, password: loginPassword });
             
             if (result.success) {
-                // IMPORTANT: Just refresh the page. The layout will handle the redirect.
+                // Navigate to the tasks page. The layout will handle the rest.
+                router.push('/tasks');
+                // Refresh to ensure the new cookie is recognized by the layout.
                 router.refresh();
             } else {
                 toast({

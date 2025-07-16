@@ -1,7 +1,7 @@
 
 'use client';
 import { getCookie } from 'cookies-next';
-import { logoutAction } from '@/app/(protected)/login/actions';
+import { logoutAction } from '@/app/login/actions';
 import type { User } from '@/types';
 
 /**
@@ -11,7 +11,7 @@ import type { User } from '@/types';
 export async function logout() {
     await logoutAction();
     // Use window.location to force a full refresh and clear all client state
-    window.location.href = '/';
+    window.location.href = '/login';
 }
 
 /**
