@@ -5,7 +5,7 @@ export const shopItemsData: ShopItemData[] = [
   {
     id: 'potion_energy',
     name: 'Enerji İksiri',
-    description: 'Envanterden kullanarak anında %10 HP yeniler.',
+    description: 'Anında %10 HP yeniler. Gerçek hayatta bir bardak favori içeceğini içmeye veya bir paket abur cubur yemeye denktir. Anlık bir enerji patlaması sağlar ama gerçek sağlık alışkanlıklarının yerini tutmaz.',
     price: 100,
     imageUrl: 'https://placehold.co/600x400.png',
     aiHint: 'glowing potion'
