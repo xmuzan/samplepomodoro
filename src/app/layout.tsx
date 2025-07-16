@@ -24,7 +24,18 @@ export default function RootLayout({
         />
       </head>
       <body className="font-body antialiased">
-        {children}
+        <div className="relative min-h-screen w-full">
+            <video
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="absolute inset-0 h-full w-full object-cover opacity-20 -z-10"
+            >
+                <source src="/sung.mp4" type="video/mp4" />
+            </video>
+            <main className="relative z-10">{children}</main>
+        </div>
         <Toaster />
       </body>
     </html>

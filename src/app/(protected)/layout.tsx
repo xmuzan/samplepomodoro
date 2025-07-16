@@ -48,14 +48,14 @@ export default function ProtectedLayout({
 
   if (isVerifying) {
     return (
-        <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="flex min-h-screen items-center justify-center bg-transparent">
             <p>Yükleniyor...</p>
         </div>
     );
   }
 
   return (
-    <div className="flex min-h-screen flex-col text-foreground md:flex-row">
+    <div className="flex min-h-screen flex-col bg-transparent text-foreground md:flex-row">
         <Navbar />
         {children}
     </div>
