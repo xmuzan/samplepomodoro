@@ -55,13 +55,13 @@ export function UserInfo({ level, tier, job, title, username, avatarUrl, onProfi
             <h2 className="text-3xl font-bold text-glow">{username}</h2>
         </div>
         <div className="flex items-center justify-center md:justify-start gap-4 mt-2">
-            <div className="flex flex-col items-center gap-1">
+            <div className="flex flex-col items-center">
                 <div className="text-center">
                     <p className="text-4xl font-headline font-bold text-primary text-glow">{level}</p>
                     <p className="text-xs text-muted-foreground uppercase tracking-widest">SEVİYE</p>
                 </div>
                 <div className={cn(
-                    "border-2 rounded-md px-2 py-0.5 font-headline font-bold text-lg shadow-[0_0_10px] mt-1",
+                    "border-2 rounded-md px-2 py-0.5 font-headline font-bold text-lg shadow-[0_0_10px] mt-2",
                     tierColorMap[tier] || tierColorMap['E']
                 )}>
                     {tier}-Kademe
