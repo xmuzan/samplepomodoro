@@ -1,8 +1,6 @@
-
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { Bot, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,7 +8,8 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { loginUserAction, registerUserAction } from './actions';
+import { createNewUser, getUserForLogin } from '@/lib/userData';
+import { login } from '@/lib/auth';
 
 export default function LoginPage() {
     const [loginUsername, setLoginUsername] = useState('');
@@ -21,18 +20,16 @@ export default function LoginPage() {
     const [isLoggingIn, setIsLoggingIn] = useState(false);
     const [isRegistering, setIsRegistering] = useState(false);
 
-    const router = useRouter();
     const { toast } = useToast();
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoggingIn(true);
         try {
-            const result = await loginUserAction({ username: loginUsername, password: loginPassword });
+            const result = await getUserForLogin(loginUsername, loginPassword);
             
-            if (result.success) {
-                // The cookie is set on the server by the Server Action.
-                // We force a full page reload to ensure the new cookie is read by the server layout.
+            if (result.success && result.user) {
+                login(result.user);
                 window.location.href = '/tasks';
             } else {
                 toast({
@@ -49,8 +46,9 @@ export default function LoginPage() {
                 title: 'Giriş Hatası',
                 description: errorMessage,
             });
+        } finally {
+            setIsLoggingIn(false);
         }
-        setIsLoggingIn(false);
     };
 
     const handleRegister = async (e: React.FormEvent) => {
@@ -58,7 +56,7 @@ export default function LoginPage() {
         setIsRegistering(true);
         setRegistrationMessage(null);
         try {
-            const result = await registerUserAction({ username: registerUsername, password: registerPassword });
+            const result = await createNewUser(registerUsername, registerPassword);
             
             if (result.success) {
                 setRegistrationMessage(result.message);
@@ -79,8 +77,9 @@ export default function LoginPage() {
                 title: 'Kayıt Başarısız',
                 description: errorMessage,
             });
+        } finally {
+            setIsRegistering(false);
         }
-        setIsRegistering(false);
     };
 
     return (

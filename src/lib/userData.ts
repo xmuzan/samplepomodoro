@@ -1,4 +1,3 @@
-
 'use server';
 
 import { db } from './firebase';
@@ -88,6 +87,7 @@ export async function createNewUser(username: string, password?: string): Promis
 
 
 export async function getUserForLogin(username: string, password?: string): Promise<{ success: boolean, message: string, user?: User }> {
+    'use client';
     const trimmedUsername = username.trim();
     if (!trimmedUsername || !password) {
         return { success: false, message: "Kullanıcı adı ve şifre gereklidir." };
@@ -128,7 +128,7 @@ export async function getUserData(username: string): Promise<UserData | null> {
     const docSnap = await getDoc(userRef);
 
     if (docSnap.exists()) {
-        const { password, isAdmin, status, ...progressData } = docSnap.data();
+        const { password, ...progressData } = docSnap.data();
         return progressData as UserData;
     } else {
         console.log("No such document for user:", username);
