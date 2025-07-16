@@ -7,7 +7,7 @@ export const shopItemsData: ShopItemData[] = [
     name: 'Enerji İksiri',
     description: 'Anında %10 HP yeniler. Gerçek hayatta bir bardak favori içeceğini içmeye veya bir paket abur cubur yemeye denktir. Anlık bir enerji patlaması sağlar ama gerçek sağlık alışkanlıklarının yerini tutmaz.',
     price: 100,
-    imageUrl: 'https://placehold.co/600x400.png',
+    imageUrl: '/enerjiksiri.png',
     aiHint: 'glowing potion'
   },
   {
@@ -15,7 +15,7 @@ export const shopItemsData: ShopItemData[] = [
     name: 'Zihin Kristali',
     description: 'Envanterden kullanarak zihinsel berraklığı anında artır. %15 MP yeniler.',
     price: 120,
-    imageUrl: 'https://placehold.co/600x400.png',
+    imageUrl: '/zihinkristali.png',
     aiHint: 'glowing blue crystal'
   },
   {
@@ -23,7 +23,7 @@ export const shopItemsData: ShopItemData[] = [
     name: 'Gölge Sineması',
     description: 'Envanterden kullanarak 20 dakikalık bir film, dizi veya video izle. Zihnini dinlendirir ve farklı dünyalara kaçmanı sağlar.',
     price: 250,
-    imageUrl: 'https://placehold.co/600x400.png',
+    imageUrl: '/gölgesineması.png',
     aiHint: 'futuristic screen'
   },
   {
@@ -31,7 +31,7 @@ export const shopItemsData: ShopItemData[] = [
     name: 'Bilgelik Tomarı',
     description: 'Envanterden kullanarak 25 dakika boyunca kendini geliştirecek bir kitap oku veya benzeri kaynaklara göz at. Entelektüel kapasiteni ve algını yükseltir.',
     price: 300,
-    imageUrl: 'https://placehold.co/600x400.png',
+    imageUrl: '/bilgeliktomarı.png',
     aiHint: 'ancient book'
   },
 ];
