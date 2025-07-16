@@ -61,11 +61,11 @@ export default function LoginPage() {
                 loop
                 muted
                 playsInline
-                className="absolute inset-0 -z-10 h-full w-full object-cover opacity-20"
+                className="absolute inset-0 h-full w-full object-cover opacity-20"
             >
                 <source src="/sung.mp4" type="video/mp4" />
             </video>
-            <div className="flex min-h-screen items-center justify-center p-4">
+            <div className="relative flex min-h-screen items-center justify-center p-4">
                 <div className="w-full max-w-md">
                     <div className="flex flex-col items-center justify-center mb-6">
                         <Bot className="h-16 w-16 text-primary drop-shadow-[0_0_8px_hsl(var(--primary))]" />
