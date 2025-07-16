@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { FuturisticBorder } from '@/components/futuristic-border';
 import { ReportCard, type ReportAction } from './_components/report-card';
 import { Separator } from '@/components/ui/separator';
@@ -57,13 +58,12 @@ const mpActions: ReportAction[] = [
 
 
 export default function ReportPage() {
-  const [stats, setStats] = useState<UserStats>({ hp: 100, mp: 100, ir: 100 });
-  const [isMounted, setIsMounted] = useState(false);
+  const [stats, setStats] = useState<UserStats | null>(null);
   const { toast } = useToast();
   const currentUser = getCurrentUser();
+  const router = useRouter();
 
   useEffect(() => {
-    setIsMounted(true);
     if (!currentUser) return;
     getUserData(currentUser.username).then(data => {
         if(data?.baseStats) {
@@ -89,7 +89,7 @@ export default function ReportPage() {
 
     await updateUserData(currentUser.username, { baseStats: newStats });
     setStats(newStats);
-    window.dispatchEvent(new Event('storage'));
+    router.refresh();
     
     toast({
       title: "Rapor Başarılı",
@@ -98,9 +98,10 @@ export default function ReportPage() {
     });
   };
 
-  if (!isMounted) {
+  if (!stats) {
     return (
-        <main className="flex-1 p-4 pb-24 md:ml-20 md:pb-4 lg:ml-64">
+        <main className="flex-1 p-4 pb-24 md:ml-20 md:pb-4 lg:ml-64 flex items-center justify-center">
+            <p>Yükleniyor...</p>
         </main>
     );
   }

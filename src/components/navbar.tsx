@@ -32,21 +32,10 @@ export function Navbar() {
   const [user, setUser] = useState<AuthUser | null>(null);
 
   useEffect(() => {
-    const checkUser = () => {
-        const currentUser = getCurrentUser();
-        setUser(currentUser);
-    }
-    
-    checkUser();
-    window.addEventListener('storage', checkUser);
+    const checkUserAndPenalty = () => {
+      const currentUser = getCurrentUser();
+      setUser(currentUser);
 
-    return () => {
-        window.removeEventListener('storage', checkUser);
-    }
-  }, []);
-
-  useEffect(() => {
-    const checkPenalty = () => {
       const penaltyEndTime = localStorage.getItem('penaltyEndTime');
       if (penaltyEndTime && parseInt(penaltyEndTime) > Date.now()) {
         setIsPenaltyActive(true);
@@ -54,16 +43,17 @@ export function Navbar() {
         setIsPenaltyActive(false);
       }
     };
-
-    checkPenalty();
-    window.addEventListener('storage', checkPenalty);
-    const interval = setInterval(checkPenalty, 1000);
+    
+    checkUserAndPenalty();
+    
+    // Listen to custom storage events if needed, or rely on router refreshes
+    const interval = setInterval(checkUserAndPenalty, 2000); // Periodically check
 
     return () => {
-      window.removeEventListener('storage', checkPenalty);
       clearInterval(interval);
     };
   }, []);
+
 
   const navItems = user?.isAdmin ? [...baseNavItems, adminNavItem] : baseNavItems;
 
@@ -79,7 +69,6 @@ export function Navbar() {
         <div className="flex justify-around">
           {navItems.map(({ href, label, icon: Icon }) => {
             const isShop = label === 'Mağaza';
-            const isBoss = label === 'Boss';
             return (
               <Link 
                 key={label} 

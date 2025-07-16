@@ -1,34 +1,35 @@
 
-'use client';
-
 import { TaskManager } from '@/components/task-manager';
 import { getCurrentUser } from '@/lib/auth';
-import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { redirect } from 'next/navigation';
+import { cookies } from 'next/headers';
+import { getUserData } from '@/lib/userData';
+import type { Task } from '@/components/task-manager';
 
-export default function TasksPage() {
-  const [isClient, setIsClient] = useState(false);
-  const router = useRouter();
-  const currentUser = getCurrentUser();
+// This is a Server Component
+export default async function TasksPage() {
+  const cookieStore = cookies();
+  const sessionCookie = cookieStore.get('currentUser');
 
-  useEffect(() => {
-    setIsClient(true);
-    if (!currentUser) {
-      router.replace('/login');
-    }
-  }, [currentUser, router]);
-
-  if (!isClient || !currentUser) {
-    return (
-      <main className="flex flex-1 items-center justify-center p-4">
-        <p>Yükleniyor...</p>
-      </main>
-    );
+  if (!sessionCookie) {
+    redirect('/login');
   }
+
+  const currentUser = JSON.parse(sessionCookie.value).user;
+  const userData = await getUserData(currentUser.username);
+
+  const initialTasks: Task[] = userData?.tasks || [];
+  const penaltyEndTime = userData?.penaltyEndTime || null;
+  const taskDeadline = userData?.taskDeadline || null;
   
   return (
     <main className="flex flex-1 items-center justify-center p-4 pb-24 md:ml-20 md:pb-4 lg:ml-64">
-      <TaskManager username={currentUser.username} />
+      <TaskManager 
+        username={currentUser.username} 
+        initialTasks={initialTasks}
+        initialPenaltyEndTime={penaltyEndTime}
+        initialTaskDeadline={taskDeadline}
+      />
     </main>
   );
 }

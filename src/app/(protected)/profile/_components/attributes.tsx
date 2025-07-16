@@ -1,5 +1,10 @@
+
+'use client';
 import { Dumbbell, Shield, Wind, Brain, Eye, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { updateUserData } from "@/lib/userData";
+import { getCurrentUser } from "@/lib/auth";
+import { useRouter } from "next/navigation";
 
 interface AttributesProps {
   stats: {
@@ -10,7 +15,6 @@ interface AttributesProps {
     per: number;
   };
   attributePoints: number;
-  onSpendPoint: (statKey: keyof AttributesProps['stats']) => void;
 }
 
 const attributeData = [
@@ -21,7 +25,24 @@ const attributeData = [
   { key: 'per', label: 'PER', icon: Eye },
 ];
 
-export function Attributes({ stats, attributePoints, onSpendPoint }: AttributesProps) {
+export function Attributes({ stats, attributePoints }: AttributesProps) {
+  const router = useRouter();
+  const currentUser = getCurrentUser();
+
+  const handleSpendPoint = async (statKey: keyof AttributesProps['stats']) => {
+    if (!currentUser?.username || attributePoints <= 0) return;
+    
+    const newPoints = attributePoints - 1;
+    const newStats = { ...stats, [statKey]: (stats?.[statKey] || 0) + 1 };
+    
+    await updateUserData(currentUser.username, { 
+        attributePoints: newPoints,
+        stats: newStats
+    });
+
+    router.refresh();
+  };
+
   const canUpgrade = attributePoints > 0;
 
   return (
@@ -37,7 +58,7 @@ export function Attributes({ stats, attributePoints, onSpendPoint }: AttributesP
             variant="ghost" 
             size="icon" 
             className="h-7 w-7 text-primary hover:bg-primary/20 hover:text-primary disabled:text-muted-foreground/30 disabled:cursor-not-allowed disabled:hover:bg-transparent"
-            onClick={() => onSpendPoint(key as keyof typeof stats)}
+            onClick={() => handleSpendPoint(key as keyof typeof stats)}
             disabled={!canUpgrade}
           >
             <Plus className="h-4 w-4" />

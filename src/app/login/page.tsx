@@ -4,6 +4,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Bot, ShieldCheck } from 'lucide-react';
+import { setCookie } from 'cookies-next';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,7 +12,6 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { login } from '@/lib/auth';
 import { loginUserAction, registerUserAction } from './actions';
 
 export default function LoginPage() {
@@ -40,9 +40,14 @@ export default function LoginPage() {
                         description: 'Hesabınız henüz yönetici tarafından onaylanmadı.',
                     });
                 } else {
-                    login(result.user); // Save user to local storage
-                    window.dispatchEvent(new Event('storage'));
+                    const session = {
+                        user: result.user,
+                        expiry: Date.now() + 24 * 60 * 60 * 1000,
+                    };
+                    setCookie('currentUser', JSON.stringify(session), { maxAge: 60 * 60 * 24 });
+                    localStorage.setItem('currentUser', JSON.stringify(session));
                     router.push('/tasks');
+                    router.refresh(); // Force a refresh of the layout
                 }
             } else {
                 toast({

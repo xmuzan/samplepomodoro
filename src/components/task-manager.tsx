@@ -2,11 +2,11 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 
 import { CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CreateTaskDialog } from './create-task-dialog';
 import { TaskItem } from './task-item';
-import { Skeleton } from './ui/skeleton';
 import { FuturisticBorder } from './futuristic-border';
 import { AlarmClock, Coins } from 'lucide-react';
 import type { SkillCategory } from '@/lib/skills';
@@ -24,11 +24,12 @@ export type Task = {
 
 function TimerDisplay({ endTime, isPenalty }: { endTime: number, isPenalty: boolean }) {
   const [timeLeft, setTimeLeft] = useState(endTime - Date.now());
+  const router = useRouter();
 
   useEffect(() => {
     if (endTime <= Date.now()) {
       setTimeLeft(0);
-      window.dispatchEvent(new Event('storage'));
+      router.refresh();
       return;
     }
     
@@ -37,14 +38,14 @@ function TimerDisplay({ endTime, isPenalty }: { endTime: number, isPenalty: bool
       if (remaining <= 0) {
         clearInterval(interval);
         setTimeLeft(0);
-        window.dispatchEvent(new Event('storage'));
+        router.refresh();
       } else {
         setTimeLeft(remaining);
       }
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [endTime]);
+  }, [endTime, router]);
 
   if (timeLeft <= 0) {
     return null;
@@ -67,70 +68,49 @@ function TimerDisplay({ endTime, isPenalty }: { endTime: number, isPenalty: bool
   );
 }
 
+interface TaskManagerProps {
+    username: string;
+    initialTasks: Task[];
+    initialPenaltyEndTime: number | null;
+    initialTaskDeadline: number | null;
+}
 
-export function TaskManager({ username }: { username: string }) {
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [isMounted, setIsMounted] = useState(false);
-  const [penaltyEndTime, setPenaltyEndTime] = useState<number | null>(null);
-  const [taskDeadline, setTaskDeadline] = useState<number | null>(null);
+export function TaskManager({ username, initialTasks, initialPenaltyEndTime, initialTaskDeadline }: TaskManagerProps) {
+  const [tasks, setTasks] = useState<Task[]>(initialTasks);
+  const [penaltyEndTime, setPenaltyEndTime] = useState<number | null>(initialPenaltyEndTime);
+  const [taskDeadline, setTaskDeadline] = useState<number | null>(initialTaskDeadline);
   const { toast } = useToast();
-
-  const loadFromFirestore = useCallback(async () => {
-    if (!username) return;
-    try {
-      const data = await getUserData(username);
-      setTasks(data?.tasks || []);
-      setPenaltyEndTime(data?.penaltyEndTime || null);
-      
-      // Check deadline
-      const deadline = data?.taskDeadline || null;
-      if (deadline && deadline < Date.now()) {
-        handleDeadlinePenalty(data?.tasks || []);
-      } else {
-        setTaskDeadline(deadline);
-      }
-
-    } catch (error) {
-      console.error("Failed to parse from Firestore", error);
-      setTasks([]);
-      setPenaltyEndTime(null);
-      setTaskDeadline(null);
-    }
-  }, [username]);
-
-  const handleDeadlinePenalty = useCallback(async (currentTasks: Task[]) => {
-    const hasIncompleteTasks = currentTasks.some((t: Task) => !t.completed);
-    const data = await getUserData(username);
-    const isPenaltyActive = data?.penaltyEndTime && data.penaltyEndTime > Date.now();
-
-    if (hasIncompleteTasks && !isPenaltyActive) {
-        const newPenaltyTime = Date.now() + 24 * 60 * 60 * 1000;
-        await updateUserData(username, { penaltyEndTime: newPenaltyTime, taskDeadline: null });
-        setPenaltyEndTime(newPenaltyTime);
-        setTaskDeadline(null);
-        toast({
-            title: "Ceza Görevi Başladı!",
-            description: "Görevleri zamanında tamamlayamadın. 24 saatliğine özelliklerin kilitlendi.",
-            variant: "destructive"
-        });
-    } else if (!hasIncompleteTasks) {
-        // Clear deadline if all tasks are complete
-        await updateUserData(username, { taskDeadline: null });
-        setTaskDeadline(null);
-    }
-  }, [username, toast]);
+  const router = useRouter();
 
   useEffect(() => {
-    setIsMounted(true);
-    loadFromFirestore();
-    
-    const storageListener = () => loadFromFirestore();
-    window.addEventListener('storage', storageListener);
-    
-    return () => {
-      window.removeEventListener('storage', storageListener);
+    setTasks(initialTasks);
+    setPenaltyEndTime(initialPenaltyEndTime);
+    setTaskDeadline(initialTaskDeadline);
+  }, [initialTasks, initialPenaltyEndTime, initialTaskDeadline]);
+
+  // The deadline penalty check should now happen on the server before page load,
+  // but we keep a client-side check as a fallback.
+  useEffect(() => {
+    const checkDeadline = async () => {
+        if (initialTaskDeadline && initialTaskDeadline < Date.now()) {
+             const hasIncompleteTasks = tasks.some((t: Task) => !t.completed);
+             const isPenaltyActive = penaltyEndTime && penaltyEndTime > Date.now();
+            if (hasIncompleteTasks && !isPenaltyActive) {
+                const newPenaltyTime = Date.now() + 24 * 60 * 60 * 1000;
+                await updateUserData(username, { penaltyEndTime: newPenaltyTime, taskDeadline: null });
+                setPenaltyEndTime(newPenaltyTime);
+                setTaskDeadline(null);
+                toast({
+                    title: "Ceza Görevi Başladı!",
+                    description: "Görevleri zamanında tamamlayamadın. 24 saatliğine özelliklerin kilitlendi.",
+                    variant: "destructive"
+                });
+                router.refresh();
+            }
+        }
     }
-  }, [loadFromFirestore]);
+    checkDeadline();
+  }, [initialTaskDeadline, penaltyEndTime, tasks, toast, username, router]);
   
   const updateTasksInDb = useCallback(async (newTasks: Task[]) => {
       setTasks(newTasks);
@@ -140,7 +120,6 @@ export function TaskManager({ username }: { username: string }) {
       const userData = await getUserData(username);
 
       if (!hasTasks) {
-          // Clear timers if no tasks left
           dataToUpdate.taskDeadline = null;
           dataToUpdate.penaltyEndTime = null;
           setTaskDeadline(null);
@@ -160,8 +139,8 @@ export function TaskManager({ username }: { username: string }) {
       }
       
       await updateTasks(username, dataToUpdate);
-      window.dispatchEvent(new Event('storage'));
-  }, [username]);
+      router.refresh(); // Re-fetch server-side props for consistency
+  }, [username, router]);
 
   const addTask = (taskText: string, difficulty: 'easy' | 'hard', category: SkillCategory) => {
     const reward = difficulty === 'easy' ? 50 : 200;
@@ -201,7 +180,7 @@ export function TaskManager({ username }: { username: string }) {
                   description: "Ceza süresi bitene kadar ödül kazanamazsın.",
                   variant: "destructive"
                 });
-                updateTasksInDb(newTasks); // Still save the completed state
+                updateTasksInDb(newTasks);
                 return;
             }
 
@@ -217,7 +196,6 @@ export function TaskManager({ username }: { username: string }) {
                 toast({ title: "MP Sıfır!", description: "Seviye ilerlemesi durduruldu.", variant: "destructive" });
             }
 
-            // Prepare updates
             const updates: Partial<UserData> = {
                 userGold: (userData.userGold || 0) + finalReward,
                 tasks: newTasks,
@@ -234,7 +212,6 @@ export function TaskManager({ username }: { username: string }) {
                     attributePoints = (attributePoints || 0) + 1;
                 }
                 
-                // Skill progress
                 const category = toggledTask.category;
                 if (category !== 'other') {
                     const TASKS_PER_RANK = 20;
@@ -256,7 +233,7 @@ export function TaskManager({ username }: { username: string }) {
             
             await updateUserData(username, updates);
             setTasks(newTasks);
-            window.dispatchEvent(new Event('storage'));
+            router.refresh();
 
             toast({
               title: "Görev Tamamlandı!",
@@ -267,8 +244,6 @@ export function TaskManager({ username }: { username: string }) {
             console.error("Error completing task:", error);
         }
     } else {
-      // Reverting task is complex with Firestore, for now we just update the task list
-      // A more complex implementation could revert gold/xp
       updateTasksInDb(newTasks);
     }
   };
@@ -278,24 +253,6 @@ export function TaskManager({ username }: { username: string }) {
     updateTasksInDb(newTasks);
   };
 
-  if (!isMounted) {
-    return (
-      <FuturisticBorder>
-        <div className="bg-background/90 backdrop-blur-sm p-1">
-            <CardHeader className="flex flex-row items-center justify-between">
-                <Skeleton className="h-8 bg-muted/20 rounded w-1/2"></Skeleton>
-                <Skeleton className="h-10 bg-muted/20 rounded w-36"></Skeleton>
-            </CardHeader>
-            <CardContent className="space-y-4 px-2">
-                <Skeleton className="h-12 bg-muted/20 rounded w-full"></Skeleton>
-                <Skeleton className="h-12 bg-muted/20 rounded w-full"></Skeleton>
-                <Skeleton className="h-12 bg-muted/20 rounded w-full"></Skeleton>
-            </CardContent>
-        </div>
-      </FuturisticBorder>
-    );
-  }
-  
   const isPenaltyActive = penaltyEndTime && penaltyEndTime > Date.now();
   const isDeadlineActive = taskDeadline && taskDeadline > Date.now() && tasks.some(t => !t.completed);
 

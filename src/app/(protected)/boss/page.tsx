@@ -3,12 +3,12 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { FuturisticBorder } from '@/components/futuristic-border';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { getStats, updateStats, type UserStats } from '@/lib/stats'; // This will be refactored
+import type { UserStats } from '@/lib/stats'; 
 import { Swords, Skull, Timer, Coins } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import './boss.css';
 import { getCurrentUser } from '@/lib/auth';
 import { getUserData, updateUserData, getGlobalBossData, updateGlobalBossData } from '@/lib/userData';
@@ -44,6 +44,7 @@ function BossDefeatedScreen({ onReset }: { onReset: () => void }) {
 
 function RespawnTimer({ respawnTime }: { respawnTime: number }) {
   const [timeLeft, setTimeLeft] = useState(respawnTime - Date.now());
+  const router = useRouter();
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -51,14 +52,14 @@ function RespawnTimer({ respawnTime }: { respawnTime: number }) {
       if (remaining <= 0) {
         clearInterval(interval);
         setTimeLeft(0);
-        window.location.reload();
+        router.refresh();
       } else {
         setTimeLeft(remaining);
       }
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [respawnTime]);
+  }, [respawnTime, router]);
 
   if (timeLeft <= 0) return null;
 
@@ -82,7 +83,6 @@ function RespawnTimer({ respawnTime }: { respawnTime: number }) {
 
 
 export default function BossPage() {
-    const [isMounted, setIsMounted] = useState(false);
     const [bossHp, setBossHp] = useState(currentBoss.maxHp);
     const [userStats, setUserStats] = useState<UserStats | null>(null);
     const [bossRespawnTime, setBossRespawnTime] = useState<number | null>(null);
@@ -90,10 +90,12 @@ export default function BossPage() {
     const [isLoading, setIsLoading] = useState(true);
 
     const { toast } = useToast();
+    const router = useRouter();
     const currentUser = getCurrentUser();
 
     const loadData = useCallback(async () => {
         if (!currentUser) return;
+        setIsLoading(true);
         try {
             const bossData = await getGlobalBossData(currentBoss.id);
             const userData = await getUserData(currentUser.username);
@@ -128,15 +130,7 @@ export default function BossPage() {
     }, [currentUser]);
 
     useEffect(() => {
-        setIsMounted(true);
         loadData();
-
-        const handleStorageChange = () => {
-            loadData();
-        };
-
-        window.addEventListener('storage', handleStorageChange);
-        return () => window.removeEventListener('storage', handleStorageChange);
     }, [loadData]);
 
 
@@ -197,7 +191,7 @@ export default function BossPage() {
         setBossRespawnTime(respawnTime);
         setIsBossDefeated(true);
 
-        window.dispatchEvent(new Event('storage'));
+        router.refresh();
     }
 
     const resetBossScreen = () => {
@@ -205,7 +199,7 @@ export default function BossPage() {
         loadData();
     }
     
-    if (!isMounted || isLoading) {
+    if (isLoading) {
         return (
             <main className="flex-1 p-4 pb-24 md:ml-20 md:pb-4 lg:ml-64 flex items-center justify-center">
                 <p>Yükleniyor...</p>

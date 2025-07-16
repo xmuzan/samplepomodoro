@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { FuturisticBorder } from '@/components/futuristic-border';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -23,10 +24,12 @@ import { getCurrentUser } from '@/lib/auth';
 
 export default function AdminPage() {
   const [pendingUsers, setPendingUsers] = useState<User[]>([]);
-  const [isMounted, setIsMounted] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+  const router = useRouter();
 
   const fetchUsers = async () => {
+    setIsLoading(true);
     try {
       const allUsers = await getAllUsers();
       setPendingUsers(allUsers.filter((user: User) => user.status === 'pending'));
@@ -37,11 +40,12 @@ export default function AdminPage() {
         description: "Kullanıcılar yüklenirken bir sorun oluştu.",
         variant: "destructive"
       });
+    } finally {
+        setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    setIsMounted(true);
     fetchUsers();
   }, []);
 
@@ -76,7 +80,7 @@ export default function AdminPage() {
         }
         await resetUserProgress(currentUser.username);
         
-        window.dispatchEvent(new Event('storage')); // Notify other components to refetch data
+        router.refresh(); // Reload server data for all pages
         
         toast({
             title: "İlerleme Sıfırlandı",
@@ -92,8 +96,12 @@ export default function AdminPage() {
     }
   };
 
-  if (!isMounted) {
-    return <main className="flex-1 p-4 pb-24 md:ml-20 md:pb-4 lg:ml-64"></main>;
+  if (isLoading) {
+    return (
+      <main className="flex-1 p-4 pb-24 md:ml-20 md:pb-4 lg:ml-64 flex items-center justify-center">
+        <p>Yükleniyor...</p>
+      </main>
+    );
   }
 
   return (

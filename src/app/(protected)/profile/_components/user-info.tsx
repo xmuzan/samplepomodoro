@@ -5,9 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Pencil } from 'lucide-react';
 import { EditProfileDialog } from './edit-profile-dialog';
 import { cn } from '@/lib/utils';
-import { getCurrentUser } from '@/lib/auth';
-import { useEffect, useState } from 'react';
-import type { User } from '@/types';
+import { updateUserData } from '@/lib/userData';
+import { useRouter } from 'next/navigation';
 
 interface UserInfoProps {
   level: number;
@@ -16,7 +15,6 @@ interface UserInfoProps {
   title: string;
   username: string;
   avatarUrl: string;
-  onProfileUpdate: (newUsername: string, newAvatarUrl:string) => void;
 }
 
 const tierColorMap: { [key: string]: string } = {
@@ -28,7 +26,15 @@ const tierColorMap: { [key: string]: string } = {
     'E': 'text-gray-400 border-gray-500/50 shadow-gray-500/50',
 };
 
-export function UserInfo({ level, tier, job, title, username, avatarUrl, onProfileUpdate }: UserInfoProps) {
+export function UserInfo({ level, tier, job, title, username, avatarUrl }: UserInfoProps) {
+  const router = useRouter();
+
+  const handleProfileUpdate = async (newUsername: string, newAvatarUrl: string) => {
+    if (!username) return;
+    await updateUserData(username, { avatarUrl: newAvatarUrl });
+    // Revalidate the current path to see changes
+    router.refresh();
+  };
   
   return (
     <div className="flex flex-col md:flex-row items-center gap-4 text-center md:text-left">
@@ -47,7 +53,7 @@ export function UserInfo({ level, tier, job, title, username, avatarUrl, onProfi
         <EditProfileDialog
             currentUsername={username}
             currentAvatarUrl={avatarUrl}
-            onSave={onProfileUpdate}
+            onSave={handleProfileUpdate}
         >
             <Button variant="ghost" size="icon" className="absolute bottom-0 right-0 h-8 w-8 rounded-full bg-background/50 text-primary opacity-0 group-hover:opacity-100 transition-opacity hover:bg-background/80">
                 <Pencil className="h-4 w-4" />

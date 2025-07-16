@@ -1,6 +1,7 @@
 
 'use client';
 import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { FuturisticBorder } from '@/components/futuristic-border';
 import { ShopItem, type ShopItemData } from './_components/shop-item';
 import { Coins, Lock } from 'lucide-react';
@@ -56,10 +57,12 @@ export const shopItemsData: ShopItemData[] = [
 
 function PenaltyTimer({ endTime }: { endTime: number }) {
   const [timeLeft, setTimeLeft] = useState(endTime - Date.now());
+  const router = useRouter();
 
   useEffect(() => {
     if (endTime <= Date.now()) {
       setTimeLeft(0);
+      router.refresh();
       return;
     }
     
@@ -68,13 +71,14 @@ function PenaltyTimer({ endTime }: { endTime: number }) {
       if (remaining <= 0) {
         clearInterval(interval);
         setTimeLeft(0);
+        router.refresh();
       } else {
         setTimeLeft(remaining);
       }
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [endTime]);
+  }, [endTime, router]);
 
   if (timeLeft <= 0) {
     return null;
@@ -99,16 +103,17 @@ function PenaltyTimer({ endTime }: { endTime: number }) {
 
 export default function ShopPage() {
   const [gold, setGold] = useState(0);
-  const [isMounted, setIsMounted] = useState(false);
   const [penaltyEndTime, setPenaltyEndTime] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const currentUser = getCurrentUser();
+  const router = useRouter();
 
   const loadData = useCallback(async () => {
     if (!currentUser) {
         setIsLoading(false);
         return;
     }
+    setIsLoading(true);
     try {
         const data = await getUserData(currentUser.username);
         setGold(data?.userGold || 0);
@@ -129,26 +134,9 @@ export default function ShopPage() {
   }, [currentUser]);
 
   useEffect(() => {
-    setIsMounted(true);
     loadData();
   }, [loadData]);
   
-  useEffect(() => {
-    if (isMounted) {
-      const handleStorageChange = () => {
-        loadData();
-      };
-
-      window.addEventListener('storage', handleStorageChange);
-      const interval = setInterval(loadData, 5000); // Periodically check for penalty changes
-      
-      return () => {
-        window.removeEventListener('storage', handleStorageChange);
-        clearInterval(interval);
-      };
-    }
-  }, [isMounted, loadData]);
-
   const handlePurchase = async (item: ShopItemData) => {
     if (!currentUser || (penaltyEndTime && penaltyEndTime > Date.now()) || gold < item.price) return;
     
@@ -171,14 +159,14 @@ export default function ShopPage() {
       });
       
       setGold(newGold);
-      window.dispatchEvent(new Event('storage'));
+      router.refresh();
 
     } catch(error) {
       console.error("Failed to update inventory in Firestore", error);
     }
   };
 
-  if (!isMounted || isLoading) {
+  if (isLoading) {
     return (
         <main className="flex-1 p-4 pb-24 md:ml-20 md:pb-4 lg:ml-64 flex items-center justify-center">
             <p>Yükleniyor...</p>

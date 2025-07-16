@@ -1,57 +1,51 @@
 
-'use client';
-
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { getCurrentUser } from '@/lib/auth';
-import type { User } from '@/types';
+import { redirect } from 'next/navigation';
+import { cookies } from 'next/headers';
 import { Navbar } from '@/components/navbar';
+import type { User } from '@/types';
 
-export default function ProtectedLayout({
+// This is a server component layout
+// It will handle authentication before rendering child pages
+
+export default async function ProtectedLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const router = useRouter();
-  const [user, setUser] = useState<User | null>(null);
-  const [isVerifying, setIsVerifying] = useState(true);
+  const cookieStore = cookies();
+  const sessionCookie = cookieStore.get('currentUser');
+  
+  let user: User | null = null;
 
-  useEffect(() => {
-    const verifyUser = () => {
-      const currentUser = getCurrentUser();
-      if (!currentUser) {
-        router.replace('/login');
-      } else {
-        setUser(currentUser);
-        setIsVerifying(false);
+  if (sessionCookie) {
+      try {
+          const session = JSON.parse(sessionCookie.value);
+          if (session.expiry > Date.now()) {
+              user = session.user;
+          }
+      } catch (e) {
+          // Invalid cookie
       }
-    };
-    
-    verifyUser();
+  }
 
-    const handleStorageChange = () => {
-        const updatedUser = getCurrentUser();
-        if (!updatedUser) {
-            router.replace('/login');
-        } else {
-            setUser(updatedUser);
-        }
-    };
-    
-    window.addEventListener('storage', handleStorageChange);
-
-    return () => {
-        window.removeEventListener('storage', handleStorageChange);
-    };
-
-  }, [router]);
-
-  if (isVerifying) {
-    return (
-        <div className="flex min-h-screen items-center justify-center bg-transparent">
-            <p>Yükleniyor...</p>
+  if (!user) {
+    redirect('/login');
+  }
+  
+  if (user.status === 'pending') {
+      // You can create a dedicated pending page if you want
+      // For now, redirecting to tasks but they won't see much
+       return (
+        <div className="flex min-h-screen flex-col bg-transparent text-foreground md:flex-row">
+            <Navbar />
+            <main className="flex-1 p-4 pb-24 md:ml-20 md:pb-4 lg:ml-64 flex items-center justify-center">
+                <div className="text-center">
+                    <h1 className="text-2xl font-bold text-primary">Hesabınız Onay Bekliyor</h1>
+                    <p className="text-muted-foreground mt-2">Yönetici onayından sonra tüm özelliklere erişebileceksiniz.</p>
+                </div>
+            </main>
         </div>
-    );
+      );
   }
 
   return (

@@ -1,19 +1,17 @@
 
-'use client';
-import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
-import { getCurrentUser } from '@/lib/auth';
+import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
 
 export default function Home() {
-    const router = useRouter();
+    const cookieStore = cookies();
+    const sessionCookie = cookieStore.get('currentUser');
 
-    useEffect(() => {
-        if (getCurrentUser()) {
-            router.replace('/tasks');
-        } else {
-            router.replace('/login');
-        }
-    }, [router]);
-
-    return null; // or a loading spinner
+    if (sessionCookie) {
+        redirect('/tasks');
+    } else {
+        redirect('/login');
+    }
+    
+    // This return is technically unreachable but required by Next.js
+    return null;
 }
