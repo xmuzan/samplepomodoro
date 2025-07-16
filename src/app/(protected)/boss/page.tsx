@@ -23,7 +23,7 @@ interface Boss {
 const currentBoss: Boss = {
   id: 'netanyahu',
   name: 'Süper Domuz Netanyahu',
-  imageUrl: 'https://placehold.co/600x400.png',
+  imageUrl: '/domuzboss.png',
   maxHp: 100,
 };
 
@@ -258,4 +258,3 @@ export default function BossPage() {
         </main>
     );
 }
-
