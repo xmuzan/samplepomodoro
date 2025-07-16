@@ -32,10 +32,11 @@ export default function LoginPage() {
             const result = await loginUserAction({ username: loginUsername, password: loginPassword });
             
             if (result.success) {
-                // Navigate to the tasks page. The layout will handle the rest.
+                toast({
+                    title: 'Giriş Başarılı',
+                    description: 'Görevler sayfasına yönlendiriliyorsunuz...',
+                });
                 router.push('/tasks');
-                // Refresh to ensure the new cookie is recognized by the layout.
-                router.refresh();
             } else {
                 toast({
                     variant: 'destructive',
