@@ -1,9 +1,12 @@
 
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { FuturisticBorder } from '@/components/futuristic-border';
 import { ShopItem, type ShopItemData } from './_components/shop-item';
 import { Coins, Lock } from 'lucide-react';
+import { getCurrentUser } from '@/lib/auth';
+import { getUserData, updateUserData } from '@/lib/userData';
+import type { InventoryItem } from '../profile/_components/inventory-dialog';
 
 import './shop.css';
 
@@ -98,81 +101,87 @@ export default function ShopPage() {
   const [gold, setGold] = useState(0);
   const [isMounted, setIsMounted] = useState(false);
   const [penaltyEndTime, setPenaltyEndTime] = useState<number | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const currentUser = getCurrentUser();
 
-  const checkPenalty = () => {
-    const storedPenaltyTime = localStorage.getItem('penaltyEndTime');
-    if (storedPenaltyTime) {
-      const endTime = parseInt(storedPenaltyTime, 10);
-      if (endTime > Date.now()) {
-        setPenaltyEndTime(endTime);
-      } else {
-        localStorage.removeItem('penaltyEndTime');
-        setPenaltyEndTime(null);
-      }
-    } else {
-      setPenaltyEndTime(null);
+  const loadData = useCallback(async () => {
+    if (!currentUser) {
+        setIsLoading(false);
+        return;
     }
-  }
+    try {
+        const data = await getUserData(currentUser.username);
+        setGold(data?.userGold || 0);
+        
+        const endTime = data?.penaltyEndTime || null;
+        if (endTime && endTime > Date.now()) {
+            setPenaltyEndTime(endTime);
+        } else {
+            setPenaltyEndTime(null);
+        }
+    } catch (error) {
+        console.error("Failed to load user data from Firestore", error);
+        setGold(0);
+        setPenaltyEndTime(null);
+    } finally {
+        setIsLoading(false);
+    }
+  }, [currentUser]);
 
   useEffect(() => {
     setIsMounted(true);
-    try {
-      const storedGold = localStorage.getItem('userGold');
-      setGold(storedGold ? JSON.parse(storedGold) : 0);
-    } catch (error) {
-      console.error("Failed to parse gold from localStorage", error);
-      setGold(0);
-    }
-    checkPenalty();
-  }, []);
+    loadData();
+  }, [loadData]);
   
   useEffect(() => {
     if (isMounted) {
       const handleStorageChange = () => {
-        const storedGold = localStorage.getItem('userGold');
-        if (storedGold) {
-            setGold(JSON.parse(storedGold));
-        }
-        checkPenalty();
+        loadData();
       };
 
       window.addEventListener('storage', handleStorageChange);
-      const interval = setInterval(checkPenalty, 1000);
+      const interval = setInterval(loadData, 5000); // Periodically check for penalty changes
       
       return () => {
         window.removeEventListener('storage', handleStorageChange);
         clearInterval(interval);
       };
     }
-  }, [isMounted]);
+  }, [isMounted, loadData]);
 
-  const handlePurchase = (item: ShopItemData) => {
-    if (penaltyEndTime && penaltyEndTime > Date.now()) return;
-
-    const newGold = gold - item.price;
-    setGold(newGold);
-    localStorage.setItem('userGold', JSON.stringify(newGold));
+  const handlePurchase = async (item: ShopItemData) => {
+    if (!currentUser || (penaltyEndTime && penaltyEndTime > Date.now()) || gold < item.price) return;
     
     try {
-      const currentInventory = JSON.parse(localStorage.getItem('inventory') || '[]');
-      const itemInInventory = currentInventory.find((invItem: {id: string}) => invItem.id === item.id);
+      const userData = await getUserData(currentUser.username);
+      const currentInventory: InventoryItem[] = userData?.inventory || [];
+      const newGold = gold - item.price;
+
+      const itemInInventory = currentInventory.find((invItem) => invItem.id === item.id);
 
       if (itemInInventory) {
         itemInInventory.quantity += 1;
       } else {
         currentInventory.push({ id: item.id, quantity: 1 });
       }
-      localStorage.setItem('inventory', JSON.stringify(currentInventory));
-    } catch(error) {
-      console.error("Failed to update inventory in localStorage", error);
-    }
+      
+      await updateUserData(currentUser.username, {
+          userGold: newGold,
+          inventory: currentInventory
+      });
+      
+      setGold(newGold);
+      window.dispatchEvent(new Event('storage'));
 
-    window.dispatchEvent(new Event('storage'));
+    } catch(error) {
+      console.error("Failed to update inventory in Firestore", error);
+    }
   };
 
-  if (!isMounted) {
+  if (!isMounted || isLoading) {
     return (
-        <main className="flex-1 p-4 pb-24 md:ml-20 md:pb-4 lg:ml-64">
+        <main className="flex-1 p-4 pb-24 md:ml-20 md:pb-4 lg:ml-64 flex items-center justify-center">
+            <p>Yükleniyor...</p>
         </main>
     );
   }

@@ -6,10 +6,12 @@ import Image from 'next/image';
 import { FuturisticBorder } from '@/components/futuristic-border';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { getStats, updateStats, type UserStats } from '@/lib/stats';
+import { getStats, updateStats, type UserStats } from '@/lib/stats'; // This will be refactored
 import { Swords, Skull, Timer, Coins } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import './boss.css';
+import { getCurrentUser } from '@/lib/auth';
+import { getUserData, updateUserData, getGlobalBossData, updateGlobalBossData } from '@/lib/userData';
 
 const BOSS_RESPAWN_HOURS = 48;
 
@@ -49,7 +51,6 @@ function RespawnTimer({ respawnTime }: { respawnTime: number }) {
       if (remaining <= 0) {
         clearInterval(interval);
         setTimeLeft(0);
-        // Reload to show the new boss
         window.location.reload();
       } else {
         setTimeLeft(remaining);
@@ -86,43 +87,51 @@ export default function BossPage() {
     const [userStats, setUserStats] = useState<UserStats | null>(null);
     const [bossRespawnTime, setBossRespawnTime] = useState<number | null>(null);
     const [isBossDefeated, setIsBossDefeated] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
 
     const { toast } = useToast();
+    const currentUser = getCurrentUser();
 
-    const loadData = useCallback(() => {
+    const loadData = useCallback(async () => {
+        if (!currentUser) return;
         try {
-            const storedHp = localStorage.getItem(`boss_${currentBoss.id}_hp`);
-            const storedRespawnTime = localStorage.getItem('bossRespawnTime');
-            
-            if (storedRespawnTime && parseInt(storedRespawnTime, 10) > Date.now()) {
-                setBossRespawnTime(parseInt(storedRespawnTime, 10));
+            const bossData = await getGlobalBossData(currentBoss.id);
+            const userData = await getUserData(currentUser.username);
+
+            if (bossData.respawnTime && bossData.respawnTime > Date.now()) {
+                setBossRespawnTime(bossData.respawnTime);
             } else {
-                if (storedHp !== null) {
-                    const hp = JSON.parse(storedHp);
-                    if (hp <= 0) {
+                if (bossData.hp !== undefined) {
+                     if (bossData.hp <= 0) {
                         setIsBossDefeated(true);
                     } else {
-                        setBossHp(hp);
+                        setBossHp(bossData.hp);
                     }
                 } else {
-                    setBossHp(currentBoss.maxHp);
+                     setBossHp(currentBoss.maxHp);
                 }
-                localStorage.removeItem('bossRespawnTime');
                 setBossRespawnTime(null);
             }
-            setUserStats(getStats());
+
+            if (userData?.baseStats) {
+                setUserStats(userData.baseStats);
+            } else {
+                setUserStats({ hp: 100, mp: 100, ir: 100 });
+            }
+
         } catch (error) {
             console.error("Error loading boss data:", error);
             setBossHp(currentBoss.maxHp);
+        } finally {
+            setIsLoading(false);
         }
-    }, []);
+    }, [currentUser]);
 
     useEffect(() => {
         setIsMounted(true);
         loadData();
 
         const handleStorageChange = () => {
-            setUserStats(getStats());
             loadData();
         };
 
@@ -131,11 +140,10 @@ export default function BossPage() {
     }, [loadData]);
 
 
-    const handleAttack = () => {
-        if (bossHp <= 0) return;
+    const handleAttack = async () => {
+        if (bossHp <= 0 || !currentUser || !userStats) return;
 
-        const currentUserStats = getStats();
-        if (currentUserStats.mp < 10) {
+        if (userStats.mp < 10) {
             toast({
                 variant: 'destructive',
                 title: 'Yetersiz MP',
@@ -144,14 +152,19 @@ export default function BossPage() {
             return;
         }
 
-        const newStats = updateStats({ hp: -2, mp: -10 });
+        const newStats = { 
+            hp: Math.max(0, userStats.hp - 2),
+            mp: Math.max(0, userStats.mp - 10),
+            ir: userStats.ir
+        };
+        await updateUserData(currentUser.username, { baseStats: newStats });
         setUserStats(newStats);
 
         const damage = currentBoss.maxHp * 0.05;
         const newBossHp = Math.max(0, bossHp - damage);
 
+        await updateGlobalBossData(currentBoss.id, { hp: newBossHp });
         setBossHp(newBossHp);
-        localStorage.setItem(`boss_${currentBoss.id}_hp`, JSON.stringify(newBossHp));
 
         toast({
             title: 'Saldırı Başarılı!',
@@ -163,7 +176,8 @@ export default function BossPage() {
         }
     };
 
-    const handleBossDefeat = () => {
+    const handleBossDefeat = async () => {
+        if (!currentUser) return;
         toast({
             title: 'BOSS YENİLDİ!',
             description: (
@@ -174,15 +188,12 @@ export default function BossPage() {
             )
         });
 
-        // Add gold
-        try {
-            const currentGold = JSON.parse(localStorage.getItem('userGold') || '0');
-            localStorage.setItem('userGold', JSON.stringify(currentGold + 1000));
-        } catch {}
-
-        // Set respawn timer
+        const userData = await getUserData(currentUser.username);
+        const currentGold = userData?.userGold || 0;
+        await updateUserData(currentUser.username, { userGold: currentGold + 1000 });
+        
         const respawnTime = Date.now() + BOSS_RESPAWN_HOURS * 60 * 60 * 1000;
-        localStorage.setItem('bossRespawnTime', respawnTime.toString());
+        await updateGlobalBossData(currentBoss.id, { respawnTime, hp: currentBoss.maxHp });
         setBossRespawnTime(respawnTime);
         setIsBossDefeated(true);
 
@@ -190,15 +201,14 @@ export default function BossPage() {
     }
 
     const resetBossScreen = () => {
-        localStorage.removeItem(`boss_${currentBoss.id}_hp`);
         setIsBossDefeated(false);
         loadData();
     }
     
-    if (!isMounted) {
+    if (!isMounted || isLoading) {
         return (
             <main className="flex-1 p-4 pb-24 md:ml-20 md:pb-4 lg:ml-64 flex items-center justify-center">
-                {/* Optional: Skeleton Loader */}
+                <p>Yükleniyor...</p>
             </main>
         );
     }

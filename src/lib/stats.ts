@@ -1,11 +1,13 @@
 
+// This file can be refactored or removed as its logic is now within userData.ts
+// For now, we keep it to avoid breaking imports that might still exist,
+// but its functions should be considered deprecated in favor of getUserData and updateUserData.
+
 export interface UserStats {
     hp: number;
     mp: number;
     ir: number;
 }
-
-const STATS_KEY = 'baseStats';
 
 const defaultStats: UserStats = {
     hp: 100,
@@ -13,49 +15,30 @@ const defaultStats: UserStats = {
     ir: 100,
 };
 
-// Function to get current stats from localStorage
+/**
+ * @deprecated Use getUserData(username) from `lib/userData` instead.
+ */
 export function getStats(): UserStats {
-    if (typeof window === 'undefined') {
-        return defaultStats;
-    }
-    try {
-        const storedStats = localStorage.getItem(STATS_KEY);
-        if (storedStats) {
-            const parsed = JSON.parse(storedStats);
-            // Basic validation
-            if (typeof parsed.hp === 'number' && typeof parsed.mp === 'number') {
-                return { ...defaultStats, ...parsed };
-            }
-        }
-        // If no valid stats found, set and return default
-        localStorage.setItem(STATS_KEY, JSON.stringify(defaultStats));
-        return defaultStats;
-    } catch (error) {
-        console.error("Failed to parse stats from localStorage", error);
-        return defaultStats;
-    }
+    console.warn("getStats() is deprecated. Use getUserData(username) from `lib/userData` instead.");
+    return defaultStats;
 }
 
-// Function to update stats and save to localStorage
+/**
+ * @deprecated Use updateUserData(username, { baseStats: ... }) from `lib/userData` instead.
+ */
 export function updateStats(changes: Partial<UserStats>): UserStats {
-    const currentStats = getStats();
+    console.warn("updateStats() is deprecated. Use updateUserData(username, { baseStats: ... }) from `lib/userData` instead.");
     
-    const newStats: UserStats = { ...currentStats };
+    const newStats: UserStats = { ...defaultStats };
 
     if (changes.hp !== undefined) {
-        newStats.hp = Math.max(0, Math.min(100, currentStats.hp + changes.hp));
+        newStats.hp = Math.max(0, Math.min(100, defaultStats.hp + changes.hp));
     }
     if (changes.mp !== undefined) {
-        newStats.mp = Math.max(0, Math.min(100, currentStats.mp + changes.mp));
+        newStats.mp = Math.max(0, Math.min(100, defaultStats.mp + changes.mp));
     }
     if (changes.ir !== undefined) {
-        newStats.ir = Math.max(0, Math.min(100, currentStats.ir + changes.ir));
-    }
-
-    if (typeof window !== 'undefined') {
-        localStorage.setItem(STATS_KEY, JSON.stringify(newStats));
-        // Dispatch a storage event to notify other tabs/components
-        window.dispatchEvent(new Event('storage'));
+        newStats.ir = Math.max(0, Math.min(100, defaultStats.ir + changes.ir));
     }
 
     return newStats;

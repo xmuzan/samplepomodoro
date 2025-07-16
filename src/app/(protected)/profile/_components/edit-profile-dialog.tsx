@@ -65,6 +65,16 @@ export function EditProfileDialog({ children, currentUsername, currentAvatarUrl,
       });
       return;
     }
+    // Username cannot be changed after registration in this model
+    if (username.trim() !== currentUsername) {
+        toast({
+            title: "Error",
+            description: "Kullanıcı adı değiştirilemez.",
+            variant: "destructive",
+        });
+        setUsername(currentUsername);
+        return;
+    }
     onSave(username.trim(), avatarUrl);
     setOpen(false);
   };
@@ -104,6 +114,7 @@ export function EditProfileDialog({ children, currentUsername, currentAvatarUrl,
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     className="col-span-3"
+                    disabled // Username cannot be changed
                   />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">

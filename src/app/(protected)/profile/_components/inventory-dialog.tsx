@@ -14,10 +14,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { FuturisticBorder } from "@/components/futuristic-border";
 import type { ShopItemData } from "@/app/(protected)/shop/_components/shop-item";
-import { updateStats } from "@/lib/stats";
 import { useToast } from "@/hooks/use-toast";
+import { getUserData, updateUserData } from "@/lib/userData";
+import { getCurrentUser } from "@/lib/auth";
 
-interface InventoryItem {
+export interface InventoryItem {
   id: string;
   quantity: number;
 }
@@ -31,13 +32,15 @@ export function InventoryDialog({ children, shopItems }: InventoryDialogProps) {
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [isMounted, setIsMounted] = useState(false);
   const { toast } = useToast();
+  const currentUser = getCurrentUser();
 
-  const fetchInventory = () => {
+  const fetchInventory = async () => {
+    if (!currentUser) return;
     try {
-      const storedInventory = localStorage.getItem('inventory');
-      setInventory(storedInventory ? JSON.parse(storedInventory) : []);
+      const data = await getUserData(currentUser.username);
+      setInventory(data?.inventory || []);
     } catch (error) {
-      console.error("Failed to parse inventory from localStorage", error);
+      console.error("Failed to fetch inventory from Firestore", error);
       setInventory([]);
     }
   }
@@ -47,33 +50,49 @@ export function InventoryDialog({ children, shopItems }: InventoryDialogProps) {
     fetchInventory();
   }, []);
 
-  const handleUseItem = (itemId: string) => {
+  const handleUseItem = async (itemId: string) => {
+    if (!currentUser) return;
     const itemData = shopItems.find(item => item.id === itemId);
     if (!itemData) return;
     
-    switch(itemId) {
-      case 'potion_energy':
-        updateStats({ hp: 10 });
-        toast({ title: "Enerji Yenilendi", description: "HP %10 yenilendi." });
-        break;
-      case 'potion_mind':
-        updateStats({ mp: 15 });
-        toast({ title: "Zihin Canlandı", description: "MP %15 yenilendi." });
-        break;
-      default:
-         toast({ title: itemData.name, description: "Bu eşya bir eylemi tamamlamak için kullanılır." });
-    }
+    try {
+        const userData = await getUserData(currentUser.username);
+        if (!userData || !userData.baseStats) return;
 
-    let updatedInventory = [...inventory];
-    const itemIndex = updatedInventory.findIndex(item => item.id === itemId);
+        let newStats = { ...userData.baseStats };
+        switch(itemId) {
+          case 'potion_energy':
+            newStats.hp = Math.min(100, newStats.hp + 10);
+            toast({ title: "Enerji Yenilendi", description: "HP %10 yenilendi." });
+            break;
+          case 'potion_mind':
+            newStats.mp = Math.min(100, newStats.mp + 15);
+            toast({ title: "Zihin Canlandı", description: "MP %15 yenilendi." });
+            break;
+          default:
+             toast({ title: itemData.name, description: "Bu eşya bir eylemi tamamlamak için kullanılır." });
+             return; // Don't consume item if it has no direct effect here
+        }
+        
+        let updatedInventory = [...inventory];
+        const itemIndex = updatedInventory.findIndex(item => item.id === itemId);
 
-    if (itemIndex > -1) {
-      updatedInventory[itemIndex].quantity -= 1;
-      if (updatedInventory[itemIndex].quantity <= 0) {
-        updatedInventory = updatedInventory.filter(item => item.id !== itemId);
-      }
-      setInventory(updatedInventory);
-      localStorage.setItem('inventory', JSON.stringify(updatedInventory));
+        if (itemIndex > -1) {
+            updatedInventory[itemIndex].quantity -= 1;
+            if (updatedInventory[itemIndex].quantity <= 0) {
+                updatedInventory = updatedInventory.filter(item => item.id !== itemId);
+            }
+            
+            await updateUserData(currentUser.username, {
+                inventory: updatedInventory,
+                baseStats: newStats
+            });
+            setInventory(updatedInventory);
+            window.dispatchEvent(new Event('storage')); // Notify other components
+        }
+    } catch (error) {
+        console.error("Failed to use item", error);
+        toast({ title: "Hata", description: "Eşya kullanılırken bir sorun oluştu.", variant: "destructive" });
     }
   };
   

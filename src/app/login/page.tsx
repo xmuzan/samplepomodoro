@@ -19,15 +19,18 @@ export default function LoginPage() {
     const [registerUsername, setRegisterUsername] = useState('');
     const [registerPassword, setRegisterPassword] = useState('');
     const [registrationMessage, setRegistrationMessage] = useState<string | null>(null);
+    const [isLoggingIn, setIsLoggingIn] = useState(false);
+    const [isRegistering, setIsRegistering] = useState(false);
 
     const router = useRouter();
     const { toast } = useToast();
 
-    const handleLogin = (e: React.FormEvent) => {
+    const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
-        const result = login(loginUsername, loginPassword);
+        setIsLoggingIn(true);
+        const result = await login(loginUsername, loginPassword);
         if (result.success) {
-            window.dispatchEvent(new Event('storage')); // Notify layout to update
+            window.dispatchEvent(new Event('storage'));
             router.push('/tasks');
         } else {
             toast({
@@ -36,11 +39,13 @@ export default function LoginPage() {
                 description: result.message,
             });
         }
+        setIsLoggingIn(false);
     };
 
-    const handleRegister = (e: React.FormEvent) => {
+    const handleRegister = async (e: React.FormEvent) => {
         e.preventDefault();
-        const result = register(registerUsername, registerPassword);
+        setIsRegistering(true);
+        const result = await register(registerUsername, registerPassword);
         if (result.success) {
             setRegistrationMessage(result.message);
             setRegisterUsername('');
@@ -52,6 +57,7 @@ export default function LoginPage() {
                 description: result.message,
             });
         }
+        setIsRegistering(false);
     };
 
     return (
@@ -79,6 +85,7 @@ export default function LoginPage() {
                                         value={loginUsername}
                                         onChange={(e) => setLoginUsername(e.target.value)}
                                         required
+                                        disabled={isLoggingIn}
                                     />
                                 </div>
                                 <div className="space-y-2">
@@ -89,10 +96,11 @@ export default function LoginPage() {
                                         value={loginPassword}
                                         onChange={(e) => setLoginPassword(e.target.value)}
                                         required
+                                        disabled={isLoggingIn}
                                     />
                                 </div>
-                                <Button type="submit" className="w-full">
-                                    Giriş Yap
+                                <Button type="submit" className="w-full" disabled={isLoggingIn}>
+                                    {isLoggingIn ? 'Giriş Yapılıyor...' : 'Giriş Yap'}
                                 </Button>
                             </form>
                         </div>
@@ -118,6 +126,7 @@ export default function LoginPage() {
                                             value={registerUsername}
                                             onChange={(e) => setRegisterUsername(e.target.value)}
                                             required
+                                            disabled={isRegistering}
                                         />
                                     </div>
                                     <div className="space-y-2">
@@ -128,10 +137,11 @@ export default function LoginPage() {
                                             value={registerPassword}
                                             onChange={(e) => setRegisterPassword(e.target.value)}
                                             required
+                                            disabled={isRegistering}
                                         />
                                     </div>
-                                    <Button type="submit" className="w-full">
-                                        Kayıt Ol
+                                    <Button type="submit" className="w-full" disabled={isRegistering}>
+                                        {isRegistering ? 'Kayıt Olunuyor...' : 'Kayıt Ol'}
                                     </Button>
                                 </form>
                             )}

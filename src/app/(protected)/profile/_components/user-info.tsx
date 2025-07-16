@@ -7,6 +7,7 @@ import { EditProfileDialog } from './edit-profile-dialog';
 import { cn } from '@/lib/utils';
 import { getCurrentUser } from '@/lib/auth';
 import { useEffect, useState } from 'react';
+import type { User } from '@/types';
 
 interface UserInfoProps {
   level: number;
@@ -27,32 +28,13 @@ const tierColorMap: { [key: string]: string } = {
     'E': 'text-gray-400 border-gray-500/50 shadow-gray-500/50',
 };
 
-export function UserInfo({ level, tier, job, title, onProfileUpdate }: UserInfoProps) {
-  const [currentUser, setCurrentUser] = useState<{username: string, avatarUrl: string} | null>(null);
-
-  useEffect(() => {
-    const user = getCurrentUser();
-    // This part is a bit tricky. We get username from auth, but avatar from general profile storage.
-    // A real app would store this together.
-    const storedUsername = localStorage.getItem('username');
-    const storedAvatarUrl = localStorage.getItem('avatarUrl');
-
-    const username = user?.username || (storedUsername ? JSON.parse(storedUsername) : "Kullanıcı");
-    const avatarUrl = storedAvatarUrl ? JSON.parse(storedAvatarUrl) : "https://placehold.co/100x100.png";
-
-    setCurrentUser({ username, avatarUrl });
-  }, []);
-
-  if (!currentUser) {
-    return null; // or a skeleton loader
-  }
-
-
+export function UserInfo({ level, tier, job, title, username, avatarUrl, onProfileUpdate }: UserInfoProps) {
+  
   return (
     <div className="flex flex-col md:flex-row items-center gap-4 text-center md:text-left">
       <div className="relative group">
         <Image
-          src={currentUser.avatarUrl}
+          src={avatarUrl}
           alt="User Avatar"
           width={100}
           height={100}
@@ -63,8 +45,8 @@ export function UserInfo({ level, tier, job, title, onProfileUpdate }: UserInfoP
           }}
         />
         <EditProfileDialog
-            currentUsername={currentUser.username}
-            currentAvatarUrl={currentUser.avatarUrl}
+            currentUsername={username}
+            currentAvatarUrl={avatarUrl}
             onSave={onProfileUpdate}
         >
             <Button variant="ghost" size="icon" className="absolute bottom-0 right-0 h-8 w-8 rounded-full bg-background/50 text-primary opacity-0 group-hover:opacity-100 transition-opacity hover:bg-background/80">
@@ -75,7 +57,7 @@ export function UserInfo({ level, tier, job, title, onProfileUpdate }: UserInfoP
       </div>
       <div className="flex-1">
         <div className="flex items-center justify-center md:justify-start gap-2">
-            <h2 className="text-3xl font-bold text-glow">{currentUser.username}</h2>
+            <h2 className="text-3xl font-bold text-glow">{username}</h2>
         </div>
         <div className="flex items-center justify-center md:justify-start gap-4 mt-2">
             <div className="flex flex-col items-center">

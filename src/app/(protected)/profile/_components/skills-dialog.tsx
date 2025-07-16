@@ -13,6 +13,8 @@ import {
 import { FuturisticBorder } from "@/components/futuristic-border";
 import { SKILL_CATEGORIES, type SkillCategory, type SkillData } from "@/lib/skills";
 import { Progress } from "@/components/ui/progress";
+import { getUserData } from "@/lib/userData";
+import { getCurrentUser } from "@/lib/auth";
 
 interface SkillsDialogProps {
   children: React.ReactNode;
@@ -23,13 +25,15 @@ const TASKS_PER_RANK = 20;
 export function SkillsDialog({ children }: SkillsDialogProps) {
   const [skillData, setSkillData] = useState<SkillData>({});
   const [isMounted, setIsMounted] = useState(false);
+  const currentUser = getCurrentUser();
 
-  const fetchSkillData = () => {
+  const fetchSkillData = async () => {
+    if (!currentUser) return;
     try {
-      const storedData = localStorage.getItem('skillData');
-      setSkillData(storedData ? JSON.parse(storedData) : {});
+        const data = await getUserData(currentUser.username);
+        setSkillData(data?.skillData || {});
     } catch (error) {
-      console.error("Failed to parse skill data from localStorage", error);
+      console.error("Failed to parse skill data from Firestore", error);
       setSkillData({});
     }
   };
@@ -44,9 +48,8 @@ export function SkillsDialog({ children }: SkillsDialogProps) {
       fetchSkillData();
       
       const handleStorageChange = (event: StorageEvent) => {
-        if(event.key === 'skillData') {
-            fetchSkillData();
-        }
+        // Listen for broad changes, then refetch
+        fetchSkillData();
       };
       window.addEventListener('storage', handleStorageChange);
       

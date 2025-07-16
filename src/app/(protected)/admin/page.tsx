@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { FuturisticBorder } from '@/components/futuristic-border';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { User } from '@/types';
+import type { User } from '@/types';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,15 +18,16 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { ShieldCheck, UserCheck, Trash2, RefreshCcw } from 'lucide-react';
+import { getAllUsers, updateUserStatus, resetUserProgress, getCurrentUser } from '@/lib/userData';
 
 export default function AdminPage() {
   const [pendingUsers, setPendingUsers] = useState<User[]>([]);
   const [isMounted, setIsMounted] = useState(false);
   const { toast } = useToast();
 
-  const fetchUsers = () => {
+  const fetchUsers = async () => {
     try {
-      const allUsers = JSON.parse(localStorage.getItem('users') || '[]');
+      const allUsers = await getAllUsers();
       setPendingUsers(allUsers.filter((user: User) => user.status === 'pending'));
     } catch (error) {
       console.error("Failed to fetch users:", error);
@@ -43,17 +44,10 @@ export default function AdminPage() {
     fetchUsers();
   }, []);
 
-  const handleActivateUser = (username: string) => {
+  const handleActivateUser = async (username: string) => {
     try {
-      const allUsers: User[] = JSON.parse(localStorage.getItem('users') || '[]');
-      const updatedUsers = allUsers.map(user => {
-        if (user.username === username) {
-          return { ...user, status: 'active' };
-        }
-        return user;
-      });
-      localStorage.setItem('users', JSON.stringify(updatedUsers));
-      fetchUsers(); // Refresh the list
+      await updateUserStatus(username, 'active');
+      await fetchUsers(); // Refresh the list
       toast({
         title: "Başarılı",
         description: `${username} adlı kullanıcının hesabı aktive edildi.`,
@@ -68,36 +62,20 @@ export default function AdminPage() {
     }
   };
   
-  const handleResetProgress = () => {
+  const handleResetProgress = async () => {
     try {
-        const keysToReset = [
-            'tasks',
-            'userGold',
-            'level',
-            'attributePoints',
-            'stats',
-            'skillData',
-            'tasksCompletedThisLevel',
-            'tasksRequiredForNextLevel',
-            'baseStats',
-            'inventory',
-            'penaltyEndTime',
-            'taskDeadline',
-            'bossRespawnTime'
-        ];
+        const currentUser = getCurrentUser();
+        if (!currentUser) {
+            toast({
+                title: "Hata",
+                description: "Mevcut kullanıcı bulunamadı.",
+                variant: "destructive"
+            });
+            return;
+        }
+        await resetUserProgress(currentUser.username);
         
-        // Also clear any boss HP data
-        Object.keys(localStorage).forEach(key => {
-            if(key.startsWith('boss_') && key.endsWith('_hp')){
-                keysToReset.push(key);
-            }
-        })
-        
-        keysToReset.forEach(key => localStorage.removeItem(key));
-        
-        // Reset username/avatar to default if needed, or leave them. Let's leave them.
-        
-        window.dispatchEvent(new Event('storage'));
+        window.dispatchEvent(new Event('storage')); // Notify other components to refetch data
         
         toast({
             title: "İlerleme Sıfırlandı",
@@ -112,7 +90,6 @@ export default function AdminPage() {
         });
     }
   };
-
 
   if (!isMounted) {
     return <main className="flex-1 p-4 pb-24 md:ml-20 md:pb-4 lg:ml-64"></main>;
@@ -187,4 +164,3 @@ export default function AdminPage() {
     </main>
   );
 }
-

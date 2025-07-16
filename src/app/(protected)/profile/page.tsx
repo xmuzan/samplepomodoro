@@ -1,7 +1,6 @@
 
-
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { FuturisticBorder } from '@/components/futuristic-border';
 import { UserInfo } from './_components/user-info';
 import { StatBars } from './_components/stat-bars';
@@ -9,190 +8,150 @@ import { Attributes } from './_components/attributes';
 import { FooterActions } from './_components/footer-actions';
 import { Separator } from '@/components/ui/separator';
 import { shopItemsData } from '@/app/(protected)/shop/page';
-import { SKILL_CATEGORIES } from '@/lib/skills';
 import { getTitleForLevel } from '@/lib/titles';
 import { getTierForLevel } from '@/lib/ranks';
-import { getStats, type UserStats } from '@/lib/stats';
+import { type UserStats } from '@/lib/stats';
+import { getCurrentUser } from '@/lib/auth';
+import { getUserData, updateUserData } from '@/lib/userData';
+import { type UserData } from '@/lib/userData';
 
 
 import './profile.css';
 
-const defaultUsername = "Sung Jin-Woo";
-const defaultAvatarUrl = "https://placehold.co/100x100.png";
-const defaultStatsData = { str: 0, vit: 0, agi: 0, int: 0, per: 0 };
-const defaultSkillData = Object.keys(SKILL_CATEGORIES).reduce((acc, key) => {
-    if (key !== 'other') {
-      acc[key as keyof typeof SKILL_CATEGORIES] = { completedTasks: 0, rankIndex: 0 };
-    }
-    return acc;
-  }, {} as Record<string, { completedTasks: number; rankIndex: number }>);
-
+const defaultUserData: UserData = {
+    userGold: 150,
+    avatarUrl: "https://placehold.co/100x100.png",
+    level: 0,
+    attributePoints: 0,
+    stats: { str: 0, vit: 0, agi: 0, int: 0, per: 0 },
+    baseStats: { hp: 100, mp: 100, ir: 100 },
+    skillData: {},
+    tasks: [],
+    inventory: [],
+};
 
 export default function ProfilePage() {
   const [isMounted, setIsMounted] = useState(false);
-  
-  // States for all user data
-  const [gold, setGold] = useState(150);
-  const [username, setUsername] = useState(defaultUsername);
-  const [avatarUrl, setAvatarUrl] = useState(defaultAvatarUrl);
-  const [level, setLevel] = useState(0);
-  const [attributePoints, setAttributePoints] = useState(0);
-  const [stats, setStats] = useState(defaultStatsData);
-  const [baseStats, setBaseStats] = useState<UserStats>({ hp: 100, mp: 100, ir: 100 });
+  const [userData, setUserData] = useState<UserData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const currentUser = getCurrentUser();
 
-
-  const loadDataFromStorage = () => {
+  const loadDataFromFirestore = useCallback(async () => {
+    if (!currentUser?.username) {
+        setIsLoading(false);
+        return;
+    };
+    setIsLoading(true);
     try {
-      const storedGold = localStorage.getItem('userGold');
-      setGold(storedGold ? JSON.parse(storedGold) : 150);
-    } catch {
-      setGold(150);
+      const data = await getUserData(currentUser.username);
+      setUserData(data || defaultUserData);
+    } catch (error) {
+      console.error("Failed to load user data:", error);
+      setUserData(defaultUserData);
+    } finally {
+        setIsLoading(false);
     }
+  }, [currentUser?.username]);
 
-    try {
-      const storedUsername = localStorage.getItem('username');
-      setUsername(storedUsername ? JSON.parse(storedUsername) : defaultUsername);
-    } catch {
-       setUsername(defaultUsername);
-    }
-    
-    try {
-      const storedAvatarUrl = localStorage.getItem('avatarUrl');
-      setAvatarUrl(storedAvatarUrl ? JSON.parse(storedAvatarUrl) : defaultAvatarUrl);
-    } catch {
-        setAvatarUrl(defaultAvatarUrl);
-    }
-
-    try {
-      const storedLevel = localStorage.getItem('level');
-      setLevel(storedLevel ? JSON.parse(storedLevel) : 0);
-    } catch {
-        setLevel(0);
-    }
-
-    try {
-      const storedAttributePoints = localStorage.getItem('attributePoints');
-      setAttributePoints(storedAttributePoints ? JSON.parse(storedAttributePoints) : 0);
-    } catch {
-        setAttributePoints(0);
-    }
-      
-    try {
-      const storedStats = localStorage.getItem('stats');
-      setStats(storedStats ? JSON.parse(storedStats) : defaultStatsData);
-    } catch {
-        setStats(defaultStatsData);
-    }
-
-    try {
-        const storedSkillData = localStorage.getItem('skillData');
-        if (!storedSkillData) {
-            localStorage.setItem('skillData', JSON.stringify(defaultSkillData));
-        }
-    } catch {
-        localStorage.setItem('skillData', JSON.stringify(defaultSkillData));
-    }
-
-    setBaseStats(getStats());
-  };
-
-  // Effect to load data from localStorage on mount
   useEffect(() => {
-    loadDataFromStorage();
     setIsMounted(true);
-  }, []);
+    loadDataFromFirestore();
+  }, [loadDataFromFirestore]);
 
   // Effect to listen for storage changes from other tabs/windows
   useEffect(() => {
     if (!isMounted) return;
 
     const handleStorageChange = (event: StorageEvent) => {
-        if ([
-          'userGold', 'username', 'avatarUrl', 'level', 
-          'attributePoints', 'stats', 'skillData', 'tasksCompletedThisLevel', 
-          'tasksRequiredForNextLevel', 'baseStats'
-        ].includes(event.key || '')) {
-          loadDataFromStorage();
-        }
+        // A generic event listener, refetch data on any 'storage' event from our app
+        loadDataFromFirestore();
     };
 
     window.addEventListener('storage', handleStorageChange);
     return () => {
         window.removeEventListener('storage', handleStorageChange);
     };
-  }, [isMounted]);
+  }, [isMounted, loadDataFromFirestore]);
 
-  const handleProfileUpdate = (newUsername: string, newAvatarUrl: string) => {
-    setUsername(newUsername);
-    setAvatarUrl(newAvatarUrl);
-    localStorage.setItem('username', JSON.stringify(newUsername));
-    localStorage.setItem('avatarUrl', JSON.stringify(newAvatarUrl));
+  const handleProfileUpdate = async (newUsername: string, newAvatarUrl: string) => {
+    if (!currentUser?.username) return;
+    await updateUserData(currentUser.username, { avatarUrl: newAvatarUrl });
+    setUserData(prev => prev ? { ...prev, avatarUrl: newAvatarUrl } : null);
     window.dispatchEvent(new Event('storage'));
   };
   
-  const handleSpendPoint = (statKey: keyof typeof stats) => {
-    if (attributePoints > 0) {
-      const newPoints = attributePoints - 1;
-      const newStats = { ...stats, [statKey]: stats[statKey] + 1 };
-      
-      setAttributePoints(newPoints);
-      setStats(newStats);
-      
-      localStorage.setItem('attributePoints', JSON.stringify(newPoints));
-      localStorage.setItem('stats', JSON.stringify(newStats));
-      window.dispatchEvent(new Event('storage'));
-    }
+  const handleSpendPoint = async (statKey: keyof UserData['stats']) => {
+    if (!currentUser?.username || !userData || userData.attributePoints <= 0) return;
+    
+    const newPoints = userData.attributePoints - 1;
+    const newStats = { ...userData.stats, [statKey]: (userData.stats?.[statKey] || 0) + 1 };
+    
+    await updateUserData(currentUser.username, { 
+        attributePoints: newPoints,
+        stats: newStats
+    });
+
+    setUserData(prev => prev ? { ...prev, attributePoints: newPoints, stats: newStats } : null);
+    window.dispatchEvent(new Event('storage'));
   };
 
 
-  if (!isMounted) {
+  if (!isMounted || isLoading) {
     return (
-        <main className="flex-1 p-4 pb-24 md:ml-20 md:pb-4 lg:ml-64">
-            {/* You can add a skeleton loader here if you want */}
+        <main className="flex-1 p-4 pb-24 md:ml-20 md:pb-4 lg:ml-64 flex items-center justify-center">
+            <p>Yükleniyor...</p>
         </main>
     );
   }
 
-  const userTitle = getTitleForLevel(level);
-  const userTier = getTierForLevel(level);
+  if (!userData || !currentUser) {
+    return (
+        <main className="flex-1 p-4 pb-24 md:ml-20 md:pb-4 lg:ml-64 flex items-center justify-center">
+            <p>Kullanıcı verisi bulunamadı.</p>
+        </main>
+    );
+  }
+
+  const userTitle = getTitleForLevel(userData.level);
+  const userTier = getTierForLevel(userData.level);
 
   return (
     <main className="flex-1 p-4 pb-24 md:ml-20 md:pb-4 lg:ml-64">
       <div className="max-w-4xl mx-auto">
         <FuturisticBorder>
-          <div className="p-4 md:p-6 profile-card-container">
+          <div className="p-4 md:p-6 profile-card-container bg-background/90 backdrop-blur-lg">
             <UserInfo 
-              level={level}
+              level={userData.level}
               tier={userTier}
               job={userTitle.job}
               title={userTitle.title}
-              username={username}
-              avatarUrl={avatarUrl}
+              username={currentUser.username}
+              avatarUrl={userData.avatarUrl}
               onProfileUpdate={handleProfileUpdate}
             />
 
             <Separator className="my-4 bg-border/20" />
 
             <StatBars 
-              hp={{current: baseStats.hp, max: 100}}
-              mp={{current: baseStats.mp, max: 100}}
-              ir={{current: baseStats.ir, max: 100}}
+              hp={{current: userData.baseStats.hp, max: 100}}
+              mp={{current: userData.baseStats.mp, max: 100}}
+              ir={{current: userData.baseStats.ir, max: 100}}
             />
 
             <Separator className="my-4 bg-border/20" />
 
             <Attributes 
-              stats={stats}
-              attributePoints={attributePoints}
+              stats={userData.stats}
+              attributePoints={userData.attributePoints}
               onSpendPoint={handleSpendPoint}
             />
 
              <Separator className="my-4 bg-border/20" />
 
             <FooterActions 
-              gold={gold} 
+              gold={userData.userGold} 
               shopItems={shopItemsData}
-              availablePoints={attributePoints}
+              availablePoints={userData.attributePoints}
             />
           </div>
         </FuturisticBorder>

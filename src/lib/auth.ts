@@ -2,71 +2,41 @@
 'use client';
 
 import type { User } from '@/types';
+import { getUserForLogin, createNewUser } from './userData';
 
 const USER_KEY = 'currentUser';
 
-export function login(username: string, password?: string): { success: boolean, message: string, user?: User } {
-    if (username === 'fatihbey' && password === '$fatihbey$') {
-        const user: User = {
-            username: 'fatihbey',
-            isAdmin: true,
-            status: 'active',
-        };
-        const session = {
-            user,
-            expiry: Date.now() + 60 * 60 * 1000, // 1 hour from now
-        };
-        localStorage.setItem(USER_KEY, JSON.stringify(session));
-        return { success: true, message: 'Admin girişi başarılı!', user };
-    }
-    
-    // For now, any other login is treated as a guest or a pending user
-    // A more robust system would check a user database
+export async function login(username: string, password?: string): Promise<{ success: boolean, message: string, user?: User }> {
     try {
-        const users = JSON.parse(localStorage.getItem('users') || '[]');
-        const existingUser = users.find((u: any) => u.username === username);
-
-        if (existingUser) {
-             if (existingUser.status === 'pending') {
-                 return { success: false, message: 'Hesabınız yönetici onayı bekliyor.' };
-             }
-             const session = {
-                user: existingUser,
-                expiry: Date.now() + 60 * 60 * 1000, // 1 hour
-             };
-             localStorage.setItem(USER_KEY, JSON.stringify(session));
-             return { success: true, message: 'Giriş başarılı!', user: existingUser };
+        const result = await getUserForLogin(username, password);
+        if (result.success && result.user) {
+            if (result.user.status === 'pending') {
+                return { success: false, message: 'Hesabınız yönetici onayı bekliyor.' };
+            }
+            const session = {
+                user: result.user,
+                expiry: Date.now() + 24 * 60 * 60 * 1000, // 24 hours
+            };
+            localStorage.setItem(USER_KEY, JSON.stringify(session));
+            return { success: true, message: 'Giriş başarılı!', user: result.user };
+        } else {
+            return { success: false, message: result.message || 'Geçersiz kullanıcı adı veya şifre.' };
         }
-    } catch {}
-
-
-    return { success: false, message: 'Geçersiz kullanıcı adı veya şifre.' };
+    } catch (error) {
+        console.error("Login error:", error);
+        return { success: false, message: 'Giriş sırasında bir hata oluştu.' };
+    }
 }
 
-export function register(username: string, password?: string): { success: boolean, message: string } {
+export async function register(username: string, password?: string): Promise<{ success: boolean, message: string }> {
     if (!username || !password) {
         return { success: false, message: 'Kullanıcı adı ve şifre gerekli.' };
     }
     try {
-        const users = JSON.parse(localStorage.getItem('users') || '[]');
-        const existingUser = users.find((u: any) => u.username === username);
-
-        if (existingUser) {
-            return { success: false, message: 'Bu kullanıcı adı zaten alınmış.' };
-        }
-
-        const newUser = {
-            username,
-            password, // Note: Storing plain text passwords is a security risk. This is for demo purposes.
-            isAdmin: false,
-            status: 'pending',
-        };
-        users.push(newUser);
-        localStorage.setItem('users', JSON.stringify(users));
-        
-        return { success: true, message: 'Kaydınız alındı. Hesabınız yönetici tarafından onaylandığında giriş yapabilirsiniz.' };
-
+        const result = await createNewUser(username, password);
+        return result;
     } catch (error) {
+        console.error("Registration error:", error);
         return { success: false, message: 'Kayıt sırasında bir hata oluştu.' };
     }
 }
@@ -74,7 +44,7 @@ export function register(username: string, password?: string): { success: boolea
 
 export function logout() {
     localStorage.removeItem(USER_KEY);
-    window.dispatchEvent(new Event('storage')); // Notify other tabs/components
+    window.dispatchEvent(new Event('storage'));
 }
 
 export function getCurrentUser(): User | null {

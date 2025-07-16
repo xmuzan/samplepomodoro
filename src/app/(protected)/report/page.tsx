@@ -5,9 +5,12 @@ import { useState, useEffect } from 'react';
 import { FuturisticBorder } from '@/components/futuristic-border';
 import { ReportCard, type ReportAction } from './_components/report-card';
 import { Separator } from '@/components/ui/separator';
-import { updateStats, getStats, type UserStats } from '@/lib/stats';
 import { useToast } from '@/hooks/use-toast';
 import { HeartPulse, FlaskConical } from 'lucide-react';
+import { getUserData, updateUserData } from '@/lib/userData';
+import { getCurrentUser } from '@/lib/auth';
+import type { UserStats } from '@/lib/stats';
+
 
 import './report.css';
 
@@ -57,15 +60,36 @@ export default function ReportPage() {
   const [stats, setStats] = useState<UserStats>({ hp: 100, mp: 100, ir: 100 });
   const [isMounted, setIsMounted] = useState(false);
   const { toast } = useToast();
+  const currentUser = getCurrentUser();
 
   useEffect(() => {
     setIsMounted(true);
-    setStats(getStats());
-  }, []);
+    if (!currentUser) return;
+    getUserData(currentUser.username).then(data => {
+        if(data?.baseStats) {
+            setStats(data.baseStats);
+        }
+    });
+  }, [currentUser]);
 
-  const handleReport = (action: ReportAction) => {
-    const newStats = updateStats({ [action.stat]: action.impact });
+  const handleReport = async (action: ReportAction) => {
+    if (!currentUser) return;
+    
+    const currentData = await getUserData(currentUser.username);
+    if (!currentData || !currentData.baseStats) return;
+
+    const currentStats = currentData.baseStats;
+    const newStats = { ...currentStats };
+
+    if (action.stat === 'hp') {
+        newStats.hp = Math.max(0, Math.min(100, currentStats.hp + action.impact));
+    } else if (action.stat === 'mp') {
+        newStats.mp = Math.max(0, Math.min(100, currentStats.mp + action.impact));
+    }
+
+    await updateUserData(currentUser.username, { baseStats: newStats });
     setStats(newStats);
+    window.dispatchEvent(new Event('storage'));
     
     toast({
       title: "Rapor Başarılı",
@@ -77,7 +101,6 @@ export default function ReportPage() {
   if (!isMounted) {
     return (
         <main className="flex-1 p-4 pb-24 md:ml-20 md:pb-4 lg:ml-64">
-            {/* Skeleton loader can be added here */}
         </main>
     );
   }
@@ -91,7 +114,6 @@ export default function ReportPage() {
               GÜNLÜK RAPOR
             </h1>
             
-            {/* HP Section */}
             <div className="mb-8">
               <h2 className="flex items-center gap-3 text-xl font-bold text-red-400 mb-4">
                 <HeartPulse className="h-6 w-6" />
@@ -106,7 +128,6 @@ export default function ReportPage() {
 
             <Separator className="my-6 bg-border/20" />
 
-            {/* MP Section */}
             <div>
               <h2 className="flex items-center gap-3 text-xl font-bold text-blue-400 mb-4">
                 <FlaskConical className="h-6 w-6" />
