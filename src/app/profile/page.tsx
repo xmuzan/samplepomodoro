@@ -11,6 +11,7 @@ import { Separator } from '@/components/ui/separator';
 import { shopItemsData } from '@/app/shop/page';
 import { SKILL_CATEGORIES } from '@/lib/skills';
 import { getTitleForLevel } from '@/lib/titles';
+import { getTierForLevel } from '@/lib/ranks';
 import { getStats, type UserStats } from '@/lib/stats';
 
 
@@ -156,6 +157,7 @@ export default function ProfilePage() {
   }
 
   const userTitle = getTitleForLevel(level);
+  const userTier = getTierForLevel(level);
 
   return (
     <div className="flex min-h-screen flex-col text-foreground md:flex-row">
@@ -166,6 +168,7 @@ export default function ProfilePage() {
             <div className="bg-background/90 backdrop-blur-sm p-4 md:p-6 profile-card-container">
               <UserInfo 
                 level={level}
+                tier={userTier}
                 job={userTitle.job}
                 title={userTitle.title}
                 username={username}
