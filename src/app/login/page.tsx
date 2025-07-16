@@ -36,7 +36,8 @@ export default function LoginPage() {
                     title: 'Giriş Başarılı',
                     description: 'Görevler sayfasına yönlendiriliyorsunuz...',
                 });
-                router.push('/tasks');
+                // Use a standard browser redirect to force a full page load, bypassing Next.js router issues.
+                window.location.href = '/tasks';
             } else {
                  toast({
                     variant: 'destructive',
