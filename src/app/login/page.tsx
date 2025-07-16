@@ -31,10 +31,9 @@ export default function LoginPage() {
             const result = await loginUserAction({ username: loginUsername, password: loginPassword });
             
             if (result.success) {
-                // The cookie is set on the server.
-                // We just need to navigate to the new page.
-                // Using router.push() is fine here.
-                router.push('/tasks');
+                // The cookie is set on the server by the Server Action.
+                // We force a full page reload to ensure the new cookie is read by the server layout.
+                window.location.href = '/tasks';
             } else {
                 toast({
                     variant: 'destructive',
