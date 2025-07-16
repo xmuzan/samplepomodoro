@@ -1,14 +1,27 @@
 
 'use server';
 
-// This file is temporarily unused while debugging is moved to the client-side.
-// In a production app, this would contain the server-side logic for registration and login.
+import { createNewUser, getUserForLogin } from '@/lib/userData';
+import type { User } from '@/types';
 
-export async function registerUserAction(credentials: unknown): Promise<{ success: boolean; message: string; }> {
-   return { success: false, message: "Sunucu tarafı kayıt devre dışı." };
+export async function registerUserAction(credentials: { username: string, password?: string }): Promise<{ success: boolean; message: string; }> {
+    try {
+        const result = await createNewUser(credentials.username, credentials.password);
+        return result;
+    } catch (error) {
+        console.error("Registration error in server action:", error);
+        const errorMessage = error instanceof Error ? error.message : 'Kayıt sırasında sunucuda beklenmedik bir hata oluştu.';
+        return { success: false, message: errorMessage };
+    }
 }
 
-export async function loginUserAction(credentials: unknown): Promise<any> {
-    // Login logic would go here
-    return { success: false, message: "Sunucu tarafı giriş devre dışı." };
+export async function loginUserAction(credentials: { username: string, password?: string }): Promise<{ success: boolean; message: string; user?: User; }> {
+    try {
+        const result = await getUserForLogin(credentials.username, credentials.password);
+        return result;
+    } catch (error) {
+        console.error("Login error in server action:", error);
+        const errorMessage = error instanceof Error ? error.message : 'Giriş sırasında sunucuda beklenmedik bir hata oluştu.';
+        return { success: false, message: errorMessage };
+    }
 }
