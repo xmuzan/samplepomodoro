@@ -12,7 +12,13 @@ import { Swords, Skull, Timer, Coins } from 'lucide-react';
 import '../boss.css';
 import type { User } from '@/types';
 import { updateUserData, updateGlobalBossData } from '@/lib/userData';
-import type { Boss } from '../page';
+
+export interface Boss {
+  id: string;
+  name: string;
+  imageUrl: string;
+  maxHp: number;
+}
 
 function BossDefeatedScreen({ onReset }: { onReset: () => void }) {
     return (

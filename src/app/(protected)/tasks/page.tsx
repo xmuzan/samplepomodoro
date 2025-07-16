@@ -1,68 +1,43 @@
 
-'use client';
+'use server';
 
-import { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { redirect } from 'next/navigation';
 import { TaskManager } from '@/components/task-manager';
-import { getCurrentUser } from '@/lib/auth';
+import { cookies } from 'next/headers';
 import { getUserData } from '@/lib/userData';
-import type { Task } from '@/components/task-manager';
+import type { User } from '@/types';
 
-// This is now a Client Component
-export default function TasksPage() {
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [username, setUsername] = useState<string | null>(null);
-  const [penaltyEndTime, setPenaltyEndTime] = useState<number | null>(null);
-  const [taskDeadline, setTaskDeadline] = useState<number | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const router = useRouter();
+function getCurrentUser(): User | null {
+    const cookieStore = cookies();
+    const sessionCookie = cookieStore.get('currentUser');
+    if (!sessionCookie?.value) return null;
 
-  const loadTaskData = useCallback(async () => {
-    setIsLoading(true);
     try {
-        const currentUser = getCurrentUser();
-        if (!currentUser) {
-            router.push('/login');
-            return;
+        const session = JSON.parse(sessionCookie.value);
+        if (session.expiry && session.expiry > Date.now()) {
+            return session.user;
         }
-        
-        setUsername(currentUser.username);
-        const userData = await getUserData(currentUser.username);
-
-        setTasks(userData?.tasks || []);
-        setPenaltyEndTime(userData?.penaltyEndTime || null);
-        setTaskDeadline(userData?.taskDeadline || null);
-    } catch (error) {
-        console.error("Failed to load task data:", error);
-    } finally {
-        setIsLoading(false);
+    } catch (e) {
+        return null;
     }
-  }, [router]);
-
-  useEffect(() => {
-    loadTaskData();
-  }, [loadTaskData]);
-
-  if (isLoading) {
-    return (
-      <main className="flex flex-1 items-center justify-center p-4 pb-24 md:ml-20 md:pb-4 lg:ml-64">
-        <p>Yükleniyor...</p>
-      </main>
-    );
-  }
-
-  // Yükleme bittikten sonra kullanıcı adı hala yoksa (yönlendirme beklenirken), hiçbir şey render etme
-  if (!username) {
     return null;
+}
+
+export default async function TasksPage() {
+  const currentUser = getCurrentUser();
+  if (!currentUser) {
+    redirect('/login');
   }
 
+  const userData = await getUserData(currentUser.username);
+  
   return (
     <main className="flex flex-1 items-center justify-center p-4 pb-24 md:ml-20 md:pb-4 lg:ml-64">
-      <TaskManager 
-        username={username} 
-        initialTasks={tasks}
-        initialPenaltyEndTime={penaltyEndTime}
-        initialTaskDeadline={taskDeadline}
+      <TaskManager
+        username={currentUser.username}
+        initialTasks={userData?.tasks || []}
+        initialPenaltyEndTime={userData?.penaltyEndTime || null}
+        initialTaskDeadline={userData?.taskDeadline || null}
       />
     </main>
   );
