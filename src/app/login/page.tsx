@@ -33,22 +33,18 @@ export default function LoginPage() {
             const result = await loginUserAction({ username: loginUsername, password: loginPassword });
             
             if (result.success && result.user) {
-                 if (result.user.status === 'pending') {
-                    toast({
-                        variant: 'destructive',
-                        title: 'Onay Bekleniyor',
-                        description: 'Hesabınız henüz yönetici tarafından onaylanmadı.',
-                    });
-                } else {
-                    const session = {
-                        user: result.user,
-                        expiry: Date.now() + 24 * 60 * 60 * 1000,
-                    };
-                    setCookie('currentUser', JSON.stringify(session), { maxAge: 60 * 60 * 24 });
-                    localStorage.setItem('currentUser', JSON.stringify(session));
-                    router.push('/tasks');
-                    router.refresh(); // Force a refresh of the layout
-                }
+                 const session = {
+                    user: result.user,
+                    expiry: Date.now() + 24 * 60 * 60 * 1000, // 24 hours
+                };
+                setCookie('currentUser', JSON.stringify(session), { maxAge: 60 * 60 * 24 });
+                
+                // For components that need immediate client-side access
+                localStorage.setItem('currentUser', JSON.stringify(session));
+                
+                // Force a full page reload to ensure the new session is picked up by the server layout
+                window.location.href = '/tasks';
+
             } else {
                 toast({
                     variant: 'destructive',
