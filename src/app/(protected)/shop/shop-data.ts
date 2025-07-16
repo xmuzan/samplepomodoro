@@ -27,17 +27,9 @@ export const shopItemsData: ShopItemData[] = [
     aiHint: 'futuristic screen'
   },
   {
-    id: 'tome_psychology',
-    name: 'Zihin Güçlendirme Parşömeni',
-    description: 'Envanterden kullanarak 25 dakika boyunca psikoloji hakkında bir video izle veya makale oku. Zihinsel dayanıklılığını artırır.',
-    price: 250,
-    imageUrl: 'https://placehold.co/600x400.png',
-    aiHint: 'magic scroll'
-  },
-  {
     id: 'book_wisdom',
     name: 'Bilgelik Tomarı',
-    description: 'Envanterden kullanarak 25 dakika boyunca kendini geliştirecek bir kitap oku. Entelektüel kapasiteni ve algını yükseltir.',
+    description: 'Envanterden kullanarak 25 dakika boyunca kendini geliştirecek bir kitap oku veya benzeri kaynaklara göz at. Entelektüel kapasiteni ve algını yükseltir.',
     price: 300,
     imageUrl: 'https://placehold.co/600x400.png',
     aiHint: 'ancient book'
