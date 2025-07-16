@@ -89,7 +89,7 @@ export default function ReportPage() {
     };
     
     loadData();
-  }, [toast]);
+  }, [router]);
 
   const handleReport = async (action: ReportAction) => {
     const currentUser = getCurrentUser();
