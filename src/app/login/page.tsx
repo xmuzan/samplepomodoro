@@ -37,7 +37,6 @@ export default function LoginPage() {
                     description: 'Görevler sayfasına yönlendiriliyorsunuz...',
                 });
                 router.push('/tasks');
-                router.refresh(); // Bu, sunucudan en güncel durumu çekmek için kritik
             } else {
                  toast({
                     variant: 'destructive',
