@@ -91,11 +91,17 @@ export default function BossPage() {
 
     const { toast } = useToast();
     const router = useRouter();
-    const currentUser = getCurrentUser();
+    
 
     const loadData = useCallback(async () => {
-        if (!currentUser) return;
         setIsLoading(true);
+        const currentUser = getCurrentUser();
+        if (!currentUser) {
+            toast({ title: "Hata", description: "Kullanıcı oturumu bulunamadı.", variant: "destructive" });
+            setIsLoading(false);
+            return;
+        }
+
         try {
             const bossData = await getGlobalBossData(currentBoss.id);
             const userData = await getUserData(currentUser.username);
@@ -124,10 +130,11 @@ export default function BossPage() {
         } catch (error) {
             console.error("Error loading boss data:", error);
             setBossHp(currentBoss.maxHp);
+            toast({ title: "Hata", description: "Boss verileri yüklenirken bir sorun oluştu.", variant: "destructive" });
         } finally {
             setIsLoading(false);
         }
-    }, [currentUser]);
+    }, [toast]);
 
     useEffect(() => {
         loadData();
@@ -135,6 +142,7 @@ export default function BossPage() {
 
 
     const handleAttack = async () => {
+        const currentUser = getCurrentUser();
         if (bossHp <= 0 || !currentUser || !userStats) return;
 
         if (userStats.mp < 10) {
@@ -171,6 +179,7 @@ export default function BossPage() {
     };
 
     const handleBossDefeat = async () => {
+        const currentUser = getCurrentUser();
         if (!currentUser) return;
         toast({
             title: 'BOSS YENİLDİ!',

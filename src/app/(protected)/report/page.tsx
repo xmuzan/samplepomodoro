@@ -59,20 +59,40 @@ const mpActions: ReportAction[] = [
 
 export default function ReportPage() {
   const [stats, setStats] = useState<UserStats | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
-  const currentUser = getCurrentUser();
   const router = useRouter();
 
   useEffect(() => {
-    if (!currentUser) return;
-    getUserData(currentUser.username).then(data => {
-        if(data?.baseStats) {
-            setStats(data.baseStats);
+    const loadData = async () => {
+        setIsLoading(true);
+        const currentUser = getCurrentUser();
+        if (!currentUser) {
+            toast({ title: "Hata", description: "Kullanıcı oturumu bulunamadı.", variant: "destructive" });
+            setIsLoading(false);
+            return;
         }
-    });
-  }, [currentUser]);
+
+        try {
+            const data = await getUserData(currentUser.username);
+            if(data?.baseStats) {
+                setStats(data.baseStats);
+            } else {
+                 toast({ title: "Hata", description: "Kullanıcı verileri bulunamadı.", variant: "destructive" });
+            }
+        } catch (error) {
+            console.error("Failed to load user stats:", error);
+            toast({ title: "Hata", description: "Kullanıcı istatistikleri yüklenirken bir sorun oluştu.", variant: "destructive" });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+    
+    loadData();
+  }, [toast]);
 
   const handleReport = async (action: ReportAction) => {
+    const currentUser = getCurrentUser();
     if (!currentUser) return;
     
     const currentData = await getUserData(currentUser.username);
@@ -89,6 +109,8 @@ export default function ReportPage() {
 
     await updateUserData(currentUser.username, { baseStats: newStats });
     setStats(newStats);
+    
+    // Refresh the router to update data in other components like the profile page
     router.refresh();
     
     toast({
@@ -98,10 +120,18 @@ export default function ReportPage() {
     });
   };
 
-  if (!stats) {
+  if (isLoading) {
     return (
         <main className="flex-1 p-4 pb-24 md:ml-20 md:pb-4 lg:ml-64 flex items-center justify-center">
             <p>Yükleniyor...</p>
+        </main>
+    );
+  }
+  
+  if (!stats) {
+    return (
+        <main className="flex-1 p-4 pb-24 md:ml-20 md:pb-4 lg:ml-64 flex items-center justify-center">
+            <p>Kullanıcı istatistikleri yüklenemedi. Lütfen tekrar deneyin.</p>
         </main>
     );
   }
