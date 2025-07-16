@@ -77,70 +77,37 @@ interface TaskManagerProps {
 
 export function TaskManager({ username, initialTasks, initialPenaltyEndTime, initialTaskDeadline }: TaskManagerProps) {
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
-  const [penaltyEndTime, setPenaltyEndTime] = useState<number | null>(initialPenaltyEndTime);
-  const [taskDeadline, setTaskDeadline] = useState<number | null>(initialTaskDeadline);
   const { toast } = useToast();
   const router = useRouter();
 
   useEffect(() => {
     setTasks(initialTasks);
-    setPenaltyEndTime(initialPenaltyEndTime);
-    setTaskDeadline(initialTaskDeadline);
-  }, [initialTasks, initialPenaltyEndTime, initialTaskDeadline]);
+  }, [initialTasks]);
 
-  // The deadline penalty check should now happen on the server before page load,
-  // but we keep a client-side check as a fallback.
-  useEffect(() => {
-    const checkDeadline = async () => {
-        if (initialTaskDeadline && initialTaskDeadline < Date.now()) {
-             const hasIncompleteTasks = tasks.some((t: Task) => !t.completed);
-             const isPenaltyActive = penaltyEndTime && penaltyEndTime > Date.now();
-            if (hasIncompleteTasks && !isPenaltyActive) {
-                const newPenaltyTime = Date.now() + 24 * 60 * 60 * 1000;
-                await updateUserData(username, { penaltyEndTime: newPenaltyTime, taskDeadline: null });
-                setPenaltyEndTime(newPenaltyTime);
-                setTaskDeadline(null);
-                toast({
-                    title: "Ceza Görevi Başladı!",
-                    description: "Görevleri zamanında tamamlayamadın. 24 saatliğine özelliklerin kilitlendi.",
-                    variant: "destructive"
-                });
-                router.refresh();
-            }
-        }
-    }
-    checkDeadline();
-  }, [initialTaskDeadline, penaltyEndTime, tasks, toast, username, router]);
-  
-  const updateTasksInDb = useCallback(async (newTasks: Task[]) => {
-      setTasks(newTasks);
-      const hasTasks = newTasks.length > 0;
-      let dataToUpdate: Partial<UserData> = { tasks: newTasks };
-
-      const userData = await getUserData(username);
-
-      if (!hasTasks) {
-          dataToUpdate.taskDeadline = null;
-          dataToUpdate.penaltyEndTime = null;
-          setTaskDeadline(null);
-          setPenaltyEndTime(null);
-      } else {
-          const currentPenalty = userData?.penaltyEndTime && userData.penaltyEndTime > Date.now();
-          const hasIncompleteTasks = newTasks.some(task => !task.completed);
-
-          if (hasIncompleteTasks && !userData?.taskDeadline && !currentPenalty) {
-              const newDeadline = Date.now() + 24 * 60 * 60 * 1000;
-              dataToUpdate.taskDeadline = newDeadline;
-              setTaskDeadline(newDeadline);
-          } else if (!hasIncompleteTasks) {
-              dataToUpdate.taskDeadline = null;
-              setTaskDeadline(null);
-          }
-      }
+  const updateTasksAndDeadline = useCallback(async (newTasks: Task[]) => {
+    setTasks(newTasks);
+    const hasTasks = newTasks.length > 0;
+    let dataToUpdate: Partial<UserData> = { tasks: newTasks };
+    
+    if (!hasTasks) {
+        dataToUpdate.taskDeadline = null;
+    } else {
+      const hasIncompleteTasks = newTasks.some(task => !task.completed);
+      const userData = await getUserData(username); // Need to check current state
       
-      await updateTasks(username, dataToUpdate);
-      router.refresh(); // Re-fetch server-side props for consistency
+      const isPenaltyActive = userData?.penaltyEndTime && userData.penaltyEndTime > Date.now();
+      
+      if (hasIncompleteTasks && !userData?.taskDeadline && !isPenaltyActive) {
+          dataToUpdate.taskDeadline = Date.now() + 24 * 60 * 60 * 1000;
+      } else if (!hasIncompleteTasks) {
+          dataToUpdate.taskDeadline = null;
+      }
+    }
+    
+    await updateUserData(username, dataToUpdate);
+    router.refresh();
   }, [username, router]);
+
 
   const addTask = (taskText: string, difficulty: 'easy' | 'hard', category: SkillCategory) => {
     const reward = difficulty === 'easy' ? 50 : 200;
@@ -153,7 +120,7 @@ export function TaskManager({ username, initialTasks, initialPenaltyEndTime, ini
       category,
     };
     const newTasks = [newTask, ...tasks];
-    updateTasksInDb(newTasks);
+    updateTasksAndDeadline(newTasks);
   };
 
   const toggleTask = async (id: string) => {
@@ -167,11 +134,13 @@ export function TaskManager({ username, initialTasks, initialPenaltyEndTime, ini
     });
 
     if (!toggledTask) return;
+    
+    setTasks(newTasks); // Optimistic UI update
 
     if (toggledTask.completed) {
         try {
             const userData = await getUserData(username);
-            if (!userData) return;
+            if (!userData) throw new Error("User data not found");
 
             const isPenaltyActiveNow = userData.penaltyEndTime && userData.penaltyEndTime > Date.now();
             if(isPenaltyActiveNow) {
@@ -180,18 +149,19 @@ export function TaskManager({ username, initialTasks, initialPenaltyEndTime, ini
                   description: "Ceza süresi bitene kadar ödül kazanamazsın.",
                   variant: "destructive"
                 });
-                updateTasksInDb(newTasks);
+                await updateUserData(username, { tasks: newTasks });
+                router.refresh();
                 return;
             }
 
             let finalReward = toggledTask.reward;
             let canLevelUp = true;
             
-            if (userData.baseStats.hp === 0) {
+            if (userData.baseStats.hp <= 0) {
                 finalReward = Math.round(toggledTask.reward * 0.1);
                 toast({ title: "HP Sıfır!", description: "Altın kazanımı %90 azaldı.", variant: "destructive" });
             }
-            if (userData.baseStats.mp === 0) {
+            if (userData.baseStats.mp <= 0) {
                 canLevelUp = false;
                 toast({ title: "MP Sıfır!", description: "Seviye ilerlemesi durduruldu.", variant: "destructive" });
             }
@@ -231,10 +201,12 @@ export function TaskManager({ username, initialTasks, initialPenaltyEndTime, ini
                 updates.skillData = skillData;
             }
             
+            if (!newTasks.some(t => !t.completed)) {
+              updates.taskDeadline = null;
+            }
+            
             await updateUserData(username, updates);
-            setTasks(newTasks);
-            router.refresh();
-
+            
             toast({
               title: "Görev Tamamlandı!",
               description: <div className="flex items-center justify-center w-full gap-2 text-yellow-400"><Coins className="h-5 w-5" /><span className="font-bold">+{finalReward} Altın</span></div>
@@ -242,22 +214,27 @@ export function TaskManager({ username, initialTasks, initialPenaltyEndTime, ini
 
         } catch (error) {
             console.error("Error completing task:", error);
+            // Revert optimistic update on error
+            setTasks(tasks);
+        } finally {
+           router.refresh();
         }
     } else {
-      updateTasksInDb(newTasks);
+      await updateUserData(username, { tasks: newTasks });
+      router.refresh();
     }
   };
   
   const deleteTask = (id: string) => {
     const newTasks = tasks.filter(task => task.id !== id);
-    updateTasksInDb(newTasks);
+    updateTasksAndDeadline(newTasks);
   };
 
-  const isPenaltyActive = penaltyEndTime && penaltyEndTime > Date.now();
-  const isDeadlineActive = taskDeadline && taskDeadline > Date.now() && tasks.some(t => !t.completed);
+  const isPenaltyActive = initialPenaltyEndTime && initialPenaltyEndTime > Date.now();
+  const isDeadlineActive = initialTaskDeadline && initialTaskDeadline > Date.now() && tasks.some(t => !t.completed);
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-4xl mx-auto w-full">
       <FuturisticBorder>
        <div className="bg-background/60 backdrop-blur-md p-1">
         <CardHeader className="flex flex-row items-center justify-between">
@@ -281,9 +258,9 @@ export function TaskManager({ username, initialTasks, initialPenaltyEndTime, ini
         </CardContent>
         
         {isPenaltyActive ? (
-          <TimerDisplay endTime={penaltyEndTime} isPenalty={true} />
+          <TimerDisplay endTime={initialPenaltyEndTime} isPenalty={true} />
         ) : isDeadlineActive ? (
-          <TimerDisplay endTime={taskDeadline} isPenalty={false} />
+          <TimerDisplay endTime={initialTaskDeadline} isPenalty={false} />
         ) : null}
 
         </div>
