@@ -29,8 +29,9 @@ export async function loginUserAction(credentials: { username?: string, password
             path: '/',
         });
 
-        // Redirect from the server action is the most reliable way.
-        redirect('/tasks');
+        // The action will no longer redirect.
+        // The client-side will handle the refresh, and the middleware will handle the redirect.
+        return { success: true };
     }
 
     return { success: false, message: result.message };
@@ -38,4 +39,5 @@ export async function loginUserAction(credentials: { username?: string, password
 
 export async function logoutAction() {
     cookies().delete('currentUser');
+    redirect('/login');
 }

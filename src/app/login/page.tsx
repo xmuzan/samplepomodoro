@@ -2,6 +2,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Bot, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,6 +21,7 @@ export default function LoginPage() {
     const [registrationMessage, setRegistrationMessage] = useState<string | null>(null);
     const [isLoggingIn, setIsLoggingIn] = useState(false);
     const [isRegistering, setIsRegistering] = useState(false);
+    const router = useRouter();
 
     const { toast } = useToast();
 
@@ -27,27 +29,21 @@ export default function LoginPage() {
         e.preventDefault();
         setIsLoggingIn(true);
         try {
-            // The server action will handle the redirect on success.
-            // We only need to handle the failure case here.
             const result = await loginUserAction({ username: loginUsername, password: loginPassword });
             
-            if (!result.success) {
-                toast({
+            if (result.success) {
+                // On success, we just refresh the page.
+                // The middleware will see the new cookie and redirect us to '/tasks'.
+                router.refresh();
+            } else {
+                 toast({
                     variant: 'destructive',
                     title: 'Giriş Başarısız',
                     description: result.message || "Lütfen bilgilerinizi kontrol edin.",
                 });
             }
-            // No need for router.push or router.refresh here.
-            // The server action 'redirect' is more reliable.
             
-        } catch (error: any) {
-            // This is the correct way to handle redirects in Server Actions.
-            // The `redirect()` function throws an error, which we need to catch and re-throw if it's the specific NEXT_REDIRECT error.
-            if (error.digest?.startsWith('NEXT_REDIRECT')) {
-              throw error;
-            }
-            
+        } catch (error) {
             console.error("Login error:", error);
             const errorMessage = error instanceof Error ? error.message : 'Giriş sırasında bilinmeyen bir hata oluştu.';
             toast({

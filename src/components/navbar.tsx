@@ -2,13 +2,12 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Bot, Store, Swords, User, FileText, Lock, Crown, Shield } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import type { User as AuthUser } from '@/types';
 
 import { cn } from '@/lib/utils';
-import { getCurrentUser, logout } from '@/lib/auth';
 import {
   Tooltip,
   TooltipContent,
@@ -17,6 +16,8 @@ import {
 } from '@/components/ui/tooltip';
 import { Button } from './ui/button';
 import { LogOut } from 'lucide-react';
+import { logoutAction } from '@/app/login/actions';
+import { getCookie } from 'cookies-next';
 
 const baseNavItems = [
   { href: '/tasks', label: 'Görevler', icon: Swords },
@@ -28,8 +29,30 @@ const baseNavItems = [
 
 const adminNavItem = { href: '/admin', label: 'Yönetim', icon: Shield };
 
+function getCurrentUser(): AuthUser | null {
+    if (typeof window === 'undefined') {
+        return null;
+    }
+    const cookieValue = getCookie('currentUser');
+    if (!cookieValue || typeof cookieValue !== 'string') {
+        return null;
+    }
+    try {
+        const session = JSON.parse(cookieValue);
+        if (session.expiry && session.expiry < Date.now()) {
+            return null;
+        }
+        return session.user;
+    } catch (error) {
+        console.error("Failed to parse user session from cookie", error);
+        return null;
+    }
+}
+
+
 export function Navbar() {
   const pathname = usePathname();
+  const router = useRouter();
   const [isPenaltyActive, setIsPenaltyActive] = useState(false);
   const [user, setUser] = useState<AuthUser | null>(null);
 
@@ -38,6 +61,8 @@ export function Navbar() {
       const currentUser = getCurrentUser();
       setUser(currentUser);
       
+      // Since penalty is per-user, we should get it from user-specific data
+      // For now, assuming local storage is used for simplicity
       if (typeof window !== 'undefined') {
           const penaltyEndTime = localStorage.getItem('penaltyEndTime');
           if (penaltyEndTime && parseInt(penaltyEndTime) > Date.now()) {
@@ -56,6 +81,11 @@ export function Navbar() {
       clearInterval(interval);
     };
   }, []);
+  
+  const handleLogout = async () => {
+      await logoutAction();
+      router.refresh();
+  }
 
   const navItems = user?.isAdmin ? [...baseNavItems, adminNavItem] : baseNavItems;
 
@@ -129,7 +159,7 @@ export function Navbar() {
              <div className="mt-auto flex flex-col gap-2 p-2 border-t border-primary/20">
                 <Tooltip>
                     <TooltipTrigger asChild>
-                         <Button variant="ghost" className={cn(commonLinkClasses, inactiveClasses)} onClick={logout}>
+                         <Button variant="ghost" className={cn(commonLinkClasses, inactiveClasses)} onClick={handleLogout}>
                             <LogOut className="h-6 w-6 shrink-0" />
                             <span className="hidden lg:block">Çıkış Yap</span>
                         </Button>

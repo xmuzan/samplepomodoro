@@ -4,36 +4,36 @@ import { cookies } from 'next/headers';
 import { Navbar } from '@/components/navbar';
 import type { User } from '@/types';
 
+// Middleware handles the redirection now. 
+// This layout assumes a valid user is present.
 export default async function ProtectedLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const cookieStore = cookies();
-  const sessionCookie = cookieStore.get('currentUser');
-  
-  let user: User | null = null;
-  
-  if (sessionCookie?.value) {
-      try {
-          const session = JSON.parse(sessionCookie.value);
-          // Check if session is expired
-          if (session.expiry && session.expiry > Date.now()) {
-              user = session.user;
-          }
-      } catch (e) {
-          console.error("Failed to parse session cookie on server:", e);
-          user = null;
-      }
-  }
+    const cookieStore = cookies();
+    const sessionCookie = cookieStore.get('currentUser');
+    
+    // Although middleware is the primary guard, an extra check here is good practice.
+    if (!sessionCookie?.value) {
+        redirect('/login');
+    }
+    
+    let user: User | null = null;
+    try {
+        const session = JSON.parse(sessionCookie.value);
+        if (session.expiry && session.expiry > Date.now()) {
+            user = session.user;
+        }
+    } catch (e) {
+        user = null;
+    }
 
-  // If there is NO valid user, redirect to the login page.
-  if (!user) {
-    redirect('/login');
-  }
+    if (!user) {
+        redirect('/login');
+    }
 
-  // If user's account status is pending, show the pending message.
-  if (user.status === 'pending') {
+    if (user.status === 'pending') {
       return (
         <div className="flex min-h-screen flex-col bg-transparent text-foreground md:flex-row">
             <Navbar />
@@ -45,13 +45,12 @@ export default async function ProtectedLayout({
             </main>
         </div>
       );
-  }
+    }
   
-  // User is logged in and active, show the app with navbar.
-  return (
-    <div className="flex min-h-screen flex-col bg-transparent text-foreground md:flex-row">
-        <Navbar />
-        {children}
-    </div>
-  );
+    return (
+        <div className="flex min-h-screen flex-col bg-transparent text-foreground md:flex-row">
+            <Navbar />
+            {children}
+        </div>
+    );
 }

@@ -1,22 +1,15 @@
 
 'use client';
-import { getCookie, deleteCookie } from 'cookies-next';
+import { getCookie } from 'cookies-next';
 import type { User } from '@/types';
 
 /**
- * Logs the user out by deleting the cookie
- * and then redirecting to the login page.
- */
-export function logout() {
-    deleteCookie('currentUser', { path: '/' });
-    window.location.href = '/login';
-}
-
-/**
- * Gets the current user from the cookie.
- * This is a client-side function. For server-side, read the cookie directly from headers.
+ * Gets the current user from the session cookie.
+ * This is a client-side function.
+ * @returns The user object or null if not authenticated.
  */
 export function getCurrentUser(): User | null {
+    // Make sure this code only runs in the browser
     if (typeof window === 'undefined') {
         return null;
     }
@@ -26,12 +19,12 @@ export function getCurrentUser(): User | null {
     if (!cookieValue || typeof cookieValue !== 'string') {
         return null;
     }
-
+    
     try {
         const session = JSON.parse(cookieValue);
         // Check if the session is expired
         if (session.expiry && session.expiry < Date.now()) {
-            return null;
+            return null; // Session expired
         }
         return session.user;
     } catch (error) {
