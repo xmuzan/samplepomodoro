@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { FuturisticBorder } from "@/components/futuristic-border";
-import type { ShopItemData } from "@/app/shop/_components/shop-item";
+import type { ShopItemData } from "@/app/(protected)/shop/_components/shop-item";
 import { updateStats } from "@/lib/stats";
 import { useToast } from "@/hooks/use-toast";
 

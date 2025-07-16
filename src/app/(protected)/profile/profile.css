@@ -1,0 +1,70 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.profile-card-container .text-glow {
+    text-shadow: 0 0 8px hsl(var(--primary) / 0.8);
+}
+
+.stat-bar-container {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.stat-bar {
+    background-color: hsl(var(--muted) / 0.3);
+    border-radius: var(--radius);
+    overflow: hidden;
+    height: 1rem;
+    border: 1px solid hsl(var(--border) / 0.3);
+}
+
+.stat-bar-fill {
+    height: 100%;
+    transition: width 0.5s ease-in-out;
+    box-shadow: 0 0 10px, 0 0 20px;
+}
+
+.stat-bar-fill-hp {
+    background-color: hsl(var(--primary));
+    box-shadow-color: hsl(var(--primary) / 0.5);
+}
+
+.stat-bar-fill-mp {
+    background-color: hsl(var(--accent));
+    box-shadow-color: hsl(var(--accent) / 0.5);
+}
+
+.stat-bar-fill-ir {
+    background-color: #f59e0b; /* Amber 500 */
+    box-shadow-color: #f59e0b80;
+}
+
+.attribute-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.attribute-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background-color: hsl(var(--muted) / 0.1);
+    padding: 0.5rem;
+    border-radius: var(--radius);
+    border: 1px solid hsl(var(--border) / 0.1);
+    transition: all 0.2s ease-in-out;
+}
+
+.attribute-item:hover {
+    background-color: hsl(var(--muted) / 0.2);
+    border-color: hsl(var(--border) / 0.3);
+}
+
+.attribute-item .icon {
+    color: hsl(var(--primary));
+    filter: drop-shadow(0 0 5px hsl(var(--primary)/0.7));
+}

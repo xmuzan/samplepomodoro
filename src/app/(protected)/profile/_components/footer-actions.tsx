@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Coins, Star, ShieldQuestion } from "lucide-react";
 import { InventoryDialog } from "./inventory-dialog";
-import type { ShopItemData } from "@/app/shop/_components/shop-item";
+import type { ShopItemData } from "@/app/(protected)/shop/_components/shop-item";
 import { SkillsDialog } from "./skills-dialog";
 
 interface FooterActionsProps {
