@@ -2,7 +2,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { Bot, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,7 +22,6 @@ export default function LoginPage() {
     const [isRegistering, setIsRegistering] = useState(false);
 
     const { toast } = useToast();
-    const router = useRouter();
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -43,9 +41,14 @@ export default function LoginPage() {
             // No need for router.push or router.refresh here.
             // The server action 'redirect' is more reliable.
             
-        } catch (error) {
+        } catch (error: any) {
+            // This is the correct way to handle redirects in Server Actions.
+            // The `redirect()` function throws an error, which we need to catch and re-throw if it's the specific NEXT_REDIRECT error.
+            if (error.digest?.startsWith('NEXT_REDIRECT')) {
+              throw error;
+            }
+            
             console.error("Login error:", error);
-            // This catch block will likely only catch network errors, not the redirect itself.
             const errorMessage = error instanceof Error ? error.message : 'Giriş sırasında bilinmeyen bir hata oluştu.';
             toast({
                 variant: 'destructive',
