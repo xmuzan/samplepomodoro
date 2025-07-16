@@ -7,7 +7,7 @@ export const shopItemsData: ShopItemData[] = [
     name: 'Enerji İksiri',
     description: 'Anında %10 HP yeniler. Gerçek hayatta bir bardak favori içeceğini içmeye veya bir paket abur cubur yemeye denktir. Anlık bir enerji patlaması sağlar ama gerçek sağlık alışkanlıklarının yerini tutmaz.',
     price: 100,
-    imageUrl: '/enerjiksiri.png',
+    imageUrl: '/enerjiiksiri.png',
     aiHint: 'glowing potion'
   },
   {
@@ -23,7 +23,7 @@ export const shopItemsData: ShopItemData[] = [
     name: 'Gölge Sineması',
     description: 'Envanterden kullanarak 20 dakikalık bir film, dizi veya video izle. Zihnini dinlendirir ve farklı dünyalara kaçmanı sağlar.',
     price: 250,
-    imageUrl: '/gölgesineması.png',
+    imageUrl: '/golgesinemasi.png',
     aiHint: 'futuristic screen'
   },
   {
@@ -31,7 +31,7 @@ export const shopItemsData: ShopItemData[] = [
     name: 'Bilgelik Tomarı',
     description: 'Envanterden kullanarak 25 dakika boyunca kendini geliştirecek bir kitap oku veya benzeri kaynaklara göz at. Entelektüel kapasiteni ve algını yükseltir.',
     price: 300,
-    imageUrl: '/bilgeliktomarı.png',
+    imageUrl: '/bilgeliktomari.png',
     aiHint: 'ancient book'
   },
 ];
