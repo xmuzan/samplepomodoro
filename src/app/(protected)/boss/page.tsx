@@ -11,6 +11,7 @@ import type { UserStats } from '@/lib/stats';
 import { Swords, Skull, Timer, Coins } from 'lucide-react';
 import './boss.css';
 import { getCurrentUser } from '@/lib/auth';
+import type { User } from '@/types';
 import { getUserData, updateUserData, getGlobalBossData, updateGlobalBossData } from '@/lib/userData';
 
 const BOSS_RESPAWN_HOURS = 48;
@@ -88,20 +89,17 @@ export default function BossPage() {
     const [bossRespawnTime, setBossRespawnTime] = useState<number | null>(null);
     const [isBossDefeated, setIsBossDefeated] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+    const [user, setUser] = useState<User | null>(null);
 
     const { toast } = useToast();
     const router = useRouter();
     
+    useEffect(() => {
+        setUser(getCurrentUser());
+    }, []);
 
-    const loadData = useCallback(async () => {
+    const loadData = useCallback(async (currentUser: User) => {
         setIsLoading(true);
-        const currentUser = getCurrentUser();
-        if (!currentUser) {
-            toast({ title: "Hata", description: "Kullanıcı oturumu bulunamadı.", variant: "destructive" });
-            setIsLoading(false);
-            return;
-        }
-
         try {
             const bossData = await getGlobalBossData(currentBoss.id);
             const userData = await getUserData(currentUser.username);
@@ -137,13 +135,18 @@ export default function BossPage() {
     }, [toast]);
 
     useEffect(() => {
-        loadData();
-    }, [loadData]);
+        if (user) {
+            loadData(user);
+        } else if (user === null) {
+            // This case handles when getCurrentUser explicitly returns null (not just initially undefined)
+            // It might mean the cookie is invalid or expired.
+            setIsLoading(false);
+        }
+    }, [user, loadData]);
 
 
     const handleAttack = async () => {
-        const currentUser = getCurrentUser();
-        if (bossHp <= 0 || !currentUser || !userStats) return;
+        if (bossHp <= 0 || !user || !userStats) return;
 
         if (userStats.mp < 10) {
             toast({
@@ -159,7 +162,7 @@ export default function BossPage() {
             mp: Math.max(0, userStats.mp - 10),
             ir: userStats.ir
         };
-        await updateUserData(currentUser.username, { baseStats: newStats });
+        await updateUserData(user.username, { baseStats: newStats });
         setUserStats(newStats);
 
         const damage = currentBoss.maxHp * 0.05;
@@ -179,8 +182,7 @@ export default function BossPage() {
     };
 
     const handleBossDefeat = async () => {
-        const currentUser = getCurrentUser();
-        if (!currentUser) return;
+        if (!user) return;
         toast({
             title: 'BOSS YENİLDİ!',
             description: (
@@ -191,9 +193,9 @@ export default function BossPage() {
             )
         });
 
-        const userData = await getUserData(currentUser.username);
+        const userData = await getUserData(user.username);
         const currentGold = userData?.userGold || 0;
-        await updateUserData(currentUser.username, { userGold: currentGold + 1000 });
+        await updateUserData(user.username, { userGold: currentGold + 1000 });
         
         const respawnTime = Date.now() + BOSS_RESPAWN_HOURS * 60 * 60 * 1000;
         await updateGlobalBossData(currentBoss.id, { respawnTime, hp: currentBoss.maxHp });
@@ -205,13 +207,23 @@ export default function BossPage() {
 
     const resetBossScreen = () => {
         setIsBossDefeated(false);
-        loadData();
+        if(user) {
+            loadData(user);
+        }
     }
     
     if (isLoading) {
         return (
             <main className="flex-1 p-4 pb-24 md:ml-20 md:pb-4 lg:ml-64 flex items-center justify-center">
                 <p>Yükleniyor...</p>
+            </main>
+        );
+    }
+
+    if (!user) {
+        return (
+            <main className="flex-1 p-4 pb-24 md:ml-20 md:pb-4 lg:ml-64 flex items-center justify-center">
+                <p>Kullanıcı oturumu bulunamadı. Lütfen tekrar giriş yapın.</p>
             </main>
         );
     }

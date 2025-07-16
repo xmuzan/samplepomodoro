@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { FuturisticBorder } from '@/components/futuristic-border';
 import { ReportCard, type ReportAction } from './_components/report-card';
@@ -11,6 +11,7 @@ import { HeartPulse, FlaskConical } from 'lucide-react';
 import { getUserData, updateUserData } from '@/lib/userData';
 import { getCurrentUser } from '@/lib/auth';
 import type { UserStats } from '@/lib/stats';
+import type { User } from '@/types';
 
 
 import './report.css';
@@ -60,42 +61,43 @@ const mpActions: ReportAction[] = [
 export default function ReportPage() {
   const [stats, setStats] = useState<UserStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(null);
   const { toast } = useToast();
   const router = useRouter();
 
   useEffect(() => {
-    const loadData = async () => {
-        setIsLoading(true);
-        const currentUser = getCurrentUser();
-        if (!currentUser) {
-            toast({ title: "Hata", description: "Kullanıcı oturumu bulunamadı.", variant: "destructive" });
-            setIsLoading(false);
-            return;
-        }
+    setUser(getCurrentUser());
+  }, []);
 
-        try {
-            const data = await getUserData(currentUser.username);
-            if(data?.baseStats) {
-                setStats(data.baseStats);
-            } else {
-                 toast({ title: "Hata", description: "Kullanıcı verileri bulunamadı.", variant: "destructive" });
-            }
-        } catch (error) {
-            console.error("Failed to load user stats:", error);
-            toast({ title: "Hata", description: "Kullanıcı istatistikleri yüklenirken bir sorun oluştu.", variant: "destructive" });
-        } finally {
-            setIsLoading(false);
+  const loadData = useCallback(async (currentUser: User) => {
+    setIsLoading(true);
+    try {
+        const data = await getUserData(currentUser.username);
+        if(data?.baseStats) {
+            setStats(data.baseStats);
+        } else {
+             toast({ title: "Hata", description: "Kullanıcı verileri bulunamadı.", variant: "destructive" });
         }
-    };
-    
-    loadData();
-  }, [router]);
+    } catch (error) {
+        console.error("Failed to load user stats:", error);
+        toast({ title: "Hata", description: "Kullanıcı istatistikleri yüklenirken bir sorun oluştu.", variant: "destructive" });
+    } finally {
+        setIsLoading(false);
+    }
+  }, [toast]);
+  
+  useEffect(() => {
+      if (user) {
+          loadData(user);
+      } else if (user === null) {
+          setIsLoading(false); // Finished checking for user, none found.
+      }
+  }, [user, loadData]);
 
   const handleReport = async (action: ReportAction) => {
-    const currentUser = getCurrentUser();
-    if (!currentUser) return;
+    if (!user) return;
     
-    const currentData = await getUserData(currentUser.username);
+    const currentData = await getUserData(user.username);
     if (!currentData || !currentData.baseStats) return;
 
     const currentStats = currentData.baseStats;
@@ -107,10 +109,9 @@ export default function ReportPage() {
         newStats.mp = Math.max(0, Math.min(100, currentStats.mp + action.impact));
     }
 
-    await updateUserData(currentUser.username, { baseStats: newStats });
+    await updateUserData(user.username, { baseStats: newStats });
     setStats(newStats);
     
-    // Refresh the router to update data in other components like the profile page
     router.refresh();
     
     toast({
@@ -128,7 +129,7 @@ export default function ReportPage() {
     );
   }
   
-  if (!stats) {
+  if (!user || !stats) {
     return (
         <main className="flex-1 p-4 pb-24 md:ml-20 md:pb-4 lg:ml-64 flex items-center justify-center">
             <p>Kullanıcı istatistikleri yüklenemedi. Lütfen tekrar deneyin.</p>
