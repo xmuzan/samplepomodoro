@@ -26,6 +26,16 @@ const tierColorMap: { [key: string]: string } = {
     'E': 'text-gray-400 border-gray-500/50 shadow-gray-500/50',
 };
 
+const tierFrameStyles: { [key: string]: string } = {
+  'S': 'frame-s',
+  'A': 'frame-a',
+  'B': 'frame-b',
+  'C': 'frame-c',
+  'D': 'frame-d',
+  'E': 'frame-e',
+};
+
+
 export function UserInfo({ level, tier, job, title, username, avatarUrl }: UserInfoProps) {
   const router = useRouter();
 
@@ -38,13 +48,16 @@ export function UserInfo({ level, tier, job, title, username, avatarUrl }: UserI
   
   return (
     <div className="flex flex-col md:flex-row items-center gap-4 text-center md:text-left">
-      <div className="relative group">
+      <div className={cn(
+          "relative group p-1 rounded-full",
+          tierFrameStyles[tier] || tierFrameStyles['E']
+        )}>
         <Image
           src={avatarUrl}
           alt="User Avatar"
           width={100}
           height={100}
-          className="rounded-full border-2 border-primary shadow-[0_0_15px_hsl(var(--primary)/0.6)]"
+          className="rounded-full border-2 border-background"
           data-ai-hint="warrior avatar"
           onError={(e) => {
             e.currentTarget.src = 'https://placehold.co/100x100.png';
