@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Bot, Store, Swords, User, FileText, Lock } from 'lucide-react';
+import { Bot, Store, Swords, User, FileText, Lock, Crown } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 import { cn } from '@/lib/utils';
@@ -19,6 +19,7 @@ const navItems = [
   { href: '/profile', label: 'Profil', icon: User },
   { href: '/shop', label: 'Mağaza', icon: Store },
   { href: '/report', label: 'Rapor', icon: FileText },
+  { href: '/boss', label: 'Boss', icon: Crown },
 ];
 
 export function Navbar() {
@@ -54,14 +55,18 @@ export function Navbar() {
     <>
       {/* Bottom Navbar for mobile */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-primary/20 bg-background/80 p-1 backdrop-blur-lg md:hidden">
-        <div className="flex justify-around">
+        <div className="flex overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {navItems.map(({ href, label, icon: Icon }) => {
             const isShop = label === 'Mağaza';
+            const isBoss = label === 'Boss';
             return (
-              <Link key={label} href={href} className={cn(
-                commonLinkClasses,
-                pathname === href ? activeClasses : inactiveClasses,
-                'flex-1 flex-col text-xs h-14 relative'
+              <Link 
+                key={label} 
+                href={href} 
+                className={cn(
+                  commonLinkClasses,
+                  pathname === href ? activeClasses : inactiveClasses,
+                  'flex-shrink-0 w-1/4 flex-col text-xs h-14 relative'
               )}>
                 <Icon className={cn('h-6 w-6 lucide-icon', pathname === href && iconGlow)} />
                 <span>{label}</span>
@@ -113,5 +118,3 @@ export function Navbar() {
     </>
   );
 }
-
-    
