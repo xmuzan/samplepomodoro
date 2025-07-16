@@ -4,18 +4,16 @@
 import { Button } from "@/components/ui/button";
 import { Coins, Star, ShieldQuestion, LogOut } from "lucide-react";
 import { InventoryDialog } from "./inventory-dialog";
-import type { ShopItemData } from "@/app/(protected)/shop/_components/shop-item";
 import { SkillsDialog } from "./skills-dialog";
 import { logoutAction } from "@/app/login/actions";
 import { useRouter } from "next/navigation";
 
 interface FooterActionsProps {
   gold: number;
-  shopItems: ShopItemData[];
   availablePoints: number;
 }
 
-export function FooterActions({ gold, shopItems, availablePoints }: FooterActionsProps) {
+export function FooterActions({ gold, availablePoints }: FooterActionsProps) {
   const router = useRouter();
 
   const handleLogout = async () => {
@@ -45,7 +43,7 @@ export function FooterActions({ gold, shopItems, availablePoints }: FooterAction
                 )}
             </Button>
         </SkillsDialog>
-        <InventoryDialog shopItems={shopItems}>
+        <InventoryDialog>
           <Button size="lg" className="gap-2 bg-primary text-primary-foreground hover:bg-primary/80 shadow-[0_0_15px_hsl(var(--primary)/0.5)] w-full">
             <ShieldQuestion className="h-6 w-6" />
             Envanter

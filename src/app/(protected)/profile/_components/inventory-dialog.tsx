@@ -17,6 +17,7 @@ import type { ShopItemData } from "@/app/(protected)/shop/_components/shop-item"
 import { useToast } from "@/hooks/use-toast";
 import { getUserData, updateUserData } from "@/lib/userData";
 import { getCurrentUser } from "@/lib/auth";
+import { shopItemsData } from "../../shop/shop-data";
 
 export interface InventoryItem {
   id: string;
@@ -25,10 +26,9 @@ export interface InventoryItem {
 
 interface InventoryDialogProps {
   children: React.ReactNode;
-  shopItems: ShopItemData[];
 }
 
-export function InventoryDialog({ children, shopItems }: InventoryDialogProps) {
+export function InventoryDialog({ children }: InventoryDialogProps) {
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [isMounted, setIsMounted] = useState(false);
   const { toast } = useToast();
@@ -52,7 +52,7 @@ export function InventoryDialog({ children, shopItems }: InventoryDialogProps) {
 
   const handleUseItem = async (itemId: string) => {
     if (!currentUser) return;
-    const itemData = shopItems.find(item => item.id === itemId);
+    const itemData = shopItemsData.find(item => item.id === itemId);
     if (!itemData) return;
     
     try {
@@ -124,7 +124,7 @@ export function InventoryDialog({ children, shopItems }: InventoryDialogProps) {
               {inventory.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {inventory.map(invItem => {
-                    const shopItem = shopItems.find(sItem => sItem.id === invItem.id);
+                    const shopItem = shopItemsData.find(sItem => sItem.id === invItem.id);
                     if (!shopItem) return null;
                     
                     return (

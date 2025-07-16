@@ -5,7 +5,6 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { FuturisticBorder } from '@/components/futuristic-border';
 import { ShopItem, type ShopItemData } from './shop-item';
-import { shopItemsData } from '../page';
 import { Coins, Lock } from 'lucide-react';
 import { getUserData, updateUserData } from '@/lib/userData';
 import type { InventoryItem } from '../../profile/_components/inventory-dialog';
@@ -60,9 +59,10 @@ interface ShopManagerProps {
     username: string;
     initialGold: number;
     initialPenaltyEndTime: number | null;
+    shopItems: ShopItemData[];
 }
 
-export function ShopManager({ username, initialGold, initialPenaltyEndTime }: ShopManagerProps) {
+export function ShopManager({ username, initialGold, initialPenaltyEndTime, shopItems }: ShopManagerProps) {
   const [gold, setGold] = useState(initialGold);
   const router = useRouter();
 
@@ -117,7 +117,7 @@ export function ShopManager({ username, initialGold, initialPenaltyEndTime }: Sh
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                  {shopItemsData.map((item) => (
+                  {shopItems.map((item) => (
                     <ShopItem 
                       key={item.id}
                       item={item}
@@ -134,4 +134,3 @@ export function ShopManager({ username, initialGold, initialPenaltyEndTime }: Sh
     </main>
   );
 }
-

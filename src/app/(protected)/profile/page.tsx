@@ -8,7 +8,6 @@ import { StatBars } from './_components/stat-bars';
 import { Attributes } from './_components/attributes';
 import { FooterActions } from './_components/footer-actions';
 import { Separator } from '@/components/ui/separator';
-import { shopItemsData } from '@/app/(protected)/shop/_components/shop-item';
 import { getTitleForLevel } from '@/lib/titles';
 import { getTierForLevel } from '@/lib/ranks';
 import { cookies } from 'next/headers';
@@ -84,7 +83,6 @@ export default async function ProfilePage() {
 
             <FooterActions
               gold={userData.userGold}
-              shopItems={shopItemsData}
               availablePoints={userData.attributePoints}
             />
           </div>
