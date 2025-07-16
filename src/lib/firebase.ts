@@ -13,17 +13,11 @@ const firebaseConfig = {
 
 // Check if all required environment variables are set
 if (Object.values(firebaseConfig).some(value => !value)) {
-    console.error("Firebase config is missing. Make sure all NEXT_PUBLIC_FIREBASE_* environment variables are set in your .env file.");
+    console.error("Firebase config is missing. Make sure all NEXT_PUBLIC_FIREBASE_* environment variables are set in your .env.local file.");
 }
 
-// Initialize Firebase
-let app;
-if (!getApps().length) {
-  app = initializeApp(firebaseConfig);
-} else {
-  app = getApp();
-}
-
+// Initialize Firebase safely for both client and server environments
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const db = getFirestore(app);
 
 export { db };
