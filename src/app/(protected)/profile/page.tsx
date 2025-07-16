@@ -17,7 +17,7 @@ import { redirect } from 'next/navigation';
 
 
 const defaultUserData: UserData = {
-    userGold: 150,
+    userGold: 0,
     avatarUrl: "https://placehold.co/100x100.png",
     level: 0,
     tasksCompletedThisLevel: 0,

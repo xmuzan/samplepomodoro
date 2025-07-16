@@ -33,7 +33,7 @@ export interface UserData {
 }
 
 const defaultUserData: Omit<UserData, 'password'> = {
-    userGold: 150,
+    userGold: 0,
     avatarUrl: "https://placehold.co/100x100.png",
     level: 0,
     tasksCompletedThisLevel: 0,
