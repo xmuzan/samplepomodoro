@@ -18,7 +18,8 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { ShieldCheck, UserCheck, Trash2, RefreshCcw } from 'lucide-react';
-import { getAllUsers, updateUserStatus, resetUserProgress, getCurrentUser } from '@/lib/userData';
+import { getAllUsers, updateUserStatus, resetUserProgress } from '@/lib/userData';
+import { getCurrentUser } from '@/lib/auth';
 
 export default function AdminPage() {
   const [pendingUsers, setPendingUsers] = useState<User[]>([]);
