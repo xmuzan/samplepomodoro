@@ -55,7 +55,7 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="relative min-h-screen w-full">
+        <div className="relative min-h-screen w-full bg-background">
              <video
                 autoPlay
                 loop
