@@ -1,3 +1,4 @@
+
 import type { Metadata } from 'next';
 import './tasks.css';
 import { Toaster } from '@/components/ui/toaster';
@@ -23,15 +24,6 @@ export default function RootLayout({
         />
       </head>
       <body className="font-body antialiased">
-        <video
-          autoPlay
-          loop
-          muted
-          playsInline
-          className="fixed left-0 top-0 -z-10 h-full w-full object-cover opacity-30"
-        >
-          <source src="/sung.mp4" type="video/mp4" />
-        </video>
         {children}
         <Toaster />
       </body>

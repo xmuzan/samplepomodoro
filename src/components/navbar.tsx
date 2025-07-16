@@ -3,10 +3,12 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Bot, Store, Swords, User, FileText, Lock, Crown } from 'lucide-react';
+import { Bot, Store, Swords, User, FileText, Lock, Crown, Shield } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import type { User as AuthUser } from '@/types';
 
 import { cn } from '@/lib/utils';
+import { getCurrentUser } from '@/lib/auth';
 import {
   Tooltip,
   TooltipContent,
@@ -14,17 +16,34 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 
-const navItems = [
-  { href: '/', label: 'Görevler', icon: Swords },
+const baseNavItems = [
+  { href: '/tasks', label: 'Görevler', icon: Swords },
   { href: '/profile', label: 'Profil', icon: User },
   { href: '/shop', label: 'Mağaza', icon: Store },
   { href: '/report', label: 'Rapor', icon: FileText },
   { href: '/boss', label: 'Boss', icon: Crown },
 ];
 
+const adminNavItem = { href: '/admin', label: 'Yönetim', icon: Shield };
+
 export function Navbar() {
   const pathname = usePathname();
   const [isPenaltyActive, setIsPenaltyActive] = useState(false);
+  const [user, setUser] = useState<AuthUser | null>(null);
+
+  useEffect(() => {
+    const checkUser = () => {
+        const currentUser = getCurrentUser();
+        setUser(currentUser);
+    }
+    
+    checkUser();
+    window.addEventListener('storage', checkUser);
+
+    return () => {
+        window.removeEventListener('storage', checkUser);
+    }
+  }, []);
 
   useEffect(() => {
     const checkPenalty = () => {
@@ -46,6 +65,8 @@ export function Navbar() {
     };
   }, []);
 
+  const navItems = user?.isAdmin ? [...baseNavItems, adminNavItem] : baseNavItems;
+
   const commonLinkClasses = "flex items-center justify-center gap-1 rounded-md transition-colors duration-200 md:justify-start md:w-full md:h-12 md:px-3";
   const activeClasses = "text-primary bg-primary/10";
   const inactiveClasses = "text-muted-foreground hover:bg-primary/5 hover:text-primary";
@@ -55,7 +76,7 @@ export function Navbar() {
     <>
       {/* Bottom Navbar for mobile */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-primary/20 bg-background/80 p-1 backdrop-blur-lg md:hidden">
-        <div className="flex overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex justify-around">
           {navItems.map(({ href, label, icon: Icon }) => {
             const isShop = label === 'Mağaza';
             const isBoss = label === 'Boss';
@@ -65,10 +86,10 @@ export function Navbar() {
                 href={href} 
                 className={cn(
                   commonLinkClasses,
-                  pathname === href ? activeClasses : inactiveClasses,
-                  'flex-shrink-0 w-1/4 flex-col text-xs h-14 relative'
+                  pathname.startsWith(href) && href !== '/' || pathname === href ? activeClasses : inactiveClasses,
+                  'flex-col text-xs h-14 relative w-full'
               )}>
-                <Icon className={cn('h-6 w-6 lucide-icon', pathname === href && iconGlow)} />
+                <Icon className={cn('h-6 w-6 lucide-icon', pathname.startsWith(href) && iconGlow)} />
                 <span>{label}</span>
                 {isShop && isPenaltyActive && <Lock className="absolute top-1 right-1 h-3 w-3 text-destructive" />}
               </Link>
@@ -90,16 +111,17 @@ export function Navbar() {
                 <ul className="flex flex-col gap-2">
                     {navItems.map(({ href, label, icon: Icon }) => {
                        const isShop = label === 'Mağaza';
+                       const isActive = pathname.startsWith(href) && href !== '/' || pathname === href;
                        return (
                         <li key={label}>
                           <Tooltip>
                               <TooltipTrigger asChild>
                                   <Link href={href} className={cn(
                                     commonLinkClasses,
-                                    pathname === href ? activeClasses : inactiveClasses,
+                                    isActive ? activeClasses : inactiveClasses,
                                     "relative"
                                   )}>
-                                      <Icon className={cn('h-6 w-6 shrink-0 lucide-icon', pathname === href && iconGlow)} />
+                                      <Icon className={cn('h-6 w-6 shrink-0 lucide-icon', isActive && iconGlow)} />
                                       <span className="hidden lg:block">{label}</span>
                                       {isShop && isPenaltyActive && <Lock className="h-4 w-4 text-destructive absolute right-3 lg:right-2" />}
                                   </Link>

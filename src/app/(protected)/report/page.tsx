@@ -1,8 +1,8 @@
 
+
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Navbar } from '@/components/navbar';
 import { FuturisticBorder } from '@/components/futuristic-border';
 import { ReportCard, type ReportAction } from './_components/report-card';
 import { Separator } from '@/components/ui/separator';
@@ -77,58 +77,52 @@ export default function ReportPage() {
 
   if (!isMounted) {
     return (
-        <div className="flex min-h-screen flex-col text-foreground md:flex-row">
-            <Navbar />
-            <main className="flex-1 p-4 pb-24 md:ml-20 md:pb-4 lg:ml-64">
-                {/* Skeleton loader can be added here */}
-            </main>
-        </div>
+        <main className="flex-1 p-4 pb-24 md:ml-20 md:pb-4 lg:ml-64">
+            {/* Skeleton loader can be added here */}
+        </main>
     );
   }
 
   return (
-    <div className="flex min-h-screen flex-col text-foreground md:flex-row">
-      <Navbar />
-      <main className="flex-1 p-4 pb-24 md:ml-20 md:pb-4 lg:ml-64">
-        <div className="max-w-4xl mx-auto">
-          <FuturisticBorder>
-            <div className="bg-background/90 backdrop-blur-sm p-4 md:p-6">
-              <h1 className="text-2xl font-headline tracking-widest text-primary uppercase text-glow text-center mb-6">
-                GÜNLÜK RAPOR
-              </h1>
-              
-              {/* HP Section */}
-              <div className="mb-8">
-                <h2 className="flex items-center gap-3 text-xl font-bold text-red-400 mb-4">
-                  <HeartPulse className="h-6 w-6" />
-                  HP (Yaşam Puanı) Raporları
-                </h2>
-                <div className="report-grid">
-                  {hpActions.map((action) => (
-                    <ReportCard key={action.id} action={action} onReport={handleReport} />
-                  ))}
-                </div>
+    <main className="flex-1 p-4 pb-24 md:ml-20 md:pb-4 lg:ml-64">
+      <div className="max-w-4xl mx-auto">
+        <FuturisticBorder>
+          <div className="bg-background/90 backdrop-blur-sm p-4 md:p-6">
+            <h1 className="text-2xl font-headline tracking-widest text-primary uppercase text-glow text-center mb-6">
+              GÜNLÜK RAPOR
+            </h1>
+            
+            {/* HP Section */}
+            <div className="mb-8">
+              <h2 className="flex items-center gap-3 text-xl font-bold text-red-400 mb-4">
+                <HeartPulse className="h-6 w-6" />
+                HP (Yaşam Puanı) Raporları
+              </h2>
+              <div className="report-grid">
+                {hpActions.map((action) => (
+                  <ReportCard key={action.id} action={action} onReport={handleReport} />
+                ))}
               </div>
-
-              <Separator className="my-6 bg-border/20" />
-
-              {/* MP Section */}
-              <div>
-                <h2 className="flex items-center gap-3 text-xl font-bold text-blue-400 mb-4">
-                  <FlaskConical className="h-6 w-6" />
-                  MP (Mana Puanı) Raporları
-                </h2>
-                <div className="report-grid">
-                  {mpActions.map((action) => (
-                    <ReportCard key={action.id} action={action} onReport={handleReport} />
-                  ))}
-                </div>
-              </div>
-
             </div>
-          </FuturisticBorder>
-        </div>
-      </main>
-    </div>
+
+            <Separator className="my-6 bg-border/20" />
+
+            {/* MP Section */}
+            <div>
+              <h2 className="flex items-center gap-3 text-xl font-bold text-blue-400 mb-4">
+                <FlaskConical className="h-6 w-6" />
+                MP (Mana Puanı) Raporları
+              </h2>
+              <div className="report-grid">
+                {mpActions.map((action) => (
+                  <ReportCard key={action.id} action={action} onReport={handleReport} />
+                ))}
+              </div>
+            </div>
+
+          </div>
+        </FuturisticBorder>
+      </div>
+    </main>
   );
 }

@@ -3,7 +3,6 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
-import { Navbar } from '@/components/navbar';
 import { FuturisticBorder } from '@/components/futuristic-border';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -198,71 +197,65 @@ export default function BossPage() {
     
     if (!isMounted) {
         return (
-            <div className="flex min-h-screen flex-col text-foreground md:flex-row">
-                <Navbar />
-                <main className="flex-1 p-4 pb-24 md:ml-20 md:pb-4 lg:ml-64 flex items-center justify-center">
-                    {/* Optional: Skeleton Loader */}
-                </main>
-            </div>
+            <main className="flex-1 p-4 pb-24 md:ml-20 md:pb-4 lg:ml-64 flex items-center justify-center">
+                {/* Optional: Skeleton Loader */}
+            </main>
         );
     }
     
     const hpPercentage = (bossHp / currentBoss.maxHp) * 100;
 
     return (
-        <div className="flex min-h-screen flex-col text-foreground md:flex-row">
-            <Navbar />
-            <main className="flex-1 p-4 pb-24 md:ml-20 md:pb-4 lg:ml-64 flex items-center justify-center">
-                <div className="w-full max-w-4xl mx-auto">
-                    <FuturisticBorder>
-                        <div className="bg-background/90 backdrop-blur-sm p-4 md:p-6">
-                            {bossRespawnTime ? (
-                                <RespawnTimer respawnTime={bossRespawnTime} />
-                            ) : isBossDefeated ? (
-                                <BossDefeatedScreen onReset={resetBossScreen} />
-                            ) : (
-                                <div className="flex flex-col items-center">
-                                    <h1 className="text-4xl font-headline tracking-widest text-destructive uppercase boss-name-glow text-center mb-4">
-                                        {currentBoss.name}
-                                    </h1>
-                                    
-                                    <div className="relative w-full max-w-2xl aspect-video rounded-lg overflow-hidden border-2 border-destructive/50 shadow-[0_0_30px_hsl(var(--destructive)/0.5)] mb-6">
-                                         <Image 
-                                            src={currentBoss.imageUrl}
-                                            alt={currentBoss.name}
-                                            fill
-                                            className="object-cover"
-                                            data-ai-hint="giant pig monster"
-                                         />
-                                    </div>
-
-                                    <div className="w-full max-w-2xl mb-6">
-                                        <div className="boss-hp-bar-container">
-                                            <div className="boss-hp-bar">
-                                                <div className="boss-hp-bar-fill" style={{ width: `${hpPercentage}%` }} />
-                                            </div>
-                                        </div>
-                                        <p className="text-center font-mono text-lg mt-2 text-red-300">
-                                            {Math.ceil(bossHp)} / {currentBoss.maxHp} HP
-                                        </p>
-                                    </div>
-                                    
-                                    <Button 
-                                        size="lg" 
-                                        onClick={handleAttack}
-                                        disabled={bossHp <= 0}
-                                        className="gap-2 text-lg font-bold px-10 py-6 rounded-lg bg-primary text-primary-foreground hover:bg-primary/80 attack-button"
-                                    >
-                                        <Swords className="h-6 w-6" />
-                                        SALDIR
-                                    </Button>
+        <main className="flex-1 p-4 pb-24 md:ml-20 md:pb-4 lg:ml-64 flex items-center justify-center">
+            <div className="w-full max-w-4xl mx-auto">
+                <FuturisticBorder>
+                    <div className="bg-background/90 backdrop-blur-sm p-4 md:p-6">
+                        {bossRespawnTime ? (
+                            <RespawnTimer respawnTime={bossRespawnTime} />
+                        ) : isBossDefeated ? (
+                            <BossDefeatedScreen onReset={resetBossScreen} />
+                        ) : (
+                            <div className="flex flex-col items-center">
+                                <h1 className="text-4xl font-headline tracking-widest text-destructive uppercase boss-name-glow text-center mb-4">
+                                    {currentBoss.name}
+                                </h1>
+                                
+                                <div className="relative w-full max-w-2xl aspect-video rounded-lg overflow-hidden border-2 border-destructive/50 shadow-[0_0_30px_hsl(var(--destructive)/0.5)] mb-6">
+                                     <Image 
+                                        src={currentBoss.imageUrl}
+                                        alt={currentBoss.name}
+                                        fill
+                                        className="object-cover"
+                                        data-ai-hint="giant pig monster"
+                                     />
                                 </div>
-                            )}
-                        </div>
-                    </FuturisticBorder>
-                </div>
-            </main>
-        </div>
+
+                                <div className="w-full max-w-2xl mb-6">
+                                    <div className="boss-hp-bar-container">
+                                        <div className="boss-hp-bar">
+                                            <div className="boss-hp-bar-fill" style={{ width: `${hpPercentage}%` }} />
+                                        </div>
+                                    </div>
+                                    <p className="text-center font-mono text-lg mt-2 text-red-300">
+                                        {Math.ceil(bossHp)} / {currentBoss.maxHp} HP
+                                    </p>
+                                </div>
+                                
+                                <Button 
+                                    size="lg" 
+                                    onClick={handleAttack}
+                                    disabled={bossHp <= 0}
+                                    className="gap-2 text-lg font-bold px-10 py-6 rounded-lg bg-primary text-primary-foreground hover:bg-primary/80 attack-button"
+                                >
+                                    <Swords className="h-6 w-6" />
+                                    SALDIR
+                                </Button>
+                            </div>
+                        )}
+                    </div>
+                </FuturisticBorder>
+            </div>
+        </main>
     );
 }
 

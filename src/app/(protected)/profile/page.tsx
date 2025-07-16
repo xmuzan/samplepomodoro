@@ -1,14 +1,14 @@
 
+
 'use client';
 import { useState, useEffect } from 'react';
-import { Navbar } from '@/components/navbar';
 import { FuturisticBorder } from '@/components/futuristic-border';
 import { UserInfo } from './_components/user-info';
 import { StatBars } from './_components/stat-bars';
 import { Attributes } from './_components/attributes';
 import { FooterActions } from './_components/footer-actions';
 import { Separator } from '@/components/ui/separator';
-import { shopItemsData } from '@/app/shop/page';
+import { shopItemsData } from '@/app/(protected)/shop/page';
 import { SKILL_CATEGORIES } from '@/lib/skills';
 import { getTitleForLevel } from '@/lib/titles';
 import { getTierForLevel } from '@/lib/ranks';
@@ -147,12 +147,9 @@ export default function ProfilePage() {
 
   if (!isMounted) {
     return (
-        <div className="flex min-h-screen flex-col text-foreground md:flex-row">
-            <Navbar />
-            <main className="flex-1 p-4 pb-24 md:ml-20 md:pb-4 lg:ml-64">
-                {/* You can add a skeleton loader here if you want */}
-            </main>
-        </div>
+        <main className="flex-1 p-4 pb-24 md:ml-20 md:pb-4 lg:ml-64">
+            {/* You can add a skeleton loader here if you want */}
+        </main>
     );
   }
 
@@ -160,49 +157,46 @@ export default function ProfilePage() {
   const userTier = getTierForLevel(level);
 
   return (
-    <div className="flex min-h-screen flex-col text-foreground md:flex-row">
-      <Navbar />
-      <main className="flex-1 p-4 pb-24 md:ml-20 md:pb-4 lg:ml-64">
-        <div className="max-w-4xl mx-auto">
-          <FuturisticBorder>
-            <div className="bg-background/90 backdrop-blur-sm p-4 md:p-6 profile-card-container">
-              <UserInfo 
-                level={level}
-                tier={userTier}
-                job={userTitle.job}
-                title={userTitle.title}
-                username={username}
-                avatarUrl={avatarUrl}
-                onProfileUpdate={handleProfileUpdate}
-              />
+    <main className="flex-1 p-4 pb-24 md:ml-20 md:pb-4 lg:ml-64">
+      <div className="max-w-4xl mx-auto">
+        <FuturisticBorder>
+          <div className="bg-background/90 backdrop-blur-sm p-4 md:p-6 profile-card-container">
+            <UserInfo 
+              level={level}
+              tier={userTier}
+              job={userTitle.job}
+              title={userTitle.title}
+              username={username}
+              avatarUrl={avatarUrl}
+              onProfileUpdate={handleProfileUpdate}
+            />
 
-              <Separator className="my-4 bg-border/20" />
+            <Separator className="my-4 bg-border/20" />
 
-              <StatBars 
-                hp={{current: baseStats.hp, max: 100}}
-                mp={{current: baseStats.mp, max: 100}}
-                ir={{current: baseStats.ir, max: 100}}
-              />
+            <StatBars 
+              hp={{current: baseStats.hp, max: 100}}
+              mp={{current: baseStats.mp, max: 100}}
+              ir={{current: baseStats.ir, max: 100}}
+            />
 
-              <Separator className="my-4 bg-border/20" />
+            <Separator className="my-4 bg-border/20" />
 
-              <Attributes 
-                stats={stats}
-                attributePoints={attributePoints}
-                onSpendPoint={handleSpendPoint}
-              />
+            <Attributes 
+              stats={stats}
+              attributePoints={attributePoints}
+              onSpendPoint={handleSpendPoint}
+            />
 
-               <Separator className="my-4 bg-border/20" />
+             <Separator className="my-4 bg-border/20" />
 
-              <FooterActions 
-                gold={gold} 
-                shopItems={shopItemsData}
-                availablePoints={attributePoints}
-              />
-            </div>
-          </FuturisticBorder>
-        </div>
-      </main>
-    </div>
+            <FooterActions 
+              gold={gold} 
+              shopItems={shopItemsData}
+              availablePoints={attributePoints}
+            />
+          </div>
+        </FuturisticBorder>
+      </div>
+    </main>
   );
 }

@@ -1,13 +1,19 @@
-import { Navbar } from '@/components/navbar';
-import { TaskManager } from '@/components/task-manager';
+
+'use client';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
+import { getCurrentUser } from '@/lib/auth';
 
 export default function Home() {
-  return (
-    <div className="flex min-h-screen flex-col text-foreground md:flex-row">
-      <Navbar />
-      <main className="flex flex-1 items-center justify-center p-4 pb-24 md:ml-20 md:pb-4 lg:ml-64">
-        <TaskManager />
-      </main>
-    </div>
-  );
+    const router = useRouter();
+
+    useEffect(() => {
+        if (getCurrentUser()) {
+            router.replace('/tasks');
+        } else {
+            router.replace('/login');
+        }
+    }, [router]);
+
+    return null; // or a loading spinner
 }
