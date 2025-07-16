@@ -160,7 +160,7 @@ export default function ProfilePage() {
     <main className="flex-1 p-4 pb-24 md:ml-20 md:pb-4 lg:ml-64">
       <div className="max-w-4xl mx-auto">
         <FuturisticBorder>
-          <div className="bg-background/90 backdrop-blur-lg p-4 md:p-6 profile-card-container">
+          <div className="p-4 md:p-6 profile-card-container">
             <UserInfo 
               level={level}
               tier={userTier}
