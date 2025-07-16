@@ -12,7 +12,7 @@ interface UserInfoProps {
   title: string;
   username: string;
   avatarUrl: string;
-  onProfileUpdate: (newUsername: string, newAvatarUrl: string) => void;
+  onProfileUpdate: (newUsername: string, newAvatarUrl:string) => void;
 }
 
 const tierColorMap: { [key: string]: string } = {
