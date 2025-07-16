@@ -37,8 +37,7 @@ export default function LoginPage() {
                     description: 'Görevler sayfasına yönlendiriliyorsunuz...',
                 });
                 router.push('/tasks');
-                // Refresh the server-side data to ensure the layout recognizes the new session
-                router.refresh(); 
+                router.refresh(); // This is crucial to re-fetch server components with the new cookie
             } else {
                 toast({
                     variant: 'destructive',

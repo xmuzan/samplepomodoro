@@ -3,6 +3,7 @@
 
 import { cookies } from 'next/headers';
 import { getUserForLogin } from '@/lib/userData';
+import type { User } from '@/types';
 
 export async function loginUserAction(credentials: { username?: string, password?: string }): Promise<{ success: boolean, message: string }> {
     if (!credentials.username || !credentials.password) {
@@ -12,6 +13,10 @@ export async function loginUserAction(credentials: { username?: string, password
     const result = await getUserForLogin(credentials.username, credentials.password);
 
     if (result.success && result.user) {
+        if (result.user.status === 'pending') {
+            return { success: false, message: 'Hesabınız yönetici onayı bekliyor.' };
+        }
+        
         const session = {
             user: result.user,
             expiry: Date.now() + 24 * 60 * 60 * 1000, // 24 hours

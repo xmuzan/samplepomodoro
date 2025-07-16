@@ -34,6 +34,7 @@ export function getCurrentUser(): User | null {
         const session = JSON.parse(cookieValue);
         // Check if the session is expired
         if (session.expiry && session.expiry < Date.now()) {
+            // Optionally, we could also trigger a logout action here to clear the expired cookie
             return null;
         }
         return session.user;
