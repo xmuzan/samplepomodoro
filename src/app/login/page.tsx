@@ -55,13 +55,13 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="flex min-h-screen items-center justify-center p-4">
+        <div className="flex min-h-screen items-center justify-center bg-transparent p-4">
             <video
                 autoPlay
                 loop
                 muted
                 playsInline
-                className="fixed left-0 top-0 -z-10 h-full w-full object-cover opacity-30"
+                className="fixed left-0 top-0 -z-10 h-full w-full object-cover opacity-20"
             >
                 <source src="/sung.mp4" type="video/mp4" />
             </video>
