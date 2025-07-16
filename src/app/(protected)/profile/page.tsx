@@ -9,7 +9,6 @@ import { Attributes } from './_components/attributes';
 import { FooterActions } from './_components/footer-actions';
 import { Separator } from '@/components/ui/separator';
 import { getTitleForLevel } from '@/lib/titles';
-import { getTierForLevel } from '@/lib/ranks';
 import { cookies } from 'next/headers';
 import { getUserData } from '@/lib/userData';
 import type { User } from '@/types';
@@ -48,7 +47,6 @@ export default async function ProfilePage() {
   }
 
   const userTitle = getTitleForLevel(userData.level);
-  const userTier = getTierForLevel(userData.level);
 
   return (
     <main className="flex-1 p-4 pb-24 md:ml-20 md:pb-4 lg:ml-64">
@@ -57,7 +55,7 @@ export default async function ProfilePage() {
           <div className="p-4 md:p-6 profile-card-container bg-background/90 backdrop-blur-lg">
             <UserInfo
               level={userData.level}
-              tier={userTier}
+              tier={userData.tier}
               job={userTitle.job}
               title={userTitle.title}
               username={user.username}

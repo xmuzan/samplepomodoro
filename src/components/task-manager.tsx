@@ -12,6 +12,7 @@ import { AlarmClock, Coins } from 'lucide-react';
 import type { SkillCategory } from '@/lib/skills';
 import { useToast } from '@/hooks/use-toast';
 import { getUserData, updateUserData, updateTasks, UserData } from '@/lib/userData';
+import { getTierForLevel } from '@/lib/ranks';
 
 export type Task = {
   id: string;
@@ -195,6 +196,7 @@ export function TaskManager({ username, initialTasks, initialPenaltyEndTime, ini
                 }
 
                 updates.level = level;
+                updates.tier = getTierForLevel(level);
                 updates.tasksCompletedThisLevel = tasksCompletedThisLevel;
                 updates.tasksRequiredForNextLevel = tasksRequiredForNextLevel;
                 updates.attributePoints = attributePoints;

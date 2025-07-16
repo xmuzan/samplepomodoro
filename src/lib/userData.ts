@@ -8,12 +8,13 @@ import type { Task } from '@/components/task-manager';
 import type { InventoryItem } from '@/app/(protected)/profile/_components/inventory-dialog';
 import type { SkillData } from './skills';
 import type { UserStats } from './stats';
-import type { Boss } from '@/app/(protected)/boss/page';
+import type { Boss } from '@/app/(protected)/boss/_components/boss-manager';
 
 export interface UserData {
     userGold: number;
     avatarUrl: string;
     level: number;
+    tier: string;
     tasksCompletedThisLevel: number;
     tasksRequiredForNextLevel: number;
     attributePoints: number;
@@ -36,6 +37,7 @@ const defaultUserData: Omit<UserData, 'password'> = {
     userGold: 0,
     avatarUrl: "https://placehold.co/100x100.png",
     level: 0,
+    tier: 'E',
     tasksCompletedThisLevel: 0,
     tasksRequiredForNextLevel: 32,
     attributePoints: 0,
@@ -179,8 +181,8 @@ export async function updateUserStatus(username: string, status: 'active' | 'pen
 
 export async function resetUserProgress(username: string) {
     const userRef = doc(db, 'users', username);
-    const dataToUpdate = { ...defaultUserData };
-    await updateDoc(userRef, dataToUpdate);
+    const { tier, ...restOfDefaults } = defaultUserData; // Keep tier, reset others if needed
+    await updateDoc(userRef, { ...restOfDefaults, tier: 'E' });
 }
 
 
