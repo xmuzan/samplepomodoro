@@ -29,7 +29,7 @@ export interface UserData {
     taskDeadline?: number | null;
 }
 
-const defaultUserData: UserData = {
+const defaultUserData: Omit<UserData, 'password'> = {
     userGold: 150,
     avatarUrl: "https://placehold.co/100x100.png",
     level: 0,
@@ -109,19 +109,23 @@ export async function createNewUser(username: string, password?: string): Promis
         return { success: false, message: "Bu kullanıcı adı zaten alınmış." };
     }
 
-    const newUser: User = {
+    // This is the auth-related part of the user document
+    const newUserAuthInfo: User & { password?: string } = {
         username,
-        isAdmin: false,
-        status: 'pending'
-    };
-
-    const fullUserData = {
-        ...newUser,
         password, // Storing plain text password - NOT FOR PRODUCTION
-        ...defaultUserData
+        isAdmin: false,
+        status: 'pending' // Users start as pending
+    };
+    
+    // Combine auth info with the default game progress data
+    const fullUserData = {
+        ...newUserAuthInfo,
+        ...defaultUserData,
     };
 
+    // Set the new user document in Firestore
     await setDoc(userRef, fullUserData);
+
     return { success: true, message: 'Kaydınız alındı. Hesabınız yönetici tarafından onaylandığında giriş yapabilirsiniz.' };
 }
 
@@ -144,7 +148,8 @@ export async function updateUserStatus(username: string, status: 'active' | 'pen
 export async function resetUserProgress(username: string) {
     const userRef = doc(db, 'users', username);
     // Reset all progress fields to default, but keep auth fields like isAdmin, status, password
-    await updateDoc(userRef, defaultUserData);
+    const dataToUpdate = { ...defaultUserData };
+    await updateDoc(userRef, dataToUpdate);
 }
 
 // --- Global Data (like Boss) ---
