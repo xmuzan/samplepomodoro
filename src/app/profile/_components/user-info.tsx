@@ -55,19 +55,19 @@ export function UserInfo({ level, tier, job, title, username, avatarUrl, onProfi
             <h2 className="text-3xl font-bold text-glow">{username}</h2>
         </div>
         <div className="flex items-center justify-center md:justify-start gap-4 mt-2">
-            <div className="flex items-end gap-2">
-              <div className="text-center">
-                  <p className="text-4xl font-headline font-bold text-primary text-glow">{level}</p>
-                  <p className="text-sm text-muted-foreground uppercase tracking-widest">SEVİYE</p>
-              </div>
-              <div className={cn(
-                  "border-2 rounded-md px-2 py-0.5 font-headline font-bold text-2xl mb-1 shadow-[0_0_10px]",
-                  tierColorMap[tier] || tierColorMap['E']
-              )}>
-                  {tier}
-              </div>
+            <div className="flex flex-col items-center gap-1">
+                <div className="text-center">
+                    <p className="text-4xl font-headline font-bold text-primary text-glow">{level}</p>
+                    <p className="text-xs text-muted-foreground uppercase tracking-widest">SEVİYE</p>
+                </div>
+                <div className={cn(
+                    "border-2 rounded-md px-2 py-0.5 font-headline font-bold text-lg shadow-[0_0_10px]",
+                    tierColorMap[tier] || tierColorMap['E']
+                )}>
+                    {tier}-Kademe
+                </div>
             </div>
-            <div className="text-left">
+            <div className="text-left pl-4">
                 <p className="text-md"><span className="font-semibold text-muted-foreground">İŞ:</span> {job}</p>
                 <p className="text-md"><span className="font-semibold text-muted-foreground">ÜNVAN:</span> {title}</p>
             </div>
