@@ -11,9 +11,8 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { loginUserAction } from './actions';
 import { login } from '@/lib/auth';
-import { createNewUser } from '@/lib/userData'; // Import directly
+import { createNewUser, getUserForLogin } from '@/lib/userData'; // Import directly for client-side test
 
 export default function LoginPage() {
     const [loginUsername, setLoginUsername] = useState('');
@@ -30,16 +29,34 @@ export default function LoginPage() {
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoggingIn(true);
-        const result = await loginUserAction({ username: loginUsername, password: loginPassword });
-        if (result.success && result.user) {
-            login(result.user); // Save user to local storage
-            window.dispatchEvent(new Event('storage'));
-            router.push('/tasks');
-        } else {
+        try {
+            const result = await getUserForLogin(registerUsername, registerPassword);
+            if (result.success && result.user) {
+                 if (result.user.status === 'pending') {
+                    toast({
+                        variant: 'destructive',
+                        title: 'Onay Bekleniyor',
+                        description: 'Hesabınız henüz yönetici tarafından onaylanmadı.',
+                    });
+                } else {
+                    login(result.user); // Save user to local storage
+                    window.dispatchEvent(new Event('storage'));
+                    router.push('/tasks');
+                }
+            } else {
+                toast({
+                    variant: 'destructive',
+                    title: 'Giriş Başarısız',
+                    description: result.message,
+                });
+            }
+        } catch (error) {
+            console.error("Login error:", error);
+            const errorMessage = error instanceof Error ? error.message : 'Giriş sırasında bilinmeyen bir hata oluştu.';
             toast({
                 variant: 'destructive',
-                title: 'Giriş Başarısız',
-                description: result.message,
+                title: 'Giriş Hatası',
+                description: errorMessage,
             });
         }
         setIsLoggingIn(false);
@@ -50,6 +67,7 @@ export default function LoginPage() {
         setIsRegistering(true);
         setRegistrationMessage(null);
         try {
+            // Directly calling the function for client-side debugging
             const result = await createNewUser(registerUsername, registerPassword);
             if (result.success) {
                 setRegistrationMessage(result.message);
@@ -64,10 +82,11 @@ export default function LoginPage() {
             }
         } catch (error) {
              console.error("Registration error:", error);
+             const errorMessage = error instanceof Error ? error.message : 'Kayıt sırasında beklenmedik bir hata oluştu.';
              toast({
                 variant: 'destructive',
                 title: 'Kayıt Başarısız',
-                description: 'Kayıt sırasında beklenmedik bir hata oluştu.',
+                description: errorMessage,
             });
         }
         setIsRegistering(false);

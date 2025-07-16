@@ -1,5 +1,5 @@
 
-'use client'; // Make this a client-side module for the test
+'use client'; // Keep client for direct debugging from the login page
 
 import { db } from './firebase';
 import { doc, getDoc, setDoc, updateDoc, collection, getDocs, writeBatch } from 'firebase/firestore';

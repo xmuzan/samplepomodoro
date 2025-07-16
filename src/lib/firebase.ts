@@ -1,4 +1,4 @@
-
+// Import the functions you need from the SDKs you need
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 
@@ -11,7 +11,14 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// Initialize Firebase for SSR and SSG
+// Check for missing environment variables
+for (const [key, value] of Object.entries(firebaseConfig)) {
+    if (!value) {
+        console.error(`Firebase config error: Missing environment variable NEXT_PUBLIC_${key.replace(/([A-Z])/g, '_$1').toUpperCase()}`);
+    }
+}
+
+// Initialize Firebase for SSR and SSG, preventing duplicate app instances
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const db = getFirestore(app);
 
