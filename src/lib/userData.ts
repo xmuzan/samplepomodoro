@@ -1,5 +1,4 @@
 
-'use client';
 
 import { db } from './firebase';
 import { doc, getDoc, setDoc, updateDoc, collection, getDocs, writeBatch } from 'firebase/firestore';
@@ -47,13 +46,80 @@ const defaultUserData: Omit<UserData, 'password'> = {
     taskDeadline: null,
 };
 
-// Get a user's entire data document
+// --- User Authentication and Management ---
+
+export async function createNewUser(username: string, password?: string): Promise<{ success: boolean, message: string }> {
+    if (!username || !password) {
+        return { success: false, message: "Kullanıcı adı ve şifre gereklidir." };
+    }
+
+    const userRef = doc(db, "users", username);
+    
+    try {
+        const docSnap = await getDoc(userRef);
+
+        if (docSnap.exists()) {
+            return { success: false, message: "Bu kullanıcı adı zaten alınmış." };
+        }
+
+        const newUserAuthData: User & { password?: string } = {
+            username,
+            password,
+            isAdmin: false,
+            status: 'pending'
+        };
+        
+        const fullUserData = {
+            ...newUserAuthData,
+            ...defaultUserData,
+        };
+
+        await setDoc(userRef, fullUserData);
+
+        return { success: true, message: 'Kaydınız alındı. Hesabınız yönetici tarafından onaylandığında giriş yapabilirsiniz.' };
+
+    } catch (error) {
+        console.error("Error creating new user:", error);
+        return { success: false, message: "Kayıt sırasında veritabanında bir hata oluştu." };
+    }
+}
+
+
+export async function getUserForLogin(username: string, password?: string): Promise<{ success: boolean, message: string, user?: User }> {
+    const userRef = doc(db, "users", username);
+    try {
+        const docSnap = await getDoc(userRef);
+
+        if (!docSnap.exists()) {
+            return { success: false, message: "Kullanıcı bulunamadı." };
+        }
+
+        const userData = docSnap.data();
+        if (userData.password !== password) {
+            return { success: false, message: "Yanlış şifre." };
+        }
+        
+        const user: User = {
+            username: docSnap.id,
+            isAdmin: userData.isAdmin || false,
+            status: userData.status || 'pending'
+        };
+        
+        return { success: true, message: "Giriş başarılı", user };
+
+    } catch (error) {
+        console.error("Error logging in:", error);
+        return { success: false, message: "Giriş sırasında veritabanında bir hata oluştu." };
+    }
+}
+
+// --- User Progress and Data Management ---
+
 export async function getUserData(username: string): Promise<UserData | null> {
     const userRef = doc(db, 'users', username);
     const docSnap = await getDoc(userRef);
 
     if (docSnap.exists()) {
-        // We only need the progress data, not the auth info
         const { password, isAdmin, status, ...progressData } = docSnap.data();
         return progressData as UserData;
     } else {
@@ -62,76 +128,14 @@ export async function getUserData(username: string): Promise<UserData | null> {
     }
 }
 
-// Update parts of a user's data document
 export async function updateUserData(username: string, dataToUpdate: Partial<UserData>) {
     const userRef = doc(db, 'users', username);
     await updateDoc(userRef, dataToUpdate);
 }
 
-
 export async function updateTasks(username: string, dataToUpdate: Partial<Pick<UserData, 'tasks' | 'taskDeadline' | 'penaltyEndTime'>>) {
     const userRef = doc(db, 'users', username);
     await updateDoc(userRef, dataToUpdate);
-}
-
-
-// --- User Authentication and Management ---
-
-export async function getUserForLogin(username: string, password?: string): Promise<{ success: boolean, message: string, user?: User }> {
-    const userRef = doc(db, "users", username);
-    const docSnap = await getDoc(userRef);
-
-    if (!docSnap.exists()) {
-        return { success: false, message: "Kullanıcı bulunamadı." };
-    }
-
-    const userData = docSnap.data();
-    // In a real app, passwords would be hashed and compared securely.
-    // For this project, we are comparing plain text.
-    if (userData.password !== password) {
-        return { success: false, message: "Yanlış şifre." };
-    }
-    
-    return { 
-        success: true, 
-        message: "Giriş başarılı", 
-        user: {
-            username: docSnap.id,
-            isAdmin: userData.isAdmin || false,
-            status: userData.status || 'pending'
-        }
-    };
-}
-
-export async function createNewUser(username: string, password?: string): Promise<{ success: boolean, message: string }> {
-    if (!username || !password) {
-        return { success: false, message: "Kullanıcı adı ve şifre gereklidir." };
-    }
-    const userRef = doc(db, "users", username);
-    const docSnap = await getDoc(userRef);
-
-    if (docSnap.exists()) {
-        return { success: false, message: "Bu kullanıcı adı zaten alınmış." };
-    }
-
-    // This is the auth-related part of the user document
-    const newUserAuthInfo: User & { password?: string } = {
-        username,
-        password, // Storing plain text password - NOT FOR PRODUCTION
-        isAdmin: false,
-        status: 'pending' // Users start as pending
-    };
-    
-    // Combine auth info with the default game progress data
-    const fullUserData = {
-        ...newUserAuthInfo,
-        ...defaultUserData,
-    };
-
-    // Set the new user document in Firestore
-    await setDoc(userRef, fullUserData);
-
-    return { success: true, message: 'Kaydınız alındı. Hesabınız yönetici tarafından onaylandığında giriş yapabilirsiniz.' };
 }
 
 export async function getAllUsers(): Promise<User[]> {
@@ -152,10 +156,10 @@ export async function updateUserStatus(username: string, status: 'active' | 'pen
 
 export async function resetUserProgress(username: string) {
     const userRef = doc(db, 'users', username);
-    // Reset all progress fields to default, but keep auth fields like isAdmin, status, password
     const dataToUpdate = { ...defaultUserData };
     await updateDoc(userRef, dataToUpdate);
 }
+
 
 // --- Global Data (like Boss) ---
 
@@ -175,6 +179,5 @@ export async function getGlobalBossData(bossId: string): Promise<Partial<BossDat
 
 export async function updateGlobalBossData(bossId: string, data: Partial<BossData>) {
     const bossRef = doc(db, 'global_state', bossId);
-    // Use setDoc with merge to create or update
     await setDoc(bossRef, data, { merge: true });
 }
