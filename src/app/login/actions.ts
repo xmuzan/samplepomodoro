@@ -2,7 +2,7 @@
 'use server';
 
 import { z } from 'zod';
-import { createNewUser, getUserForLogin } from '@/lib/userData';
+import { getUserForLogin } from '@/lib/userData';
 import type { User } from '@/types';
 
 const AuthSchema = z.object({
@@ -25,10 +25,25 @@ export async function registerUserAction(credentials: unknown): Promise<Omit<Aut
     const { username, password } = validated.data;
 
     try {
-        const result = await createNewUser(username, password);
+        // We call our API route instead of directly calling the database function
+        const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password }),
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            // Forward the error message from the API route
+            return { success: false, message: result.message || 'Kayıt sırasında bir hata oluştu.' };
+        }
+
         return result;
+
     } catch (error) {
         console.error("Registration action error:", error);
+        // This will catch network errors between server action and API route
         return { success: false, message: 'Kayıt sırasında beklenmedik bir hata oluştu.' };
     }
 }
