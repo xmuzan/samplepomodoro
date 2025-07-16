@@ -1,17 +1,8 @@
-
-import { cookies } from 'next/headers';
+// This is now the main entry point and will be handled by the protected layout.
+// We redirect to /tasks to trigger the logic in the layout.
 import { redirect } from 'next/navigation';
 
-export default function Home() {
-    const cookieStore = cookies();
-    const sessionCookie = cookieStore.get('currentUser');
-
-    if (sessionCookie) {
-        redirect('/tasks');
-    } else {
-        redirect('/login');
-    }
-    
-    // This return is technically unreachable but required by Next.js
-    return null;
+export default function HomePage() {
+  redirect('/tasks');
+  return null;
 }

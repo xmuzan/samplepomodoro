@@ -3,9 +3,7 @@ import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
 import { Navbar } from '@/components/navbar';
 import type { User } from '@/types';
-
-// This is a server component layout
-// It will handle authentication before rendering child pages
+import LoginPage from './login/page'; // We will render the login page directly
 
 export default async function ProtectedLayout({
   children,
@@ -24,35 +22,35 @@ export default async function ProtectedLayout({
               user = session.user;
           }
       } catch (e) {
-          // Invalid cookie
           console.error("Failed to parse session cookie:", e);
       }
   }
 
-  if (!user) {
-    redirect('/login');
+  // If there is a user, proceed as normal
+  if (user) {
+    if (user.status === 'pending') {
+        return (
+          <div className="flex min-h-screen flex-col bg-transparent text-foreground md:flex-row">
+              <Navbar />
+              <main className="flex-1 p-4 pb-24 md:ml-20 md:pb-4 lg:ml-64 flex items-center justify-center">
+                  <div className="text-center">
+                      <h1 className="text-2xl font-bold text-primary">Hesabınız Onay Bekliyor</h1>
+                      <p className="text-muted-foreground mt-2">Yönetici onayından sonra tüm özelliklere erişebileceksiniz.</p>
+                  </div>
+              </main>
+          </div>
+        );
+    }
+    
+    // User is logged in and active, show the app with navbar.
+    return (
+      <div className="flex min-h-screen flex-col bg-transparent text-foreground md:flex-row">
+          <Navbar />
+          {children}
+      </div>
+    );
   }
   
-  if (user.status === 'pending') {
-      // You can create a dedicated pending page if you want
-      // For now, redirecting to tasks but they won't see much
-       return (
-        <div className="flex min-h-screen flex-col bg-transparent text-foreground md:flex-row">
-            <Navbar />
-            <main className="flex-1 p-4 pb-24 md:ml-20 md:pb-4 lg:ml-64 flex items-center justify-center">
-                <div className="text-center">
-                    <h1 className="text-2xl font-bold text-primary">Hesabınız Onay Bekliyor</h1>
-                    <p className="text-muted-foreground mt-2">Yönetici onayından sonra tüm özelliklere erişebileceksiniz.</p>
-                </div>
-            </main>
-        </div>
-      );
-  }
-
-  return (
-    <div className="flex min-h-screen flex-col bg-transparent text-foreground md:flex-row">
-        <Navbar />
-        {children}
-    </div>
-  );
+  // If there is NO user, show the login page content WITHOUT the navbar.
+  return <LoginPage />;
 }

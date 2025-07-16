@@ -3,9 +3,6 @@
 
 import { cookies } from 'next/headers';
 import { getUserForLogin } from '@/lib/userData';
-import type { User } from '@/types';
-
-const USER_KEY = 'currentUser';
 
 export async function loginUserAction(credentials: { username?: string, password?: string }): Promise<{ success: boolean, message: string }> {
     if (!credentials.username || !credentials.password) {
@@ -21,7 +18,7 @@ export async function loginUserAction(credentials: { username?: string, password
         };
 
         // Set the cookie on the server
-        cookies().set(USER_KEY, JSON.stringify(session), {
+        cookies().set('currentUser', JSON.stringify(session), {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             maxAge: 60 * 60 * 24, // 1 day
@@ -35,5 +32,5 @@ export async function loginUserAction(credentials: { username?: string, password
 }
 
 export async function logoutAction() {
-    cookies().delete(USER_KEY);
+    cookies().delete('currentUser');
 }

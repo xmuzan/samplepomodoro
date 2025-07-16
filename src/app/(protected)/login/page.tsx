@@ -32,7 +32,8 @@ export default function LoginPage() {
             const result = await loginUserAction({ username: loginUsername, password: loginPassword });
             
             if (result.success) {
-                router.push('/tasks');
+                // IMPORTANT: Just refresh the page. The layout will handle the redirect.
+                router.refresh();
             } else {
                 toast({
                     variant: 'destructive',

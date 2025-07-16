@@ -11,8 +11,9 @@ export default async function TasksPage() {
   const cookieStore = cookies();
   const sessionCookie = cookieStore.get('currentUser');
 
+  // This check is redundant due to the layout, but good for safety.
   if (!sessionCookie) {
-    redirect('/login');
+    redirect('/');
   }
 
   const currentUser = JSON.parse(sessionCookie.value).user;

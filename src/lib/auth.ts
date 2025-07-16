@@ -1,15 +1,17 @@
 
 'use client';
-import { setCookie, getCookie, deleteCookie } from 'cookies-next';
-import { logoutAction } from '@/app/login/actions';
+import { getCookie } from 'cookies-next';
+import { logoutAction } from '@/app/(protected)/login/actions';
 import type { User } from '@/types';
 
-const USER_KEY = 'currentUser';
-
+/**
+ * Logs the user out by calling the server action to delete the cookie
+ * and then forces a page reload to clear all state.
+ */
 export async function logout() {
     await logoutAction();
     // Use window.location to force a full refresh and clear all client state
-    window.location.href = '/login';
+    window.location.href = '/';
 }
 
 /**
@@ -21,7 +23,7 @@ export function getCurrentUser(): User | null {
         return null;
     }
 
-    const cookieValue = getCookie(USER_KEY);
+    const cookieValue = getCookie('currentUser');
     
     if (!cookieValue || typeof cookieValue !== 'string') {
         return null;
