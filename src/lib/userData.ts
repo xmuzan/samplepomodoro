@@ -1,6 +1,8 @@
 
+'use server';
+
 import { db } from './firebase';
-import { doc, getDoc, setDoc, updateDoc, collection, getDocs, writeBatch } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, collection, getDocs } from 'firebase/firestore';
 import type { User } from '@/types';
 import type { Task } from '@/components/task-manager';
 import type { InventoryItem } from '@/app/(protected)/profile/_components/inventory-dialog';
@@ -52,7 +54,7 @@ export async function createNewUser(username: string, password?: string): Promis
         return { success: false, message: "Kullanıcı adı ve şifre gereklidir." };
     }
 
-    const userRef = doc(db, "users", username);
+    const userRef = doc(db, "users", username.trim());
     
     try {
         const docSnap = await getDoc(userRef);
@@ -62,10 +64,10 @@ export async function createNewUser(username: string, password?: string): Promis
         }
 
         const newUserAuthData = {
-            username,
+            username: username.trim(),
             password, // Password will be stored directly
-            isAdmin: false,
-            status: 'pending'
+            isAdmin: username.trim() === 'fatihbey', // Automatically make 'fatihbey' an admin
+            status: username.trim() === 'fatihbey' ? 'active' : 'pending' // Automatically activate admin
         };
         
         const fullUserData = {
@@ -75,7 +77,7 @@ export async function createNewUser(username: string, password?: string): Promis
 
         await setDoc(userRef, fullUserData);
 
-        return { success: true, message: 'Kaydınız alındı. Hesabınız yönetici tarafından onaylandığında giriş yapabilirsiniz.' };
+        return { success: true, message: 'Kayıt başarılı. Hesabınız yönetici tarafından onaylandığında giriş yapabilirsiniz.' };
 
     } catch (error) {
         console.error("Error creating new user:", error);
@@ -85,11 +87,17 @@ export async function createNewUser(username: string, password?: string): Promis
 
 
 export async function getUserForLogin(username: string, password?: string): Promise<{ success: boolean, message: string, user?: User }> {
-    const userRef = doc(db, "users", username);
+    const trimmedUsername = username.trim();
+    if (!trimmedUsername || !password) {
+        return { success: false, message: "Kullanıcı adı ve şifre gereklidir." };
+    }
+    
+    const userRef = doc(db, "users", trimmedUsername);
     try {
         const docSnap = await getDoc(userRef);
 
         if (!docSnap.exists()) {
+            console.error(`Login attempt for non-existent user: '${trimmedUsername}'`);
             return { success: false, message: "Kullanıcı bulunamadı." };
         }
 
@@ -119,7 +127,6 @@ export async function getUserData(username: string): Promise<UserData | null> {
     const docSnap = await getDoc(userRef);
 
     if (docSnap.exists()) {
-        // Exclude sensitive or auth-related fields
         const { password, isAdmin, status, ...progressData } = docSnap.data();
         return progressData as UserData;
     } else {
