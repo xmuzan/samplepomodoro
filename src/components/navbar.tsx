@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Bot, Store, Swords, User, FileText, Lock, Crown, Shield } from 'lucide-react';
+import { Bot, Store, Swords, User, FileText, Lock, Crown, Shield, LogOut } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import type { User as AuthUser } from '@/types';
 
@@ -15,7 +15,6 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { Button } from './ui/button';
-import { LogOut } from 'lucide-react';
 import { logoutAction } from '@/app/login/actions';
 import { getCookie } from 'cookies-next';
 
@@ -84,7 +83,6 @@ export function Navbar() {
   
   const handleLogout = async () => {
       await logoutAction();
-      router.refresh();
   }
 
   const navItems = user?.isAdmin ? [...baseNavItems, adminNavItem] : baseNavItems;
