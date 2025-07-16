@@ -11,7 +11,8 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { login, register } from '@/lib/auth';
+import { loginUserAction, registerUserAction } from './actions';
+import { login } from '@/lib/auth';
 
 export default function LoginPage() {
     const [loginUsername, setLoginUsername] = useState('');
@@ -28,8 +29,9 @@ export default function LoginPage() {
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoggingIn(true);
-        const result = await login(loginUsername, loginPassword);
-        if (result.success) {
+        const result = await loginUserAction({ username: loginUsername, password: loginPassword });
+        if (result.success && result.user) {
+            login(result.user); // Save user to local storage
             window.dispatchEvent(new Event('storage'));
             router.push('/tasks');
         } else {
@@ -45,7 +47,7 @@ export default function LoginPage() {
     const handleRegister = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsRegistering(true);
-        const result = await register(registerUsername, registerPassword);
+        const result = await registerUserAction({ username: registerUsername, password: registerPassword });
         if (result.success) {
             setRegistrationMessage(result.message);
             setRegisterUsername('');

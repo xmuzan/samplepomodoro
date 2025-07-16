@@ -2,43 +2,19 @@
 'use client';
 
 import type { User } from '@/types';
-import { getUserForLogin, createNewUser } from './userData';
 
 const USER_KEY = 'currentUser';
 
-export async function login(username: string, password?: string): Promise<{ success: boolean, message: string, user?: User }> {
-    try {
-        const result = await getUserForLogin(username, password);
-        if (result.success && result.user) {
-            if (result.user.status === 'pending') {
-                return { success: false, message: 'Hesabınız yönetici onayı bekliyor.' };
-            }
-            const session = {
-                user: result.user,
-                expiry: Date.now() + 24 * 60 * 60 * 1000, // 24 hours
-            };
-            localStorage.setItem(USER_KEY, JSON.stringify(session));
-            return { success: true, message: 'Giriş başarılı!', user: result.user };
-        } else {
-            return { success: false, message: result.message || 'Geçersiz kullanıcı adı veya şifre.' };
-        }
-    } catch (error) {
-        console.error("Login error:", error);
-        return { success: false, message: 'Giriş sırasında bir hata oluştu.' };
-    }
-}
-
-export async function register(username: string, password?: string): Promise<{ success: boolean, message: string }> {
-    if (!username || !password) {
-        return { success: false, message: 'Kullanıcı adı ve şifre gerekli.' };
-    }
-    try {
-        const result = await createNewUser(username, password);
-        return result;
-    } catch (error) {
-        console.error("Registration error:", error);
-        return { success: false, message: 'Kayıt sırasında bir hata oluştu.' };
-    }
+/**
+ * Saves the user object to localStorage to start a session.
+ * This should be called after a successful login from a Server Action.
+ */
+export function login(user: User) {
+    const session = {
+        user: user,
+        expiry: Date.now() + 24 * 60 * 60 * 1000, // 24 hours
+    };
+    localStorage.setItem(USER_KEY, JSON.stringify(session));
 }
 
 
