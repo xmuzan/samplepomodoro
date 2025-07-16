@@ -64,7 +64,7 @@ export function UserInfo({ level, tier, job, title, username, avatarUrl, onProfi
                     "border-2 rounded-md px-2 py-0.5 font-headline font-bold text-lg shadow-[0_0_10px] mt-2",
                     tierColorMap[tier] || tierColorMap['E']
                 )}>
-                    {tier}-Kademe
+                    {tier}
                 </div>
             </div>
             <div className="text-left pl-4">
