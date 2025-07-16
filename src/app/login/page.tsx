@@ -1,6 +1,8 @@
+
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Bot, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,8 +10,8 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { createNewUser, getUserForLogin } from '@/lib/userData';
-import { login } from '@/lib/auth';
+import { createNewUser } from '@/lib/userData';
+import { loginUserAction } from './actions';
 
 export default function LoginPage() {
     const [loginUsername, setLoginUsername] = useState('');
@@ -21,16 +23,16 @@ export default function LoginPage() {
     const [isRegistering, setIsRegistering] = useState(false);
 
     const { toast } = useToast();
+    const router = useRouter();
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoggingIn(true);
         try {
-            const result = await getUserForLogin(loginUsername, loginPassword);
+            const result = await loginUserAction({ username: loginUsername, password: loginPassword });
             
-            if (result.success && result.user) {
-                login(result.user);
-                window.location.href = '/tasks';
+            if (result.success) {
+                router.push('/tasks');
             } else {
                 toast({
                     variant: 'destructive',

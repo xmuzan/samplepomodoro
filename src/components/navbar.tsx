@@ -8,13 +8,15 @@ import { useState, useEffect } from 'react';
 import type { User as AuthUser } from '@/types';
 
 import { cn } from '@/lib/utils';
-import { getCurrentUser } from '@/lib/auth';
+import { getCurrentUser, logout } from '@/lib/auth';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { Button } from './ui/button';
+import { LogOut } from 'lucide-react';
 
 const baseNavItems = [
   { href: '/tasks', label: 'Görevler', icon: Swords },
@@ -35,25 +37,25 @@ export function Navbar() {
     const checkUserAndPenalty = () => {
       const currentUser = getCurrentUser();
       setUser(currentUser);
-
-      const penaltyEndTime = localStorage.getItem('penaltyEndTime');
-      if (penaltyEndTime && parseInt(penaltyEndTime) > Date.now()) {
-        setIsPenaltyActive(true);
-      } else {
-        setIsPenaltyActive(false);
+      
+      if (typeof window !== 'undefined') {
+          const penaltyEndTime = localStorage.getItem('penaltyEndTime');
+          if (penaltyEndTime && parseInt(penaltyEndTime) > Date.now()) {
+            setIsPenaltyActive(true);
+          } else {
+            setIsPenaltyActive(false);
+          }
       }
     };
     
     checkUserAndPenalty();
     
-    // Listen to custom storage events if needed, or rely on router refreshes
-    const interval = setInterval(checkUserAndPenalty, 2000); // Periodically check
+    const interval = setInterval(checkUserAndPenalty, 2000); 
 
     return () => {
       clearInterval(interval);
     };
   }, []);
-
 
   const navItems = user?.isAdmin ? [...baseNavItems, adminNavItem] : baseNavItems;
 
@@ -123,6 +125,19 @@ export function Navbar() {
                        )
                     })}
                 </ul>
+            </div>
+             <div className="mt-auto flex flex-col gap-2 p-2 border-t border-primary/20">
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                         <Button variant="ghost" className={cn(commonLinkClasses, inactiveClasses)} onClick={logout}>
+                            <LogOut className="h-6 w-6 shrink-0" />
+                            <span className="hidden lg:block">Çıkış Yap</span>
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="right" className="lg:hidden futuristic-card !p-2 !border-primary/50">
+                        <p>Çıkış Yap</p>
+                    </TooltipContent>
+                </Tooltip>
             </div>
         </nav>
       </TooltipProvider>

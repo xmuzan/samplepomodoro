@@ -17,7 +17,7 @@ export default async function ProtectedLayout({
   
   let user: User | null = null;
 
-  if (sessionCookie) {
+  if (sessionCookie?.value) {
       try {
           const session = JSON.parse(sessionCookie.value);
           if (session.expiry > Date.now()) {
@@ -25,6 +25,7 @@ export default async function ProtectedLayout({
           }
       } catch (e) {
           // Invalid cookie
+          console.error("Failed to parse session cookie:", e);
       }
   }
 
