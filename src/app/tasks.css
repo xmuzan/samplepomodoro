@@ -201,3 +201,8 @@
 .tech-task-item:hover::before {
   transform: scaleY(1);
 }
+
+.profile-card-container {
+    background-color: hsl(var(--background) / 0.9);
+    backdrop-filter: blur(8px);
+}
