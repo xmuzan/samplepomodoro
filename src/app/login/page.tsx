@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { login } from '@/lib/auth';
-import { registerUserAction, loginUserAction } from './actions';
+import { createNewUser, getUserForLogin } from '@/lib/userData'; // Directly import from userData
 
 export default function LoginPage() {
     const [loginUsername, setLoginUsername] = useState('');
@@ -30,7 +30,7 @@ export default function LoginPage() {
         e.preventDefault();
         setIsLoggingIn(true);
         try {
-            const result = await loginUserAction({ username: loginUsername, password: loginPassword });
+            const result = await getUserForLogin(loginUsername, loginPassword);
             if (result.success && result.user) {
                  if (result.user.status === 'pending') {
                     toast({
@@ -67,7 +67,8 @@ export default function LoginPage() {
         setIsRegistering(true);
         setRegistrationMessage(null);
         try {
-            const result = await registerUserAction({ username: registerUsername, password: registerPassword });
+            // Call createNewUser directly from the client component
+            const result = await createNewUser(registerUsername, registerPassword);
             if (result.success) {
                 setRegistrationMessage(result.message);
                 setRegisterUsername('');
