@@ -47,6 +47,7 @@ export default function LoginPage() {
     const handleRegister = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsRegistering(true);
+        setRegistrationMessage(null);
         const result = await registerUserAction({ username: registerUsername, password: registerPassword });
         if (result.success) {
             setRegistrationMessage(result.message);

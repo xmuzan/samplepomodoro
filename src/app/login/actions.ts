@@ -2,7 +2,7 @@
 'use server';
 
 import { z } from 'zod';
-import { getUserForLogin } from '@/lib/userData';
+import { createNewUser, getUserForLogin } from '@/lib/userData';
 import type { User } from '@/types';
 
 const AuthSchema = z.object({
@@ -25,37 +25,21 @@ export async function registerUserAction(credentials: unknown): Promise<Omit<Aut
     const { username, password } = validated.data;
 
     try {
-        // We call our API route instead of directly calling the database function
-        const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/register`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password }),
-        });
-
-        const result = await response.json();
-
-        if (!response.ok) {
-            // Forward the error message from the API route
-            return { success: false, message: result.message || 'Kayıt sırasında bir hata oluştu.' };
-        }
-
+        const result = await createNewUser(username, password);
         return result;
-
     } catch (error) {
         console.error("Registration action error:", error);
-        // This will catch network errors between server action and API route
-        return { success: false, message: 'Kayıt sırasında beklenmedik bir hata oluştu.' };
+        return { success: false, message: 'Kayıt sırasında sunucuda beklenmedik bir hata oluştu.' };
     }
 }
 
 export async function loginUserAction(credentials: unknown): Promise<AuthResult> {
     const validated = AuthSchema.safeParse(credentials);
     if (!validated.success) {
-        // Allow login attempt even if validation fails, backend will check.
-        // This is to avoid giving away which fields are incorrect.
+        return { success: false, message: "Geçersiz kullanıcı adı veya şifre." };
     }
 
-    const { username, password } = credentials as z.infer<typeof AuthSchema>;
+    const { username, password } = validated.data;
 
     try {
         const result = await getUserForLogin(username, password);
