@@ -1,8 +1,13 @@
+
+'use client';
+
 import { Button } from "@/components/ui/button";
-import { Coins, Star, ShieldQuestion } from "lucide-react";
+import { Coins, Star, ShieldQuestion, LogOut } from "lucide-react";
 import { InventoryDialog } from "./inventory-dialog";
 import type { ShopItemData } from "@/app/(protected)/shop/_components/shop-item";
 import { SkillsDialog } from "./skills-dialog";
+import { logoutAction } from "@/app/login/actions";
+import { useRouter } from "next/navigation";
 
 interface FooterActionsProps {
   gold: number;
@@ -11,6 +16,14 @@ interface FooterActionsProps {
 }
 
 export function FooterActions({ gold, shopItems, availablePoints }: FooterActionsProps) {
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    await logoutAction();
+    // The redirect is handled within logoutAction, but a router.refresh() can be good practice
+    // in case the action is modified later. However, for a logout, it's not strictly necessary.
+  };
+
   return (
     <div className="flex flex-col md:flex-row justify-between items-center gap-4 mt-2">
       <div className="flex items-center gap-2 text-lg font-mono p-2 rounded-md bg-muted/20">
@@ -38,6 +51,10 @@ export function FooterActions({ gold, shopItems, availablePoints }: FooterAction
             Envanter
           </Button>
         </InventoryDialog>
+        <Button size="lg" variant="destructive" onClick={handleLogout} className="gap-2 w-full">
+            <LogOut className="h-6 w-6" />
+            Çıkış Yap
+        </Button>
       </div>
     </div>
   );
