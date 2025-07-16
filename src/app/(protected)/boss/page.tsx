@@ -1,10 +1,8 @@
 
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { getGlobalBossData, getUserData } from '@/lib/userData';
+import { getGlobalBossData, getUserData, getBossDefinition, initializeBossDefinition } from '@/lib/userData';
 import { BossManager } from './_components/boss-manager';
-
-export const BOSS_RESPAWN_HOURS = 48;
 
 export interface Boss {
   id: string;
@@ -13,8 +11,10 @@ export interface Boss {
   maxHp: number;
 }
 
-const currentBoss: Boss = {
-  id: 'netanyahu',
+const BOSS_ID = 'netanyahu';
+
+const defaultBoss: Boss = {
+  id: BOSS_ID,
   name: 'Süper Domuz Netanyahu',
   imageUrl: '/domuzboss.png',
   maxHp: 100,
@@ -31,6 +31,14 @@ export default async function BossPage() {
 
   const currentUser = JSON.parse(sessionCookie.value).user;
   const userData = await getUserData(currentUser.username);
+
+  // Fetch boss definition from DB, or initialize it if it doesn't exist
+  let currentBoss = await getBossDefinition(BOSS_ID);
+  if (!currentBoss) {
+    await initializeBossDefinition(BOSS_ID, defaultBoss);
+    currentBoss = defaultBoss;
+  }
+  
   const bossData = await getGlobalBossData(currentBoss.id);
 
   if (!userData?.baseStats) {

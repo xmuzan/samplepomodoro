@@ -8,6 +8,7 @@ import type { Task } from '@/components/task-manager';
 import type { InventoryItem } from '@/app/(protected)/profile/_components/inventory-dialog';
 import type { SkillData } from './skills';
 import type { UserStats } from './stats';
+import type { Boss } from '@/app/(protected)/boss/page';
 
 export interface UserData {
     userGold: number;
@@ -185,21 +186,35 @@ export async function resetUserProgress(username: string) {
 
 // --- Global Data (like Boss) ---
 
-interface BossData {
+interface BossStatus {
     hp: number;
     respawnTime: number | null;
 }
 
-export async function getGlobalBossData(bossId: string): Promise<Partial<BossData>> {
+export async function getBossDefinition(bossId: string): Promise<Boss | null> {
+    const bossDefRef = doc(db, 'boss_definitions', bossId);
+    const docSnap = await getDoc(bossDefRef);
+    if (docSnap.exists()) {
+        return docSnap.data() as Boss;
+    }
+    return null;
+}
+
+export async function initializeBossDefinition(bossId: string, bossData: Boss) {
+    const bossDefRef = doc(db, 'boss_definitions', bossId);
+    await setDoc(bossDefRef, bossData, { merge: true });
+}
+
+export async function getGlobalBossData(bossId: string): Promise<Partial<BossStatus>> {
     const bossRef = doc(db, 'global_state', bossId);
     const docSnap = await getDoc(bossRef);
     if (docSnap.exists()) {
-        return docSnap.data() as BossData;
+        return docSnap.data() as BossStatus;
     }
     return {};
 }
 
-export async function updateGlobalBossData(bossId: string, data: Partial<BossData>) {
+export async function updateGlobalBossData(bossId: string, data: Partial<BossStatus>) {
     const bossRef = doc(db, 'global_state', bossId);
     await setDoc(bossRef, data, { merge: true });
 }
