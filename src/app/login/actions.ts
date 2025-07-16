@@ -2,6 +2,7 @@
 'use server';
 
 import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
 import { getUserForLogin } from '@/lib/userData';
 
 export async function loginUserAction(credentials: { username?: string, password?: string }): Promise<{ success: boolean, message?: string }> {
@@ -29,7 +30,11 @@ export async function loginUserAction(credentials: { username?: string, password
             path: '/',
         });
 
-        return { success: true };
+        // Redirect from the server action
+        redirect('/tasks');
+
+        // This part will not be reached due to the redirect, but it's good practice
+        // return { success: true }; 
     }
 
     return { success: false, message: result.message };

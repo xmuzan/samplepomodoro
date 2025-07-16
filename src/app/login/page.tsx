@@ -29,24 +29,23 @@ export default function LoginPage() {
         e.preventDefault();
         setIsLoggingIn(true);
         try {
+            // The server action will handle the redirect on success.
+            // We only need to handle the failure case here.
             const result = await loginUserAction({ username: loginUsername, password: loginPassword });
             
-            if (result.success) {
-                toast({
-                    title: 'Giriş Başarılı',
-                    description: 'Görevler sayfasına yönlendiriliyorsunuz...',
-                });
-                router.push('/tasks');
-                router.refresh();
-            } else {
+            if (!result.success) {
                 toast({
                     variant: 'destructive',
                     title: 'Giriş Başarısız',
                     description: result.message || "Lütfen bilgilerinizi kontrol edin.",
                 });
             }
+            // No need for router.push or router.refresh here.
+            // The server action 'redirect' is more reliable.
+            
         } catch (error) {
             console.error("Login error:", error);
+            // This catch block will likely only catch network errors, not the redirect itself.
             const errorMessage = error instanceof Error ? error.message : 'Giriş sırasında bilinmeyen bir hata oluştu.';
             toast({
                 variant: 'destructive',
