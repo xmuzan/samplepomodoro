@@ -37,7 +37,7 @@ export default function LoginPage() {
                     description: 'Görevler sayfasına yönlendiriliyorsunuz...',
                 });
                 router.push('/tasks');
-                router.refresh(); // This is crucial to re-fetch server components with the new cookie
+                router.refresh();
             } else {
                 toast({
                     variant: 'destructive',

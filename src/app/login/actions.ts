@@ -3,9 +3,8 @@
 
 import { cookies } from 'next/headers';
 import { getUserForLogin } from '@/lib/userData';
-import type { User } from '@/types';
 
-export async function loginUserAction(credentials: { username?: string, password?: string }): Promise<{ success: boolean, message: string }> {
+export async function loginUserAction(credentials: { username?: string, password?: string }): Promise<{ success: boolean, message?: string }> {
     if (!credentials.username || !credentials.password) {
         return { success: false, message: 'Kullanıcı adı ve şifre gereklidir.' };
     }
@@ -30,7 +29,7 @@ export async function loginUserAction(credentials: { username?: string, password
             path: '/',
         });
 
-        return { success: true, message: 'Giriş başarılı.' };
+        return { success: true };
     }
 
     return { success: false, message: result.message };

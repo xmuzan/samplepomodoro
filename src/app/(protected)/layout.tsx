@@ -13,22 +13,21 @@ export default async function ProtectedLayout({
   const sessionCookie = cookieStore.get('currentUser');
   
   let user: User | null = null;
-  let isSessionValid = false;
-
+  
   if (sessionCookie?.value) {
       try {
           const session = JSON.parse(sessionCookie.value);
+          // Check if session is expired
           if (session.expiry && session.expiry > Date.now()) {
               user = session.user;
-              isSessionValid = true;
           }
       } catch (e) {
           console.error("Failed to parse session cookie on server:", e);
       }
   }
 
-  // If there is NO valid session, redirect to the login page.
-  if (!isSessionValid || !user) {
+  // If there is NO valid user, redirect to the login page.
+  if (!user) {
     redirect('/login');
   }
 
