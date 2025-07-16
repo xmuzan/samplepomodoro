@@ -61,7 +61,7 @@ export function UserInfo({ level, tier, job, title, username, avatarUrl, onProfi
                     <p className="text-xs text-muted-foreground uppercase tracking-widest">SEVİYE</p>
                 </div>
                 <div className={cn(
-                    "border-2 rounded-md px-2 py-0.5 font-headline font-bold text-lg shadow-[0_0_10px]",
+                    "border-2 rounded-md px-2 py-0.5 font-headline font-bold text-lg shadow-[0_0_10px] mt-1",
                     tierColorMap[tier] || tierColorMap['E']
                 )}>
                     {tier}-Kademe
