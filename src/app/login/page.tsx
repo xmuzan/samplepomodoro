@@ -32,9 +32,12 @@ export default function LoginPage() {
             const result = await loginUserAction({ username: loginUsername, password: loginPassword });
             
             if (result.success) {
-                // On success, we just refresh the page.
-                // The middleware will see the new cookie and redirect us to '/tasks'.
-                router.refresh();
+                toast({
+                    title: 'Giriş Başarılı',
+                    description: 'Görevler sayfasına yönlendiriliyorsunuz...',
+                });
+                router.push('/tasks');
+                router.refresh(); // Bu, sunucudan en güncel durumu çekmek için kritik
             } else {
                  toast({
                     variant: 'destructive',

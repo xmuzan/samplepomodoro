@@ -16,8 +16,8 @@ export function middleware(request: NextRequest) {
   if (currentUserCookie) {
     try {
       const session: { user: User, expiry: number } = JSON.parse(currentUserCookie);
-      // Check if session is expired and user status is active
-      if (session && session.expiry > Date.now() && session.user.status === 'active') {
+      // Check if session is expired AND user status is active
+      if (session && session.user && session.expiry > Date.now() && session.user.status === 'active') {
         userIsAuthenticated = true;
         userIsAdmin = session.user.isAdmin || false;
       }
@@ -44,9 +44,12 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/tasks', request.url));
   }
   
-  // If the root path is accessed, redirect to tasks
+  // If the root path is accessed, redirect to tasks if logged in, otherwise to login
   if (pathname === '/') {
-      return NextResponse.redirect(new URL('/tasks', request.url));
+      if (userIsAuthenticated) {
+         return NextResponse.redirect(new URL('/tasks', request.url));
+      }
+      return NextResponse.redirect(new URL('/login', request.url));
   }
 
   return NextResponse.next();

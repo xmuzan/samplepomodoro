@@ -29,8 +29,7 @@ export async function loginUserAction(credentials: { username?: string, password
             path: '/',
         });
 
-        // The action will no longer redirect.
-        // The client-side will handle the refresh, and the middleware will handle the redirect.
+        // Artık yönlendirme yapmıyoruz, sadece başarı durumunu döndürüyoruz.
         return { success: true };
     }
 
