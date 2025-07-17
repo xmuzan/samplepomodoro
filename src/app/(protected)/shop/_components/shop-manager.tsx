@@ -80,7 +80,6 @@ export function ShopManager({ username, initialGold, initialPenaltyEndTime, shop
       const itemIndex = currentInventory.findIndex((invItem) => invItem.id === item.id);
 
       if (itemIndex > -1) {
-        // Item exists, update quantity (immutable way)
         updatedInventory = currentInventory.map((invItem, index) => {
           if (index === itemIndex) {
             return { ...invItem, quantity: invItem.quantity + 1 };
@@ -88,7 +87,6 @@ export function ShopManager({ username, initialGold, initialPenaltyEndTime, shop
           return invItem;
         });
       } else {
-        // Item does not exist, add it (immutable way)
         updatedInventory = [...currentInventory, { id: item.id, quantity: 1 }];
       }
       
@@ -102,7 +100,9 @@ export function ShopManager({ username, initialGold, initialPenaltyEndTime, shop
         title: "Satın Alma Başarılı",
         description: `${item.name} envanterine eklendi.`
       })
-      window.dispatchEvent(new Event('storage')); // Notify other components of data change
+      // This event can notify other components on the SAME page if they are listening.
+      // For cross-page updates, a full refresh on navigation is more reliable.
+      window.dispatchEvent(new Event('storage')); 
       
     } catch(error) {
       console.error("Failed to update inventory in Firestore", error);

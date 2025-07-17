@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
@@ -37,20 +37,11 @@ export function InventoryDialog({ children, initialInventory }: InventoryDialogP
   const currentUser = getCurrentUser();
   const router = useRouter();
 
-  const fetchLatestInventory = async () => {
-      if (!currentUser?.username) return;
-      const data = await getUserData(currentUser.username);
-      setInventory(data?.inventory || []);
-  };
+  // When the initialInventory prop changes (because the page was refreshed), update the component's state.
+  useEffect(() => {
+    setInventory(initialInventory);
+  }, [initialInventory]);
   
-  const handleOpenChange = (isOpen: boolean) => {
-    setOpen(isOpen);
-    if (isOpen) {
-      // Always fetch the latest data from DB when dialog opens to ensure it's fresh
-      fetchLatestInventory();
-    }
-  };
-
   const handleUseItem = async (itemId: string) => {
     if (!currentUser) return;
     const itemData = shopItemsData.find(item => item.id === itemId);
@@ -88,10 +79,10 @@ export function InventoryDialog({ children, initialInventory }: InventoryDialogP
             baseStats: newStats
         });
         
-        setInventory(finalInventory); // Optimistic update for the dialog UI
-        
-        // Refresh server components on the page to reflect stat changes etc.
+        // This is the key change: refresh the page to get the latest server data.
+        // This ensures the profile page and all its components have the latest state.
         router.refresh(); 
+        setOpen(false); // Close the dialog after using an item
 
     } catch (error) {
         console.error("Failed to use item", error);
@@ -100,7 +91,7 @@ export function InventoryDialog({ children, initialInventory }: InventoryDialogP
   };
   
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {children}
       </DialogTrigger>
