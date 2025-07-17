@@ -98,7 +98,6 @@ export function ShopManager({ username, initialGold, initialPenaltyEndTime, shop
         title: "Satın Alındı!",
         description: `${item.name} envanterine eklendi.`,
       });
-      window.dispatchEvent(new Event('storage')); // Notify other components
       router.refresh();
       
     } catch(error) {

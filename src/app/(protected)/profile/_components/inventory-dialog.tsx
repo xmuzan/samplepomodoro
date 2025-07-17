@@ -18,6 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 import { getUserData, updateUserData } from "@/lib/userData";
 import { getCurrentUser } from "@/lib/auth";
 import { shopItemsData } from "../../shop/shop-data";
+import { useRouter } from "next/navigation";
 
 export interface InventoryItem {
   id: string;
@@ -33,6 +34,7 @@ export function InventoryDialog({ children }: InventoryDialogProps) {
   const [isMounted, setIsMounted] = useState(false);
   const { toast } = useToast();
   const currentUser = getCurrentUser();
+  const router = useRouter();
 
   const fetchInventory = async () => {
     if (!currentUser) return;
@@ -46,18 +48,8 @@ export function InventoryDialog({ children }: InventoryDialogProps) {
   }
 
   useEffect(() => {
+    // This effect runs once on component mount to ensure client-side logic runs correctly.
     setIsMounted(true);
-    fetchInventory();
-
-    const handleStorageChange = () => {
-        fetchInventory();
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-
-    return () => {
-        window.removeEventListener('storage', handleStorageChange);
-    };
   }, []);
 
   const handleUseItem = async (itemId: string) => {
@@ -98,7 +90,7 @@ export function InventoryDialog({ children }: InventoryDialogProps) {
                 baseStats: newStats
             });
             setInventory(updatedInventory);
-            window.dispatchEvent(new Event('storage')); // Notify other components
+            router.refresh(); // Refresh server components
         }
     } catch (error) {
         console.error("Failed to use item", error);
@@ -113,6 +105,7 @@ export function InventoryDialog({ children }: InventoryDialogProps) {
   };
 
   if (!isMounted) {
+    // Render a placeholder or nothing on the server to prevent hydration issues
     return <>{children}</>;
   }
 

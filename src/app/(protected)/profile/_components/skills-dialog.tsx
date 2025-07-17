@@ -40,16 +40,6 @@ export function SkillsDialog({ children }: SkillsDialogProps) {
 
   useEffect(() => {
     setIsMounted(true);
-    fetchSkillData();
-
-    const handleStorageChange = () => {
-      fetchSkillData();
-    };
-    window.addEventListener('storage', handleStorageChange);
-
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-    };
   }, []);
 
   const handleOpenChange = (open: boolean) => {
