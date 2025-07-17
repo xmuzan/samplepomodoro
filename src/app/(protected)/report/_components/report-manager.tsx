@@ -30,13 +30,6 @@ const hpActions: ReportAction[] = [
     stat: 'hp',
   },
   {
-    id: 'hp_sport',
-    title: 'Spor Hedefini Aksatma',
-    description: 'Bugünkü antrenmanını veya fiziksel aktivite hedefini atladın.',
-    impact: -5,
-    stat: 'hp',
-  },
-  {
     id: 'hp_profanity',
     title: 'Küfür Etmek',
     description: 'Ağızdan çıkan kötü sözler ruhsal enerjiyi tüketir.',
