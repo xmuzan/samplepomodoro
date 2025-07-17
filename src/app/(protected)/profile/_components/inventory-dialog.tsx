@@ -97,8 +97,6 @@ export function InventoryDialog({ children, initialInventory }: InventoryDialogP
             baseStats: newStats
         });
         
-        // This is the key: refresh the page to get the latest server data.
-        // This ensures the profile page and all its components (HP bars, inventory) have the latest state.
         toast({ title: "Başarılı", description: `${itemData.name} kullanıldı.` });
         router.refresh(); 
         setOpen(false); // Close the dialog after using an item
@@ -143,7 +141,6 @@ export function InventoryDialog({ children, initialInventory }: InventoryDialogP
                         </div>
                         <div className="flex-grow">
                           <h4 className="font-bold text-foreground">{shopItem.name} {invItem.quantity > 1 && `(x${invItem.quantity})`}</h4>
-                          <p className="text-xs text-muted-foreground">{shopItem.description}</p>
                         </div>
                         <Button size="sm" variant="outline" onClick={() => handleUseItem(invItem.id)}>
                           Kullan
