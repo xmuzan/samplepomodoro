@@ -21,19 +21,19 @@ import type { InventoryItem } from "@/lib/userData";
 import type { UserStats } from "@/lib/stats";
 
 interface InventoryDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  children: React.ReactNode;
   initialInventory: InventoryItem[];
   userData: UserData | null;
 }
 
-export function InventoryDialog({ open, onOpenChange, initialInventory, userData }: InventoryDialogProps) {
+export function InventoryDialog({ children, initialInventory, userData }: InventoryDialogProps) {
   const { toast } = useToast();
   const currentUser = getCurrentUser();
   const router = useRouter();
+  const [open, setOpen] = useState(false);
 
   const handleUseItem = async (itemId: string) => {
-    if (!currentUser || !userData || !userData.baseStats || !initialInventory) {
+    if (!currentUser || !userData || !userData.baseStats) {
         toast({ title: "Hata", description: "Kullanıcı verisi bulunamadı.", variant: "destructive" });
         return;
     }
@@ -77,7 +77,7 @@ export function InventoryDialog({ open, onOpenChange, initialInventory, userData
             });
             
             if (updatedInventory.length === 0) {
-              onOpenChange(false);
+              setOpen(false);
             }
             
             router.refresh();
@@ -89,7 +89,8 @@ export function InventoryDialog({ open, onOpenChange, initialInventory, userData
   };
   
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={setOpen}>
+      {children}
       <DialogContent className="border-none bg-transparent p-0 shadow-none sm:max-w-2xl">
         <FuturisticBorder>
           <div className="bg-background/90 backdrop-blur-sm p-1">
