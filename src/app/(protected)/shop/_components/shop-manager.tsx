@@ -8,6 +8,7 @@ import { ShopItem, type ShopItemData } from './shop-item';
 import { Coins, Lock } from 'lucide-react';
 import { getUserData, updateUserData } from '@/lib/userData';
 import type { InventoryItem } from '../../profile/_components/inventory-dialog';
+import { useToast } from '@/hooks/use-toast';
 
 function PenaltyTimer({ endTime }: { endTime: number }) {
   const [timeLeft, setTimeLeft] = useState(endTime - Date.now());
@@ -65,6 +66,11 @@ interface ShopManagerProps {
 export function ShopManager({ username, initialGold, initialPenaltyEndTime, shopItems }: ShopManagerProps) {
   const [gold, setGold] = useState(initialGold);
   const router = useRouter();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    setGold(initialGold);
+  }, [initialGold]);
 
   const handlePurchase = async (item: ShopItemData) => {
     if (!username || (initialPenaltyEndTime && initialPenaltyEndTime > Date.now()) || gold < item.price) return;
@@ -88,10 +94,20 @@ export function ShopManager({ username, initialGold, initialPenaltyEndTime, shop
       });
       
       setGold(newGold);
+      toast({
+        title: "Satın Alındı!",
+        description: `${item.name} envanterine eklendi.`,
+      });
+      window.dispatchEvent(new Event('storage')); // Notify other components
       router.refresh();
       
     } catch(error) {
       console.error("Failed to update inventory in Firestore", error);
+      toast({
+        title: "Hata",
+        description: "Eşya satın alınırken bir sorun oluştu.",
+        variant: "destructive",
+      });
     }
   };
 

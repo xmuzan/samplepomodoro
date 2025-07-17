@@ -41,21 +41,20 @@ export function SkillsDialog({ children }: SkillsDialogProps) {
   useEffect(() => {
     setIsMounted(true);
     fetchSkillData();
+
+    const handleStorageChange = () => {
+      fetchSkillData();
+    };
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, []);
 
   const handleOpenChange = (open: boolean) => {
     if (open && isMounted) {
       fetchSkillData();
-      
-      const handleStorageChange = (event: StorageEvent) => {
-        // Listen for broad changes, then refetch
-        fetchSkillData();
-      };
-      window.addEventListener('storage', handleStorageChange);
-      
-      return () => {
-          window.removeEventListener('storage', handleStorageChange);
-      }
     }
   };
   

@@ -48,6 +48,16 @@ export function InventoryDialog({ children }: InventoryDialogProps) {
   useEffect(() => {
     setIsMounted(true);
     fetchInventory();
+
+    const handleStorageChange = () => {
+        fetchInventory();
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+        window.removeEventListener('storage', handleStorageChange);
+    };
   }, []);
 
   const handleUseItem = async (itemId: string) => {
