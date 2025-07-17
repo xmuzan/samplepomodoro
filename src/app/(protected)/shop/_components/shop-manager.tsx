@@ -102,7 +102,7 @@ export function ShopManager({ username, initialGold, initialPenaltyEndTime, shop
         title: "Satın Alma Başarılı",
         description: `${item.name} envanterine eklendi.`
       })
-      router.refresh(); // Refresh to update inventory dialog data
+      window.dispatchEvent(new Event('storage')); // Notify other components of data change
       
     } catch(error) {
       console.error("Failed to update inventory in Firestore", error);
