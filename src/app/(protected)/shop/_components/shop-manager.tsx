@@ -8,6 +8,7 @@ import { ShopItem, type ShopItemData } from './shop-item';
 import { Coins, Lock } from 'lucide-react';
 import { getUserData, updateUserData } from '@/lib/userData';
 import type { InventoryItem } from '../../profile/_components/inventory-dialog';
+import { useToast } from '@/hooks/use-toast';
 
 function PenaltyTimer({ endTime }: { endTime: number }) {
   const [timeLeft, setTimeLeft] = useState(endTime - Date.now());
@@ -65,6 +66,7 @@ interface ShopManagerProps {
 export function ShopManager({ username, initialGold, initialPenaltyEndTime, shopItems }: ShopManagerProps) {
   const [gold, setGold] = useState(initialGold);
   const router = useRouter();
+  const { toast } = useToast();
 
   const handlePurchase = async (item: ShopItemData) => {
     if (!username || (initialPenaltyEndTime && initialPenaltyEndTime > Date.now()) || gold < item.price) return;
@@ -74,24 +76,41 @@ export function ShopManager({ username, initialGold, initialPenaltyEndTime, shop
       const currentInventory: InventoryItem[] = userData?.inventory || [];
       const newGold = gold - item.price;
 
-      const itemInInventory = currentInventory.find((invItem) => invItem.id === item.id);
+      let updatedInventory: InventoryItem[];
+      const itemIndex = currentInventory.findIndex((invItem) => invItem.id === item.id);
 
-      if (itemInInventory) {
-        itemInInventory.quantity += 1;
+      if (itemIndex > -1) {
+        // Item exists, update quantity (immutable way)
+        updatedInventory = currentInventory.map((invItem, index) => {
+          if (index === itemIndex) {
+            return { ...invItem, quantity: invItem.quantity + 1 };
+          }
+          return invItem;
+        });
       } else {
-        currentInventory.push({ id: item.id, quantity: 1 });
+        // Item does not exist, add it (immutable way)
+        updatedInventory = [...currentInventory, { id: item.id, quantity: 1 }];
       }
       
       await updateUserData(username, {
           userGold: newGold,
-          inventory: currentInventory
+          inventory: updatedInventory
       });
       
       setGold(newGold);
-      router.refresh();
+      toast({
+        title: "Satın Alma Başarılı",
+        description: `${item.name} envanterine eklendi.`
+      })
+      router.refresh(); // Refresh to update inventory dialog data
       
     } catch(error) {
       console.error("Failed to update inventory in Firestore", error);
+      toast({
+        title: "Hata",
+        description: "Satın alma sırasında bir sorun oluştu.",
+        variant: "destructive"
+      })
     }
   };
 
