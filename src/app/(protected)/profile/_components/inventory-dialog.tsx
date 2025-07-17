@@ -1,8 +1,9 @@
 
 'use client';
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import {
   Dialog,
   DialogContent,
@@ -18,7 +19,6 @@ import { useToast } from "@/hooks/use-toast";
 import { getUserData, updateUserData } from "@/lib/userData";
 import { getCurrentUser } from "@/lib/auth";
 import { shopItemsData } from "../../shop/shop-data";
-import { useRouter } from "next/navigation";
 
 export interface InventoryItem {
   id: string;
@@ -27,32 +27,29 @@ export interface InventoryItem {
 
 interface InventoryDialogProps {
   children: React.ReactNode;
+  initialInventory: InventoryItem[];
 }
 
-export function InventoryDialog({ children }: InventoryDialogProps) {
-  const [inventory, setInventory] = useState<InventoryItem[]>([]);
-  const [isMounted, setIsMounted] = useState(false);
+export function InventoryDialog({ children, initialInventory }: InventoryDialogProps) {
+  const [inventory, setInventory] = useState<InventoryItem[]>(initialInventory);
+  const [open, setOpen] = useState(false);
   const { toast } = useToast();
   const currentUser = getCurrentUser();
   const router = useRouter();
 
-  const fetchInventory = async () => {
-    if (!currentUser) return;
-    try {
+  const fetchLatestInventory = async () => {
+      if (!currentUser?.username) return;
       const data = await getUserData(currentUser.username);
       setInventory(data?.inventory || []);
-    } catch (error) {
-      console.error("Failed to fetch inventory from Firestore", error);
-      setInventory([]);
+  };
+  
+  const handleOpenChange = (isOpen: boolean) => {
+    setOpen(isOpen);
+    if (isOpen) {
+      // Always fetch the latest data from DB when dialog opens to ensure it's fresh
+      fetchLatestInventory();
     }
-  }
-
-  useEffect(() => {
-    setIsMounted(true);
-    if (currentUser) {
-        fetchInventory();
-    }
-  }, [currentUser?.username]);
+  };
 
   const handleUseItem = async (itemId: string) => {
     if (!currentUser) return;
@@ -61,7 +58,7 @@ export function InventoryDialog({ children }: InventoryDialogProps) {
     
     try {
         const userData = await getUserData(currentUser.username);
-        if (!userData || !userData.baseStats) return;
+        if (!userData || !userData.baseStats || !userData.inventory) return;
 
         let newStats = { ...userData.baseStats };
         switch(itemId) {
@@ -78,44 +75,32 @@ export function InventoryDialog({ children }: InventoryDialogProps) {
              return;
         }
         
-        let updatedInventory = [...inventory];
-        const itemIndex = updatedInventory.findIndex(item => item.id === itemId);
+        const itemIndex = userData.inventory.findIndex(item => item.id === itemId);
+        if (itemIndex === -1) return;
 
-        if (itemIndex > -1) {
-            updatedInventory[itemIndex].quantity -= 1;
-            if (updatedInventory[itemIndex].quantity <= 0) {
-                updatedInventory = updatedInventory.filter(item => item.id !== itemId);
-            }
+        const updatedInventory = [...userData.inventory];
+        updatedInventory[itemIndex].quantity -= 1;
+
+        const finalInventory = updatedInventory.filter(item => item.quantity > 0);
             
-            await updateUserData(currentUser.username, {
-                inventory: updatedInventory,
-                baseStats: newStats
-            });
-            
-            setInventory(updatedInventory);
-            
-            // Notify other components like stat bars on the profile page
-            window.dispatchEvent(new Event('storage'));
-            router.refresh(); // Force refresh server components on the page
-        }
+        await updateUserData(currentUser.username, {
+            inventory: finalInventory,
+            baseStats: newStats
+        });
+        
+        setInventory(finalInventory); // Optimistic update for the dialog UI
+        
+        // Refresh server components on the page to reflect stat changes etc.
+        router.refresh(); 
+
     } catch (error) {
         console.error("Failed to use item", error);
         toast({ title: "Hata", description: "Eşya kullanılırken bir sorun oluştu.", variant: "destructive" });
     }
   };
   
-  const handleOpenChange = (open: boolean) => {
-    if (open && isMounted) {
-      fetchInventory();
-    }
-  };
-
-  if (!isMounted) {
-    return <>{children}</>;
-  }
-
   return (
-    <Dialog onOpenChange={handleOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         {children}
       </DialogTrigger>
