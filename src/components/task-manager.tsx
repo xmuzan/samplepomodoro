@@ -140,11 +140,14 @@ export function TaskManager({ username, initialUserData }: TaskManagerProps) {
         const updates: Partial<UserData> = { tasks: newTasks };
 
         // --- SKILL DATA LOGIC ---
-        const skillData = JSON.parse(JSON.stringify(userData.skillData || {}));
+        const skillData = JSON.parse(JSON.stringify(userData.skillData || {})); // Deep copy
         const category = taskToToggle.category;
+        
         if (category !== 'other') {
             const TASKS_PER_RANK = 20;
-            if (!skillData[category]) skillData[category] = { completedTasks: 0, rankIndex: 0 };
+            if (!skillData[category]) {
+                skillData[category] = { completedTasks: 0, rankIndex: 0 };
+            }
             const skill = skillData[category]!;
 
             if (isNowCompleted) {
@@ -162,6 +165,7 @@ export function TaskManager({ username, initialUserData }: TaskManagerProps) {
                 }
             }
         }
+        // This is the critical fix: assign the MODIFIED skillData to the updates object.
         updates.skillData = skillData;
 
         if (isNowCompleted) {
