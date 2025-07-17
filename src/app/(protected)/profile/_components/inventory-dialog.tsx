@@ -9,6 +9,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { FuturisticBorder } from "@/components/futuristic-border";
@@ -68,7 +69,9 @@ export function InventoryDialog({ children, initialInventory, userData, open, on
   
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      {children}
+      <DialogTrigger asChild>
+        {children}
+      </DialogTrigger>
       <DialogContent className="border-none bg-transparent p-0 shadow-none sm:max-w-2xl">
         <FuturisticBorder>
           <div className="bg-background/90 backdrop-blur-sm p-1">

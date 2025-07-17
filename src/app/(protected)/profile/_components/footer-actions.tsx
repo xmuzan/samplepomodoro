@@ -9,8 +9,6 @@ import { SkillsDialog } from "./skills-dialog";
 import { logoutAction } from "@/app/login/actions";
 import { useRouter } from "next/navigation";
 import type { InventoryItem, UserData } from '@/lib/userData';
-import { Dialog, DialogTrigger } from '@/components/ui/dialog';
-
 
 interface FooterActionsProps {
   gold: number;
@@ -22,6 +20,7 @@ interface FooterActionsProps {
 export function FooterActions({ gold, availablePoints, initialInventory, userData }: FooterActionsProps) {
   const router = useRouter();
   const [formattedGold, setFormattedGold] = useState<string | number>(gold);
+  const [isInventoryOpen, setIsInventoryOpen] = useState(false);
   
   useEffect(() => {
     // This code runs only on the client, after hydration.
@@ -57,15 +56,15 @@ export function FooterActions({ gold, availablePoints, initialInventory, userDat
           </SkillsDialog>
           
           <InventoryDialog
-            userData={userData}
             initialInventory={initialInventory}
+            userData={userData}
+            open={isInventoryOpen}
+            onOpenChange={setIsInventoryOpen}
           >
-            <DialogTrigger asChild>
-                <Button size="lg" className="gap-2 bg-primary text-primary-foreground hover:bg-primary/80 shadow-[0_0_15px_hsl(var(--primary)/0.5)] w-full">
-                <ShieldQuestion className="h-6 w-6" />
-                Envanter
-                </Button>
-            </DialogTrigger>
+            <Button size="lg" className="gap-2 bg-primary text-primary-foreground hover:bg-primary/80 shadow-[0_0_15px_hsl(var(--primary)/0.5)] w-full" onClick={() => setIsInventoryOpen(true)}>
+              <ShieldQuestion className="h-6 w-6" />
+              Envanter
+            </Button>
           </InventoryDialog>
 
           <Button size="lg" variant="destructive" onClick={handleLogout} className="gap-2 w-full">
