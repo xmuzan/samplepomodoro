@@ -32,7 +32,6 @@ export function InventoryDialog({ initialInventory, userData, open, onOpenChange
   const [isPending, startTransition] = useTransition();
 
   const handleDeleteItem = (itemId: string) => {
-    // We get the username directly from userData prop, which is more reliable.
     if (!userData?.username) {
         toast({ title: "Hata", description: "İşlem için kullanıcı verisi bulunamadı.", variant: "destructive" });
         return;
@@ -43,7 +42,6 @@ export function InventoryDialog({ initialInventory, userData, open, onOpenChange
         if (result.success) {
             toast({ title: "Eşya Kullanıldı", description: "Eşya başarıyla kullanıldı." });
             
-            // If the last item was deleted, close the dialog
             if (initialInventory.length === 1 && initialInventory[0].quantity === 1) {
               onOpenChange(false);
             }
@@ -85,7 +83,6 @@ export function InventoryDialog({ initialInventory, userData, open, onOpenChange
                         </div>
                         <div className="flex-grow">
                           <h4 className="font-bold text-foreground">{shopItem.name} {invItem.quantity > 1 && `(x${invItem.quantity})`}</h4>
-                          <p className="text-xs text-muted-foreground">{shopItem.description}</p>
                         </div>
                         <Button 
                           size="sm" 
