@@ -36,7 +36,7 @@ export function TaskItem({ task, onToggle, onDelete }: TaskItemProps) {
       <Button
         variant="ghost"
         size="icon"
-        className="h-8 w-8 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+        className="h-8 w-8 text-muted-foreground hover:text-destructive transition-colors"
         onClick={() => onDelete(task.id)}
         aria-label="Delete task"
       >
