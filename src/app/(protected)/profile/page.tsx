@@ -14,6 +14,7 @@ import { getUserData } from '@/lib/userData';
 import type { User } from '@/types';
 
 import './profile.css';
+import { InventoryDialog } from './_components/inventory-dialog';
 
 function getCurrentUser(): User | null {
     const cookieStore = cookies();
@@ -82,6 +83,7 @@ export default async function ProfilePage() {
             <FooterActions
               gold={userData.userGold}
               availablePoints={userData.attributePoints}
+              initialInventory={userData.inventory || []}
             />
           </div>
         </FuturisticBorder>

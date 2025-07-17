@@ -27,30 +27,14 @@ export interface InventoryItem {
 
 interface InventoryDialogProps {
   children: React.ReactNode;
+  initialInventory: InventoryItem[];
 }
 
-export function InventoryDialog({ children }: InventoryDialogProps) {
-  const [inventory, setInventory] = useState<InventoryItem[]>([]);
-  const [isMounted, setIsMounted] = useState(false);
+export function InventoryDialog({ children, initialInventory }: InventoryDialogProps) {
+  const [open, setOpen] = useState(false);
   const { toast } = useToast();
   const currentUser = getCurrentUser();
   const router = useRouter();
-
-  const fetchInventory = async () => {
-    if (!currentUser) return;
-    try {
-      const data = await getUserData(currentUser.username);
-      setInventory(data?.inventory || []);
-    } catch (error) {
-      console.error("Failed to fetch inventory from Firestore", error);
-      setInventory([]);
-    }
-  }
-
-  useEffect(() => {
-    // This effect runs once on component mount to ensure client-side logic runs correctly.
-    setIsMounted(true);
-  }, []);
 
   const handleUseItem = async (itemId: string) => {
     if (!currentUser) return;
@@ -89,10 +73,11 @@ export function InventoryDialog({ children }: InventoryDialogProps) {
                 inventory: updatedInventory,
                 baseStats: newStats
             });
-            // Update local state immediately for responsiveness
-            setInventory(updatedInventory);
             // Refresh server components to ensure data consistency everywhere
-            router.refresh(); 
+            router.refresh();
+            if (updatedInventory.length === 0) {
+              setOpen(false); // Close dialog if inventory is empty
+            }
         }
     } catch (error) {
         console.error("Failed to use item", error);
@@ -100,19 +85,8 @@ export function InventoryDialog({ children }: InventoryDialogProps) {
     }
   };
   
-  const handleOpenChange = (open: boolean) => {
-    if (open && isMounted) {
-      fetchInventory();
-    }
-  };
-
-  if (!isMounted) {
-    // Render a placeholder or nothing on the server to prevent hydration issues
-    return <>{children}</>;
-  }
-
   return (
-    <Dialog onOpenChange={handleOpenChange}>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {children}
       </DialogTrigger>
@@ -126,9 +100,9 @@ export function InventoryDialog({ children }: InventoryDialogProps) {
               </DialogDescription>
             </DialogHeader>
             <div className="max-h-[60vh] overflow-y-auto px-6 pb-6">
-              {inventory.length > 0 ? (
+              {initialInventory.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {inventory.map(invItem => {
+                  {initialInventory.map(invItem => {
                     const shopItem = shopItemsData.find(sItem => sItem.id === invItem.id);
                     if (!shopItem) return null;
                     

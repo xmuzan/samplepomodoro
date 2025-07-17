@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Coins, Star, ShieldQuestion, LogOut } from "lucide-react";
-import { InventoryDialog } from "./inventory-dialog";
+import { InventoryDialog, type InventoryItem } from "./inventory-dialog";
 import { SkillsDialog } from "./skills-dialog";
 import { logoutAction } from "@/app/login/actions";
 import { useRouter } from "next/navigation";
@@ -12,9 +12,10 @@ import { useRouter } from "next/navigation";
 interface FooterActionsProps {
   gold: number;
   availablePoints: number;
+  initialInventory: InventoryItem[];
 }
 
-export function FooterActions({ gold, availablePoints }: FooterActionsProps) {
+export function FooterActions({ gold, availablePoints, initialInventory }: FooterActionsProps) {
   const router = useRouter();
   const [formattedGold, setFormattedGold] = useState<string | number>(gold);
 
@@ -51,7 +52,7 @@ export function FooterActions({ gold, availablePoints }: FooterActionsProps) {
                 )}
             </Button>
         </SkillsDialog>
-        <InventoryDialog>
+        <InventoryDialog initialInventory={initialInventory}>
           <Button size="lg" className="gap-2 bg-primary text-primary-foreground hover:bg-primary/80 shadow-[0_0_15px_hsl(var(--primary)/0.5)] w-full">
             <ShieldQuestion className="h-6 w-6" />
             Envanter
