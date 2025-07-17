@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { FuturisticBorder } from '@/components/futuristic-border';
 import { ShopItem, type ShopItemData } from './shop-item';
@@ -76,17 +76,18 @@ export function ShopManager({ username, initialGold, initialPenaltyEndTime, shop
       const currentInventory: InventoryItem[] = userData?.inventory || [];
       const newGold = gold - item.price;
 
-      let updatedInventory: InventoryItem[];
       const itemIndex = currentInventory.findIndex((invItem) => invItem.id === item.id);
+      let updatedInventory: InventoryItem[];
 
       if (itemIndex > -1) {
-        updatedInventory = currentInventory.map((invItem, index) => {
-          if (index === itemIndex) {
-            return { ...invItem, quantity: invItem.quantity + 1 };
-          }
-          return invItem;
-        });
+        // Item exists, increase quantity
+        updatedInventory = currentInventory.map((invItem, index) => 
+          index === itemIndex 
+            ? { ...invItem, quantity: invItem.quantity + 1 } 
+            : invItem
+        );
       } else {
+        // New item, add to inventory
         updatedInventory = [...currentInventory, { id: item.id, quantity: 1 }];
       }
       
@@ -100,12 +101,12 @@ export function ShopManager({ username, initialGold, initialPenaltyEndTime, shop
         title: "Satın Alma Başarılı",
         description: `${item.name} envanterine eklendi.`
       })
-      // This event can notify other components on the SAME page if they are listening.
-      // For cross-page updates, a full refresh on navigation is more reliable.
-      window.dispatchEvent(new Event('storage')); 
+      // Intentionally not calling router.refresh() here to avoid potential caching issues.
+      // The user will see the updated inventory when they navigate to the profile page,
+      // which will fetch fresh data from the server.
       
     } catch(error) {
-      console.error("Failed to update inventory in Firestore", error);
+      console.error("Failed to purchase item:", error);
       toast({
         title: "Hata",
         description: "Satın alma sırasında bir sorun oluştu.",

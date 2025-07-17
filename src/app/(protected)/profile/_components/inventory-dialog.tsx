@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
@@ -31,16 +31,10 @@ interface InventoryDialogProps {
 }
 
 export function InventoryDialog({ children, initialInventory }: InventoryDialogProps) {
-  const [inventory, setInventory] = useState<InventoryItem[]>(initialInventory);
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
   const currentUser = getCurrentUser();
   const router = useRouter();
-
-  // When the initialInventory prop changes (because the page was refreshed), update the component's state.
-  useEffect(() => {
-    setInventory(initialInventory);
-  }, [initialInventory]);
   
   const handleUseItem = async (itemId: string) => {
     if (!currentUser) return;
@@ -49,29 +43,53 @@ export function InventoryDialog({ children, initialInventory }: InventoryDialogP
     
     try {
         const userData = await getUserData(currentUser.username);
-        if (!userData || !userData.baseStats || !userData.inventory) return;
+        if (!userData || !userData.baseStats || !userData.inventory) {
+          toast({ title: "Hata", description: "Kullanıcı verisi bulunamadı.", variant: "destructive" });
+          return;
+        }
 
         let newStats = { ...userData.baseStats };
+        let itemUsed = false;
+        
+        // Handle direct-use items like potions
         switch(itemId) {
           case 'potion_energy':
+            if (newStats.hp >= 100) {
+              toast({ title: "HP Zaten Dolu", description: "Enerji iksiri kullanamazsın." });
+              return; // Do not proceed if HP is full
+            }
             newStats.hp = Math.min(100, newStats.hp + 10);
-            toast({ title: "Enerji Yenilendi", description: "HP %10 yenilendi." });
+            toast({ title: "Enerji Yenilendi", description: "HP 10 puan yenilendi." });
+            itemUsed = true;
             break;
           case 'potion_mind':
+            if (newStats.mp >= 100) {
+              toast({ title: "MP Zaten Dolu", description: "Zihin kristali kullanamazsın." });
+              return; // Do not proceed if MP is full
+            }
             newStats.mp = Math.min(100, newStats.mp + 15);
-            toast({ title: "Zihin Canlandı", description: "MP %15 yenilendi." });
+            toast({ title: "Zihin Canlandı", description: "MP 15 puan yenilendi." });
+            itemUsed = true;
             break;
           default:
+             // Handle items that are not directly used from inventory
              toast({ title: itemData.name, description: "Bu eşya bir eylemi tamamlamak için kullanılır." });
-             return;
+             return; // Don't consume the item
         }
         
+        if (!itemUsed) return; // If no item was actually used, stop here.
+
+        // Find the item in inventory and reduce its quantity
         const itemIndex = userData.inventory.findIndex(item => item.id === itemId);
-        if (itemIndex === -1) return;
+        if (itemIndex === -1) {
+          toast({ title: "Hata", description: "Eşya envanterinde bulunamadı.", variant: "destructive" });
+          return;
+        };
 
         const updatedInventory = [...userData.inventory];
         updatedInventory[itemIndex].quantity -= 1;
 
+        // Filter out items with zero quantity
         const finalInventory = updatedInventory.filter(item => item.quantity > 0);
             
         await updateUserData(currentUser.username, {
@@ -79,8 +97,9 @@ export function InventoryDialog({ children, initialInventory }: InventoryDialogP
             baseStats: newStats
         });
         
-        // This is the key change: refresh the page to get the latest server data.
-        // This ensures the profile page and all its components have the latest state.
+        // This is the key: refresh the page to get the latest server data.
+        // This ensures the profile page and all its components (HP bars, inventory) have the latest state.
+        toast({ title: "Başarılı", description: `${itemData.name} kullanıldı.` });
         router.refresh(); 
         setOpen(false); // Close the dialog after using an item
 
@@ -105,9 +124,9 @@ export function InventoryDialog({ children, initialInventory }: InventoryDialogP
               </DialogDescription>
             </DialogHeader>
             <div className="max-h-[60vh] overflow-y-auto px-6 pb-6">
-              {inventory.length > 0 ? (
+              {initialInventory && initialInventory.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {inventory.map(invItem => {
+                  {initialInventory.map(invItem => {
                     const shopItem = shopItemsData.find(sItem => sItem.id === invItem.id);
                     if (!shopItem) return null;
                     
