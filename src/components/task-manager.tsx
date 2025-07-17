@@ -136,8 +136,33 @@ export function TaskManager({ username, initialUserData }: TaskManagerProps) {
     setTasks(newTasks); // Optimistic UI update
 
     try {
-        const userData = initialUserData; // Use the fresh data passed in
+        const userData = initialUserData;
         const updates: Partial<UserData> = { tasks: newTasks };
+
+        // --- SKILL DATA LOGIC ---
+        const skillData = JSON.parse(JSON.stringify(userData.skillData || {}));
+        const category = taskToToggle.category;
+        if (category !== 'other') {
+            const TASKS_PER_RANK = 20;
+            if (!skillData[category]) skillData[category] = { completedTasks: 0, rankIndex: 0 };
+            const skill = skillData[category]!;
+
+            if (isNowCompleted) {
+                skill.completedTasks += 1;
+                if (skill.completedTasks >= TASKS_PER_RANK && skill.rankIndex < 9) {
+                    skill.rankIndex += 1;
+                    skill.completedTasks = 0;
+                }
+            } else {
+                if (skill.completedTasks > 0) {
+                    skill.completedTasks -= 1;
+                } else if (skill.rankIndex > 0) {
+                    skill.rankIndex -= 1;
+                    skill.completedTasks = TASKS_PER_RANK - 1;
+                }
+            }
+        }
+        updates.skillData = skillData;
 
         if (isNowCompleted) {
             // --- LOGIC FOR COMPLETING A TASK ---
@@ -148,7 +173,7 @@ export function TaskManager({ username, initialUserData }: TaskManagerProps) {
                   description: "Ceza süresi bitene kadar ödül kazanamazsın.",
                   variant: "destructive"
                 });
-                await updateUserData(username, { tasks: newTasks });
+                await updateUserData(username, { tasks: newTasks, skillData: updates.skillData });
                 router.refresh();
                 return;
             }
@@ -186,19 +211,6 @@ export function TaskManager({ username, initialUserData }: TaskManagerProps) {
                 updates.attributePoints = attributePoints;
             }
             
-            const category = taskToToggle.category;
-            if (category !== 'other') {
-                const skillData = JSON.parse(JSON.stringify(userData.skillData || {})); // Deep copy
-                const TASKS_PER_RANK = 20;
-                if (!skillData[category]) skillData[category] = { completedTasks: 0, rankIndex: 0 };
-                skillData[category]!.completedTasks += 1;
-                if (skillData[category]!.completedTasks >= TASKS_PER_RANK && skillData[category]!.rankIndex < 9) {
-                    skillData[category]!.rankIndex += 1;
-                    skillData[category]!.completedTasks = 0;
-                }
-                updates.skillData = skillData;
-            }
-            
             if (!newTasks.some(t => !t.completed)) {
               updates.taskDeadline = null;
             }
@@ -217,20 +229,6 @@ export function TaskManager({ username, initialUserData }: TaskManagerProps) {
             }
             
             updates.userGold = Math.max(0, userGold - taskToToggle.reward);
-            
-            const category = taskToToggle.category;
-            if (category !== 'other' && userData.skillData?.[category]) {
-                const skillData = JSON.parse(JSON.stringify(userData.skillData)); // Deep copy
-                const skill = skillData[category]!;
-                if (skill.completedTasks > 0) {
-                    skill.completedTasks -= 1;
-                } else if (skill.rankIndex > 0) {
-                    const TASKS_PER_RANK = 20;
-                    skill.rankIndex -= 1;
-                    skill.completedTasks = TASKS_PER_RANK - 1;
-                }
-                updates.skillData = skillData;
-            }
             
             toast({
               title: "Görev Geri Alındı",
