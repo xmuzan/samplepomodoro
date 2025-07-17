@@ -18,6 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 import { getUserData, updateUserData } from "@/lib/userData";
 import { getCurrentUser } from "@/lib/auth";
 import { shopItemsData } from "../../shop/shop-data";
+import { useRouter } from "next/navigation";
 
 export interface InventoryItem {
   id: string;
@@ -33,6 +34,7 @@ export function InventoryDialog({ children }: InventoryDialogProps) {
   const [isMounted, setIsMounted] = useState(false);
   const { toast } = useToast();
   const currentUser = getCurrentUser();
+  const router = useRouter();
 
   const fetchInventory = async () => {
     if (!currentUser) return;
@@ -47,8 +49,10 @@ export function InventoryDialog({ children }: InventoryDialogProps) {
 
   useEffect(() => {
     setIsMounted(true);
-    fetchInventory();
-  }, []);
+    if (currentUser) {
+        fetchInventory();
+    }
+  }, [currentUser?.username]);
 
   const handleUseItem = async (itemId: string) => {
     if (!currentUser) return;
@@ -71,7 +75,7 @@ export function InventoryDialog({ children }: InventoryDialogProps) {
             break;
           default:
              toast({ title: itemData.name, description: "Bu eşya bir eylemi tamamlamak için kullanılır." });
-             return; // Don't consume item if it has no direct effect here
+             return;
         }
         
         let updatedInventory = [...inventory];
@@ -87,8 +91,12 @@ export function InventoryDialog({ children }: InventoryDialogProps) {
                 inventory: updatedInventory,
                 baseStats: newStats
             });
+            
             setInventory(updatedInventory);
-            window.dispatchEvent(new Event('storage')); // Notify other components
+            
+            // Notify other components like stat bars on the profile page
+            window.dispatchEvent(new Event('storage'));
+            router.refresh(); // Force refresh server components on the page
         }
     } catch (error) {
         console.error("Failed to use item", error);
