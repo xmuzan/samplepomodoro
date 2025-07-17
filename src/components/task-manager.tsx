@@ -168,7 +168,9 @@ export function TaskManager({ username, initialUserData }: TaskManagerProps) {
             updates.userGold = (userData.userGold || 0) + finalReward;
 
             if (canLevelUp) {
-                let { level, tasksCompletedThisLevel, tasksRequiredForNextLevel, attributePoints, skillData } = userData;
+                let { level, tasksCompletedThisLevel, tasksRequiredForNextLevel, attributePoints } = userData;
+                let skillData = JSON.parse(JSON.stringify(userData.skillData || {})); // Deep copy
+                
                 tasksCompletedThisLevel = (tasksCompletedThisLevel || 0) + 1;
 
                 if (tasksCompletedThisLevel >= tasksRequiredForNextLevel) {
@@ -181,7 +183,6 @@ export function TaskManager({ username, initialUserData }: TaskManagerProps) {
                 const category = taskToToggle.category;
                 if (category !== 'other') {
                     const TASKS_PER_RANK = 20;
-                    skillData = skillData || {};
                     if (!skillData[category]) skillData[category] = { completedTasks: 0, rankIndex: 0 };
                     skillData[category]!.completedTasks += 1;
                     if (skillData[category]!.completedTasks >= TASKS_PER_RANK && skillData[category]!.rankIndex < 9) {
@@ -209,7 +210,8 @@ export function TaskManager({ username, initialUserData }: TaskManagerProps) {
 
         } else {
             // --- LOGIC FOR UN-COMPLETING A TASK ---
-            const { tasksCompletedThisLevel = 0, userGold = 0, skillData = {} } = userData;
+            const { tasksCompletedThisLevel = 0, userGold = 0 } = userData;
+            let skillData = JSON.parse(JSON.stringify(userData.skillData || {})); // Deep copy
             
             // Revert level progress if it makes sense to
             if (tasksCompletedThisLevel > 0) {
