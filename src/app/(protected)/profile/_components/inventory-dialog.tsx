@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useTransition } from "react";
@@ -42,7 +41,7 @@ export function InventoryDialog({ initialInventory, userData, open, onOpenChange
     startTransition(async () => {
         const result = await deleteItemAction(userData.username, itemId);
         if (result.success) {
-            toast({ title: "Başarılı", description: "Eşya envanterden silindi." });
+            toast({ title: "Eşya Kullanıldı", description: "Eşya başarıyla kullanıldı." });
             
             // If the last item was deleted, close the dialog
             if (initialInventory.length === 1 && initialInventory[0].quantity === 1) {
@@ -94,7 +93,7 @@ export function InventoryDialog({ initialInventory, userData, open, onOpenChange
                           onClick={() => handleDeleteItem(invItem.id)}
                           disabled={isPending}
                         >
-                          {isPending ? "Siliniyor..." : "Sil"}
+                          {isPending ? "Kullanılıyor..." : "Kullan"}
                         </Button>
                       </div>
                     )
