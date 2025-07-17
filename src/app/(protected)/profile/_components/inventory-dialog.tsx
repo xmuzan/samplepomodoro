@@ -14,7 +14,6 @@ import { Button } from "@/components/ui/button";
 import { FuturisticBorder } from "@/components/futuristic-border";
 import { useToast } from "@/hooks/use-toast";
 import { type UserData } from "@/lib/userData";
-import { getCurrentUser } from "@/lib/auth";
 import { shopItemsData } from "../../shop/shop-data";
 import type { InventoryItem } from "@/lib/userData";
 import { deleteItemAction } from '../actions';
@@ -31,17 +30,17 @@ interface InventoryDialogProps {
 
 export function InventoryDialog({ initialInventory, userData, open, onOpenChange, children }: InventoryDialogProps) {
   const { toast } = useToast();
-  const currentUser = getCurrentUser();
   const [isPending, startTransition] = useTransition();
 
   const handleDeleteItem = (itemId: string) => {
-    if (!currentUser?.username) {
-        toast({ title: "Hata", description: "Kullanıcı bilgisi bulunamadı.", variant: "destructive" });
+    // We get the username directly from userData prop, which is more reliable.
+    if (!userData?.username) {
+        toast({ title: "Hata", description: "İşlem için kullanıcı verisi bulunamadı.", variant: "destructive" });
         return;
     }
     
     startTransition(async () => {
-        const result = await deleteItemAction(currentUser.username, itemId);
+        const result = await deleteItemAction(userData.username, itemId);
         if (result.success) {
             toast({ title: "Başarılı", description: "Eşya envanterden silindi." });
             

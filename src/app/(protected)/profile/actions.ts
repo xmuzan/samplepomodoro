@@ -27,6 +27,7 @@ export async function deleteItemAction(username: string, itemId: string): Promis
 
     const updatedInventory = currentInventory.filter((item: InventoryItem) => item.quantity > 0);
 
+    // Pass the entire username to updateUserData
     await updateUserData(username, {
       inventory: updatedInventory,
     });
