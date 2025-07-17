@@ -9,7 +9,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { FuturisticBorder } from "@/components/futuristic-border";
@@ -21,14 +20,14 @@ import { useRouter } from "next/navigation";
 import type { InventoryItem } from "@/lib/userData";
 
 interface InventoryDialogProps {
-  children: React.ReactNode;
   initialInventory: InventoryItem[];
   userData: UserData | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  children: React.ReactNode;
 }
 
-export function InventoryDialog({ children, initialInventory, userData, open, onOpenChange }: InventoryDialogProps) {
+export function InventoryDialog({ initialInventory, userData, open, onOpenChange, children }: InventoryDialogProps) {
   const { toast } = useToast();
   const currentUser = getCurrentUser();
   const router = useRouter();
@@ -40,14 +39,13 @@ export function InventoryDialog({ children, initialInventory, userData, open, on
     }
 
     try {
-      let updatedInventory = [...initialInventory];
-      const itemIndex = updatedInventory.findIndex(item => item.id === itemId);
+      const currentInventory = [...initialInventory];
+      const itemIndex = currentInventory.findIndex(item => item.id === itemId);
 
       if (itemIndex > -1) {
-        updatedInventory[itemIndex].quantity -= 1;
-        if (updatedInventory[itemIndex].quantity <= 0) {
-          updatedInventory = updatedInventory.filter((_, index) => index !== itemIndex);
-        }
+        currentInventory[itemIndex].quantity -= 1;
+        
+        const updatedInventory = currentInventory.filter(item => item.quantity > 0);
 
         await updateUserData(currentUser.username, {
           inventory: updatedInventory,
@@ -69,9 +67,7 @@ export function InventoryDialog({ children, initialInventory, userData, open, on
   
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogTrigger asChild>
-        {children}
-      </DialogTrigger>
+      {children}
       <DialogContent className="border-none bg-transparent p-0 shadow-none sm:max-w-2xl">
         <FuturisticBorder>
           <div className="bg-background/90 backdrop-blur-sm p-1">

@@ -2,7 +2,7 @@
 'use server';
 
 import { db } from './firebase';
-import { doc, getDoc, setDoc, updateDoc, collection, getDocs, limit, query } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, collection, getDocs, limit, query, writeBatch } from 'firebase/firestore';
 import type { User } from '@/types';
 import type { Task } from '@/components/task-manager';
 import type { InventoryItem } from '@/app/(protected)/profile/_components/inventory-dialog';
@@ -155,7 +155,15 @@ export async function getUserData(username: string): Promise<UserData | null> {
 
 export async function updateUserData(username: string, dataToUpdate: Partial<UserData>) {
     const userRef = doc(db, 'users', username);
-    await updateDoc(userRef, dataToUpdate);
+    // Firestore'a gönderirken tanımsız (undefined) alanları temizle
+    const cleanData = Object.entries(dataToUpdate).reduce((acc, [key, value]) => {
+        if (value !== undefined) {
+            acc[key as keyof Partial<UserData>] = value;
+        }
+        return acc;
+    }, {} as Partial<UserData>);
+
+    await updateDoc(userRef, cleanData);
 }
 
 export async function updateTasks(username: string, dataToUpdate: Partial<Pick<UserData, 'tasks' | 'taskDeadline' | 'penaltyEndTime'>>) {
