@@ -128,7 +128,6 @@ export function TaskManager({ username, initialTasks, initialPenaltyEndTime, ini
     const taskToToggle = tasks.find(task => task.id === id);
     if (!taskToToggle) return;
 
-    // This is the new state of the task
     const isNowCompleted = !taskToToggle.completed;
 
     const newTasks = tasks.map(task => 
@@ -213,9 +212,9 @@ export function TaskManager({ username, initialTasks, initialPenaltyEndTime, ini
 
         } else {
             // --- LOGIC FOR UN-COMPLETING A TASK ---
-            let { tasksCompletedThisLevel, userGold, skillData } = userData;
+            const { tasksCompletedThisLevel = 0, userGold = 0, skillData = {} } = userData;
             
-            // Revert level progress
+            // Revert level progress if it makes sense to
             if (tasksCompletedThisLevel > 0) {
                 updates.tasksCompletedThisLevel = tasksCompletedThisLevel - 1;
             }
