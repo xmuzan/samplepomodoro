@@ -19,6 +19,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { shopItemsData } from "../../shop/shop-data";
 import { useRouter } from "next/navigation";
 import type { InventoryItem } from "@/lib/userData";
+import type { UserStats } from "@/lib/stats";
 
 interface InventoryDialogProps {
   children: React.ReactNode;
@@ -35,7 +36,7 @@ export function InventoryDialog({ children, initialInventory, userData }: Invent
 
   const handleUseItem = async (itemId: string) => {
     // Ensure we have all necessary data before proceeding
-    if (!currentUser || !userData || !userData.baseStats || !initialInventory) {
+    if (!currentUser || !userData || !initialInventory) {
         toast({ title: "Hata", description: "Kullanıcı verisi bulunamadı.", variant: "destructive" });
         return;
     }
@@ -43,7 +44,9 @@ export function InventoryDialog({ children, initialInventory, userData }: Invent
     if (!itemData) return;
 
     try {
-        let newStats = { ...userData.baseStats };
+        // Use existing baseStats or provide a default if it's missing to prevent crash.
+        const currentBaseStats = userData.baseStats || { hp: 100, mp: 100, ir: 100 };
+        let newStats: UserStats = { ...currentBaseStats };
         let itemConsumed = false;
 
         switch(itemId) {
