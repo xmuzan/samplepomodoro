@@ -87,13 +87,14 @@ export function InventoryDialog({ children, initialInventory }: InventoryDialogP
         };
 
         const updatedInventory = [...userData.inventory];
-        updatedInventory[itemIndex].quantity -= 1;
-
-        // Filter out items with zero quantity
-        const finalInventory = updatedInventory.filter(item => item.quantity > 0);
+        if (updatedInventory[itemIndex].quantity > 1) {
+          updatedInventory[itemIndex].quantity -= 1;
+        } else {
+          updatedInventory.splice(itemIndex, 1);
+        }
             
         await updateUserData(currentUser.username, {
-            inventory: finalInventory,
+            inventory: updatedInventory,
             baseStats: newStats
         });
         
