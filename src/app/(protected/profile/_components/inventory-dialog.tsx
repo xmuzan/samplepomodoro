@@ -47,17 +47,8 @@ export function InventoryDialog({ children }: InventoryDialogProps) {
 
   useEffect(() => {
     setIsMounted(true);
-    fetchInventory(); // Initial fetch
-
-    const handleStorageChange = () => {
-        fetchInventory();
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-
-    return () => {
-        window.removeEventListener('storage', handleStorageChange);
-    };
+    // Initial fetch for when the profile page loads, although handleOpenChange will be the primary updater.
+    fetchInventory();
   }, [currentUser?.username]);
 
   const handleUseItem = async (itemId: string) => {
@@ -107,12 +98,14 @@ export function InventoryDialog({ children }: InventoryDialogProps) {
   };
   
   const handleOpenChange = (open: boolean) => {
+    // When the dialog is opened, fetch the latest inventory data.
     if (open && isMounted) {
       fetchInventory();
     }
   };
 
   if (!isMounted) {
+    // Prevents hydration errors by not rendering the dialog on the server.
     return <>{children}</>;
   }
 
