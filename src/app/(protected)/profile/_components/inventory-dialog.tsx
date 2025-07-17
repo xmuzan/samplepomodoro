@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import Image from "next/image";
 import {
   Dialog,
@@ -13,11 +13,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { FuturisticBorder } from "@/components/futuristic-border";
 import { useToast } from "@/hooks/use-toast";
-import { updateUserData, type UserData } from "@/lib/userData";
+import { type UserData } from "@/lib/userData";
 import { getCurrentUser } from "@/lib/auth";
 import { shopItemsData } from "../../shop/shop-data";
-import { useRouter } from "next/navigation";
 import type { InventoryItem } from "@/lib/userData";
+import { deleteItemAction } from '../actions';
+import { useRouter } from "next/navigation";
+
 
 interface InventoryDialogProps {
   initialInventory: InventoryItem[];
@@ -31,38 +33,27 @@ export function InventoryDialog({ initialInventory, userData, open, onOpenChange
   const { toast } = useToast();
   const currentUser = getCurrentUser();
   const router = useRouter();
+  const [isPending, startTransition] = useTransition();
 
-  const handleDeleteItem = async (itemId: string) => {
-    if (!currentUser || !userData) {
-      toast({ title: "Hata", description: "İşlem için kullanıcı verisi bulunamadı.", variant: "destructive" });
-      return;
+  const handleDeleteItem = (itemId: string) => {
+    if (!currentUser?.username) {
+        toast({ title: "Hata", description: "Kullanıcı bilgisi bulunamadı.", variant: "destructive" });
+        return;
     }
-
-    try {
-      const currentInventory = [...initialInventory];
-      const itemIndex = currentInventory.findIndex(item => item.id === itemId);
-
-      if (itemIndex > -1) {
-        currentInventory[itemIndex].quantity -= 1;
-        
-        const updatedInventory = currentInventory.filter(item => item.quantity > 0);
-
-        await updateUserData(currentUser.username, {
-          inventory: updatedInventory,
-        });
-
-        toast({ title: "Başarılı", description: "Eşya envanterden silindi." });
-        
-        if (updatedInventory.length === 0) {
-          onOpenChange(false);
+    
+    startTransition(async () => {
+        const result = await deleteItemAction(currentUser.username, itemId);
+        if (result.success) {
+            toast({ title: "Başarılı", description: "Eşya envanterden silindi." });
+            
+            // If the last item was deleted, close the dialog
+            if (initialInventory.length === 1 && initialInventory[0].quantity === 1) {
+              onOpenChange(false);
+            }
+        } else {
+            toast({ title: "Hata", description: result.message, variant: "destructive" });
         }
-        
-        router.refresh();
-      }
-    } catch (error) {
-      console.error("Failed to delete item", error);
-      toast({ title: "Hata", description: "Eşya silinirken bir sorun oluştu.", variant: "destructive" });
-    }
+    });
   };
   
   return (
@@ -99,8 +90,13 @@ export function InventoryDialog({ initialInventory, userData, open, onOpenChange
                           <h4 className="font-bold text-foreground">{shopItem.name} {invItem.quantity > 1 && `(x${invItem.quantity})`}</h4>
                           <p className="text-xs text-muted-foreground">{shopItem.description}</p>
                         </div>
-                        <Button size="sm" variant="destructive" onClick={() => handleDeleteItem(invItem.id)}>
-                          Sil
+                        <Button 
+                          size="sm" 
+                          variant="destructive" 
+                          onClick={() => handleDeleteItem(invItem.id)}
+                          disabled={isPending}
+                        >
+                          {isPending ? "Siliniyor..." : "Sil"}
                         </Button>
                       </div>
                     )
