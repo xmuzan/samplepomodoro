@@ -18,7 +18,6 @@ import { getCurrentUser } from "@/lib/auth";
 import { shopItemsData } from "../../shop/shop-data";
 import { useRouter } from "next/navigation";
 import type { InventoryItem } from "@/lib/userData";
-import type { UserStats } from "@/lib/stats";
 
 interface InventoryDialogProps {
   children: React.ReactNode;
@@ -35,7 +34,7 @@ export function InventoryDialog({ children, initialInventory, userData, open, on
 
   const handleDeleteItem = async (itemId: string) => {
     if (!currentUser || !userData) {
-      toast({ title: "Hata", description: "Kullanıcı verisi bulunamadı.", variant: "destructive" });
+      toast({ title: "Hata", description: "İşlem için kullanıcı verisi bulunamadı.", variant: "destructive" });
       return;
     }
 
@@ -80,7 +79,7 @@ export function InventoryDialog({ children, initialInventory, userData, open, on
               </DialogDescription>
             </DialogHeader>
             <div className="max-h-[60vh] overflow-y-auto px-6 pb-6">
-              {initialInventory.length > 0 ? (
+              {initialInventory && initialInventory.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {initialInventory.map(invItem => {
                     const shopItem = shopItemsData.find(sItem => sItem.id === invItem.id);
