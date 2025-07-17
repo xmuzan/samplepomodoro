@@ -48,7 +48,6 @@ export async function completeTaskAction(username: string, task: Task): Promise<
       }
     }
     
-    userData.skillData = skillData;
     let completionMessage;
 
     if (isNowCompleted) {
@@ -106,7 +105,7 @@ export async function completeTaskAction(username: string, task: Task): Promise<
         userData.taskDeadline = null;
     }
 
-    await updateUserData(username, { ...userData });
+    await updateUserData(username, { ...userData, skillData });
     revalidatePath('/tasks');
     revalidatePath('/profile');
     return { message: completionMessage };
