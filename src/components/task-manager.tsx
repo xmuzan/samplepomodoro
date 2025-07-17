@@ -11,7 +11,7 @@ import { FuturisticBorder } from './futuristic-border';
 import { AlarmClock, Coins } from 'lucide-react';
 import type { SkillCategory } from '@/lib/skills';
 import { useToast } from '@/hooks/use-toast';
-import { getUserData, updateUserData, updateTasks, UserData } from '@/lib/userData';
+import { getUserData, updateUserData, UserData } from '@/lib/userData';
 import { getTierForLevel } from '@/lib/ranks';
 
 export type Task = {
@@ -125,16 +125,15 @@ export function TaskManager({ username, initialTasks, initialPenaltyEndTime, ini
   };
 
   const toggleTask = async (id: string) => {
-    let toggledTask: Task | undefined;
-    const newTasks = tasks.map(task => {
-        if (task.id === id) {
-            toggledTask = { ...task, completed: !task.completed };
-            return toggledTask;
-        }
-        return task;
-    });
+    const taskToToggle = tasks.find(task => task.id === id);
+    if (!taskToToggle) return;
 
-    if (!toggledTask) return;
+    // This is the new state of the task
+    const isNowCompleted = !taskToToggle.completed;
+
+    const newTasks = tasks.map(task => 
+      task.id === id ? { ...task, completed: isNowCompleted } : task
+    );
     
     setTasks(newTasks); // Optimistic UI update
 
@@ -142,12 +141,10 @@ export function TaskManager({ username, initialTasks, initialPenaltyEndTime, ini
         const userData = await getUserData(username);
         if (!userData) throw new Error("User data not found");
 
-        // Prepare updates object
         const updates: Partial<UserData> = { tasks: newTasks };
 
-        if (toggledTask.completed) {
+        if (isNowCompleted) {
             // --- LOGIC FOR COMPLETING A TASK ---
-
             const isPenaltyActiveNow = userData.penaltyEndTime && userData.penaltyEndTime > Date.now();
             if(isPenaltyActiveNow) {
                 toast({
@@ -160,11 +157,11 @@ export function TaskManager({ username, initialTasks, initialPenaltyEndTime, ini
                 return;
             }
 
-            let finalReward = toggledTask.reward;
+            let finalReward = taskToToggle.reward;
             let canLevelUp = true;
             
             if (userData.baseStats.hp <= 0) {
-                finalReward = Math.round(toggledTask.reward * 0.1);
+                finalReward = Math.round(taskToToggle.reward * 0.1);
                 toast({ title: "HP Sıfır!", description: "Altın kazanımı %90 azaldı.", variant: "destructive" });
             }
             if (userData.baseStats.mp <= 0) {
@@ -185,7 +182,7 @@ export function TaskManager({ username, initialTasks, initialPenaltyEndTime, ini
                     attributePoints = (attributePoints || 0) + 1;
                 }
                 
-                const category = toggledTask.category;
+                const category = taskToToggle.category;
                 if (category !== 'other') {
                     const TASKS_PER_RANK = 20;
                     skillData = skillData || {};
@@ -216,34 +213,34 @@ export function TaskManager({ username, initialTasks, initialPenaltyEndTime, ini
 
         } else {
             // --- LOGIC FOR UN-COMPLETING A TASK ---
+            let { tasksCompletedThisLevel, userGold, skillData } = userData;
             
-            // We only revert progress if the task was genuinely completed before (i.e., user had > 0 tasks completed)
-            if ((userData.tasksCompletedThisLevel || 0) > 0) {
-                updates.tasksCompletedThisLevel = (userData.tasksCompletedThisLevel || 0) - 1;
-                
-                // Revert gold, ensuring it doesn't go below zero
-                updates.userGold = Math.max(0, (userData.userGold || 0) - toggledTask.reward);
-                
-                // Revert skill progress
-                const category = toggledTask.category;
-                if (category !== 'other' && userData.skillData?.[category]) {
-                    const skill = userData.skillData[category]!;
-                    if (skill.completedTasks > 0) {
-                        skill.completedTasks -= 1;
-                    } else if (skill.rankIndex > 0) {
-                        // This handles de-ranking if they un-complete the task that ranked them up
-                        const TASKS_PER_RANK = 20;
-                        skill.rankIndex -=1;
-                        skill.completedTasks = TASKS_PER_RANK - 1;
-                    }
-                    updates.skillData = userData.skillData;
-                }
-                
-                toast({
-                  title: "Görev Geri Alındı",
-                  description: `İlerlemeniz ve ${toggledTask.reward} altın geri alındı.`
-                });
+            // Revert level progress
+            if (tasksCompletedThisLevel > 0) {
+                updates.tasksCompletedThisLevel = tasksCompletedThisLevel - 1;
             }
+            
+            // Revert gold, ensuring it doesn't go below zero
+            updates.userGold = Math.max(0, userGold - taskToToggle.reward);
+            
+            // Revert skill progress
+            const category = taskToToggle.category;
+            if (category !== 'other' && skillData?.[category]) {
+                const skill = skillData[category]!;
+                if (skill.completedTasks > 0) {
+                    skill.completedTasks -= 1;
+                } else if (skill.rankIndex > 0) {
+                    const TASKS_PER_RANK = 20;
+                    skill.rankIndex -= 1;
+                    skill.completedTasks = TASKS_PER_RANK - 1;
+                }
+                updates.skillData = skillData;
+            }
+            
+            toast({
+              title: "Görev Geri Alındı",
+              description: `İlerlemeniz ve ${taskToToggle.reward} altın geri alındı.`
+            });
         }
 
         await updateUserData(username, updates);
