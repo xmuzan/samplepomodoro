@@ -1,17 +1,16 @@
+
 'use client';
 
 import { useState } from 'react';
-import { useRouter }s from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
-import { auth, db } from '@/lib/firebase';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { auth } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Loader2, ShieldCheck, Eye, EyeOff } from 'lucide-react';
-import { getTitleForLevel } from '@/lib/titles';
+import { Loader2, Eye, EyeOff } from 'lucide-react';
 
 export default function LoginPage() {
     const [email, setEmail] = useState('');
@@ -23,7 +22,7 @@ export default function LoginPage() {
     const [showPassword, setShowPassword] = useState(false);
     const router = useRouter();
 
-    const handleSignUp = async (e) => {
+    const handleSignUp = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
         setError('');
@@ -36,32 +35,9 @@ export default function LoginPage() {
         }
 
         try {
-            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-            const user = userCredential.user;
-
-            const userDocRef = doc(db, "users", user.uid);
-            await setDoc(userDocRef, {
-                uid: user.uid,
-                email: user.email,
-                username: username,
-                level: 1,
-                xp: 0,
-                xpToNextLevel: 100,
-                gold: 0,
-                gems: 0,
-                status: "active",
-                title: getTitleForLevel(1).title,
-                job: getTitleForLevel(1).job,
-                baseStats: { str: 5, dex: 5, int: 5, agi: 5, luk: 5 },
-                inventory: [],
-                equipment: {},
-                skills: {},
-                achievements: [],
-                createdAt: new Date(),
-            });
-
+            await createUserWithEmailAndPassword(auth, email, password);
             setSuccessMessage('Registration successful! You can now log in.');
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error signing up: ", error);
             setError(error.message);
         } finally {
@@ -69,13 +45,13 @@ export default function LoginPage() {
         }
     };
 
-    const handleLogin = async (e) => {
+    const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
         setError('');
         try {
             await signInWithEmailAndPassword(auth, email, password);
-            router.push('/dashboard'); // Redirect to a protected page after login
+            router.push('/tasks'); 
         } catch (error) {
             console.error("Error signing in: ", error);
             setError("Invalid email or password.");
