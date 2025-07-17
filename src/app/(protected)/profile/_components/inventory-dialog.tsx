@@ -90,6 +90,7 @@ export function InventoryDialog({ children, initialInventory }: InventoryDialogP
         if (updatedInventory[itemIndex].quantity > 1) {
           updatedInventory[itemIndex].quantity -= 1;
         } else {
+          // Remove the item if quantity is 1
           updatedInventory.splice(itemIndex, 1);
         }
             
