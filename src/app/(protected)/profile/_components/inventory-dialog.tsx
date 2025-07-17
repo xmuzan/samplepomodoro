@@ -32,7 +32,6 @@ interface InventoryDialogProps {
 export function InventoryDialog({ initialInventory, userData, open, onOpenChange, children }: InventoryDialogProps) {
   const { toast } = useToast();
   const currentUser = getCurrentUser();
-  const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
   const handleDeleteItem = (itemId: string) => {
