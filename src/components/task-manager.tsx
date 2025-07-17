@@ -138,10 +138,15 @@ export function TaskManager({ username, initialTasks, initialPenaltyEndTime, ini
     
     setTasks(newTasks); // Optimistic UI update
 
-    if (toggledTask.completed) {
-        try {
-            const userData = await getUserData(username);
-            if (!userData) throw new Error("User data not found");
+    try {
+        const userData = await getUserData(username);
+        if (!userData) throw new Error("User data not found");
+
+        // Prepare updates object
+        const updates: Partial<UserData> = { tasks: newTasks };
+
+        if (toggledTask.completed) {
+            // --- LOGIC FOR COMPLETING A TASK ---
 
             const isPenaltyActiveNow = userData.penaltyEndTime && userData.penaltyEndTime > Date.now();
             if(isPenaltyActiveNow) {
@@ -167,10 +172,7 @@ export function TaskManager({ username, initialTasks, initialPenaltyEndTime, ini
                 toast({ title: "MP Sıfır!", description: "Seviye ilerlemesi durduruldu.", variant: "destructive" });
             }
 
-            const updates: Partial<UserData> = {
-                userGold: (userData.userGold || 0) + finalReward,
-                tasks: newTasks,
-            };
+            updates.userGold = (userData.userGold || 0) + finalReward;
 
             if (canLevelUp) {
                 let { level, tasksCompletedThisLevel, tasksRequiredForNextLevel, attributePoints, skillData } = userData;
@@ -207,23 +209,51 @@ export function TaskManager({ username, initialTasks, initialPenaltyEndTime, ini
               updates.taskDeadline = null;
             }
             
-            await updateUserData(username, updates);
-            
             toast({
               title: "Görev Tamamlandı!",
               description: <div className="flex items-center justify-center w-full gap-2 text-yellow-400"><Coins className="h-5 w-5" /><span className="font-bold">+{finalReward} Altın</span></div>
             });
 
-        } catch (error) {
-            console.error("Error completing task:", error);
-            // Revert optimistic update on error
-            setTasks(tasks);
-        } finally {
-           router.refresh();
+        } else {
+            // --- LOGIC FOR UN-COMPLETING A TASK ---
+            
+            // We only revert progress if the task was genuinely completed before (i.e., user had > 0 tasks completed)
+            if ((userData.tasksCompletedThisLevel || 0) > 0) {
+                updates.tasksCompletedThisLevel = (userData.tasksCompletedThisLevel || 0) - 1;
+                
+                // Revert gold, ensuring it doesn't go below zero
+                updates.userGold = Math.max(0, (userData.userGold || 0) - toggledTask.reward);
+                
+                // Revert skill progress
+                const category = toggledTask.category;
+                if (category !== 'other' && userData.skillData?.[category]) {
+                    const skill = userData.skillData[category]!;
+                    if (skill.completedTasks > 0) {
+                        skill.completedTasks -= 1;
+                    } else if (skill.rankIndex > 0) {
+                        // This handles de-ranking if they un-complete the task that ranked them up
+                        const TASKS_PER_RANK = 20;
+                        skill.rankIndex -=1;
+                        skill.completedTasks = TASKS_PER_RANK - 1;
+                    }
+                    updates.skillData = userData.skillData;
+                }
+                
+                toast({
+                  title: "Görev Geri Alındı",
+                  description: `İlerlemeniz ve ${toggledTask.reward} altın geri alındı.`
+                });
+            }
         }
-    } else {
-      await updateUserData(username, { tasks: newTasks });
-      router.refresh();
+
+        await updateUserData(username, updates);
+
+    } catch (error) {
+        console.error("Error toggling task:", error);
+        setTasks(tasks); // Revert optimistic update on error
+        toast({ title: "Hata", description: "Görev durumu güncellenemedi.", variant: "destructive" });
+    } finally {
+       router.refresh();
     }
   };
   
