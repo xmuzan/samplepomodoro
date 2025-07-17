@@ -84,6 +84,7 @@ export default async function ProfilePage() {
               gold={userData.userGold}
               availablePoints={userData.attributePoints}
               initialInventory={userData.inventory || []}
+              userData={userData}
             />
           </div>
         </FuturisticBorder>

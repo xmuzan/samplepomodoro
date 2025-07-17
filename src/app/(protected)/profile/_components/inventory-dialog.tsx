@@ -14,7 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { FuturisticBorder } from "@/components/futuristic-border";
 import { useToast } from "@/hooks/use-toast";
-import { getUserData, updateUserData } from "@/lib/userData";
+import { updateUserData, type UserData } from "@/lib/userData";
 import { getCurrentUser } from "@/lib/auth";
 import { shopItemsData } from "../../shop/shop-data";
 import { useRouter } from "next/navigation";
@@ -23,58 +23,67 @@ import type { InventoryItem } from "@/lib/userData";
 interface InventoryDialogProps {
   children: React.ReactNode;
   initialInventory: InventoryItem[];
+  // Pass the full user data to have access to stats
+  userData: UserData | null;
 }
 
-export function InventoryDialog({ children, initialInventory }: InventoryDialogProps) {
+export function InventoryDialog({ children, initialInventory, userData }: InventoryDialogProps) {
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
   const currentUser = getCurrentUser();
   const router = useRouter();
 
   const handleUseItem = async (itemId: string) => {
-    if (!currentUser) return;
+    // Ensure we have all necessary data before proceeding
+    if (!currentUser || !userData || !userData.baseStats || !initialInventory) {
+        toast({ title: "Hata", description: "Kullanıcı verisi bulunamadı.", variant: "destructive" });
+        return;
+    }
     const itemData = shopItemsData.find(item => item.id === itemId);
     if (!itemData) return;
-    
-    try {
-        const userData = await getUserData(currentUser.username);
-        if (!userData || !userData.baseStats || !userData.inventory) return;
 
+    try {
         let newStats = { ...userData.baseStats };
+        let itemConsumed = false;
+
         switch(itemId) {
           case 'potion_energy':
             newStats.hp = Math.min(100, newStats.hp + 10);
             toast({ title: "Enerji Yenilendi", description: "HP %10 yenilendi." });
+            itemConsumed = true;
             break;
           case 'potion_mind':
             newStats.mp = Math.min(100, newStats.mp + 15);
             toast({ title: "Zihin Canlandı", description: "MP %15 yenilendi." });
+            itemConsumed = true;
             break;
           default:
-             toast({ title: itemData.name, description: "Bu eşya bir eylemi tamamlamak için kullanılır." });
+             toast({ title: itemData.name, description: "Bu eşyanın doğrudan bir kullanım etkisi yok." });
              return; // Don't consume item if it has no direct effect here
         }
         
-        let updatedInventory = [...userData.inventory];
+        if (!itemConsumed) return;
+
+        // Use the inventory from props, which is always up-to-date on render
+        let updatedInventory = [...initialInventory];
         const itemIndex = updatedInventory.findIndex(item => item.id === itemId);
 
         if (itemIndex > -1) {
             updatedInventory[itemIndex].quantity -= 1;
             if (updatedInventory[itemIndex].quantity <= 0) {
-                updatedInventory = updatedInventory.filter(item => item.id !== itemId);
+                updatedInventory = updatedInventory.filter((_, index) => index !== itemIndex);
             }
             
             await updateUserData(currentUser.username, {
                 inventory: updatedInventory,
                 baseStats: newStats
             });
-
-            // Close dialog if inventory becomes empty
+            
+            // Close dialog if the last item was used
             if (updatedInventory.length === 0) {
               setOpen(false);
             }
             
-            // Refresh server components to ensure data consistency everywhere
             router.refresh();
         }
     } catch (error) {
