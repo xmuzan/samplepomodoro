@@ -51,35 +51,30 @@ export function InventoryDialog({ children, initialInventory }: InventoryDialogP
         let newStats = { ...userData.baseStats };
         let itemUsed = false;
         
-        // Handle direct-use items like potions
         switch(itemId) {
           case 'potion_energy':
             if (newStats.hp >= 100) {
               toast({ title: "HP Zaten Dolu", description: "Enerji iksiri kullanamazsın." });
-              return; // Do not proceed if HP is full
+              return;
             }
             newStats.hp = Math.min(100, newStats.hp + 10);
-            toast({ title: "Enerji Yenilendi", description: "HP 10 puan yenilendi." });
             itemUsed = true;
             break;
           case 'potion_mind':
             if (newStats.mp >= 100) {
               toast({ title: "MP Zaten Dolu", description: "Zihin kristali kullanamazsın." });
-              return; // Do not proceed if MP is full
+              return;
             }
             newStats.mp = Math.min(100, newStats.mp + 15);
-            toast({ title: "Zihin Canlandı", description: "MP 15 puan yenilendi." });
             itemUsed = true;
             break;
           default:
-             // Handle items that are not directly used from inventory
              toast({ title: itemData.name, description: "Bu eşya bir eylemi tamamlamak için kullanılır." });
-             return; // Don't consume the item
+             return;
         }
         
-        if (!itemUsed) return; // If no item was actually used, stop here.
+        if (!itemUsed) return;
 
-        // Find the item in inventory and reduce its quantity
         const itemIndex = userData.inventory.findIndex(item => item.id === itemId);
         if (itemIndex === -1) {
           toast({ title: "Hata", description: "Eşya envanterinde bulunamadı.", variant: "destructive" });
@@ -90,7 +85,6 @@ export function InventoryDialog({ children, initialInventory }: InventoryDialogP
         if (updatedInventory[itemIndex].quantity > 1) {
           updatedInventory[itemIndex].quantity -= 1;
         } else {
-          // Remove the item if quantity is 1
           updatedInventory.splice(itemIndex, 1);
         }
             
@@ -101,7 +95,7 @@ export function InventoryDialog({ children, initialInventory }: InventoryDialogP
         
         toast({ title: "Başarılı", description: `${itemData.name} kullanıldı.` });
         router.refresh(); 
-        setOpen(false); // Close the dialog after using an item
+        setOpen(false);
 
     } catch (error) {
         console.error("Failed to use item", error);
