@@ -8,11 +8,12 @@ import { cn } from '@/lib/utils';
 
 interface TaskItemProps {
   task: Task;
-  onToggle: (id: string) => void;
-  onDelete: (id: string) => void;
+  onToggle: () => void;
+  onDelete: () => void;
+  isPending: boolean;
 }
 
-export function TaskItem({ task, onToggle, onDelete }: TaskItemProps) {
+export function TaskItem({ task, onToggle, onDelete, isPending }: TaskItemProps) {
   return (
     <div
       className="tech-task-item group flex items-center gap-4"
@@ -20,15 +21,17 @@ export function TaskItem({ task, onToggle, onDelete }: TaskItemProps) {
       <Checkbox
         id={`task-${task.id}`}
         checked={task.completed}
-        onCheckedChange={() => onToggle(task.id)}
+        onCheckedChange={onToggle}
         className="size-5 rounded-sm border-primary/50 text-primary data-[state=checked]:bg-primary/20 data-[state=checked]:text-primary data-[state=checked]:border-primary"
         aria-label={task.completed ? "Mark task as incomplete" : "Mark task as complete"}
+        disabled={isPending}
       />
       <label
         htmlFor={`task-${task.id}`}
         className={cn(
           "flex-1 cursor-pointer transition-colors",
-          task.completed ? 'line-through text-muted-foreground/80' : 'text-foreground'
+          task.completed ? 'line-through text-muted-foreground/80' : 'text-foreground',
+          isPending ? 'cursor-not-allowed opacity-50' : ''
         )}
       >
         {task.text}
@@ -37,8 +40,9 @@ export function TaskItem({ task, onToggle, onDelete }: TaskItemProps) {
         variant="ghost"
         size="icon"
         className="h-8 w-8 text-muted-foreground hover:text-destructive transition-colors"
-        onClick={() => onDelete(task.id)}
+        onClick={onDelete}
         aria-label="Delete task"
+        disabled={isPending}
       >
         <Trash2 className="h-4 w-4" />
       </Button>

@@ -1,18 +1,18 @@
 
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CreateTaskDialog } from './create-task-dialog';
 import { TaskItem } from './task-item';
 import { FuturisticBorder } from './futuristic-border';
-import { AlarmClock, Coins } from 'lucide-react';
+import { AlarmClock } from 'lucide-react';
 import type { SkillCategory } from '@/lib/skills';
 import { useToast } from '@/hooks/use-toast';
-import { updateUserData, UserData } from '@/lib/userData';
-import { getTierForLevel } from '@/lib/ranks';
+import { UserData } from '@/lib/userData';
+import { completeTaskAction, deleteTaskAction, updateTaskDeadlineAction } from '@/app/(protected)/tasks/actions';
 
 export type Task = {
   id: string;
@@ -76,6 +76,7 @@ interface TaskManagerProps {
 
 export function TaskManager({ username, initialUserData }: TaskManagerProps) {
   const [tasks, setTasks] = useState<Task[]>(initialUserData?.tasks || []);
+  const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
   const router = useRouter();
 
@@ -83,31 +84,7 @@ export function TaskManager({ username, initialUserData }: TaskManagerProps) {
     setTasks(initialUserData?.tasks || []);
   }, [initialUserData]);
 
-  const updateTasksAndDeadline = useCallback(async (newTasks: Task[], currentData: UserData) => {
-    setTasks(newTasks);
-    const hasTasks = newTasks.length > 0;
-    let dataToUpdate: Partial<UserData> = { tasks: newTasks };
-    
-    if (!hasTasks) {
-        dataToUpdate.taskDeadline = null;
-    } else {
-      const hasIncompleteTasks = newTasks.some(task => !task.completed);
-      const isPenaltyActive = currentData.penaltyEndTime && currentData.penaltyEndTime > Date.now();
-      
-      if (hasIncompleteTasks && !currentData.taskDeadline && !isPenaltyActive) {
-          dataToUpdate.taskDeadline = Date.now() + 24 * 60 * 60 * 1000;
-      } else if (!hasIncompleteTasks) {
-          dataToUpdate.taskDeadline = null;
-      }
-    }
-    
-    await updateUserData(username, dataToUpdate);
-    router.refresh();
-  }, [username, router]);
-
-
   const addTask = (taskText: string, difficulty: 'easy' | 'hard', category: SkillCategory) => {
-    if (!initialUserData) return;
     const reward = difficulty === 'easy' ? 50 : 200;
     const newTask: Task = {
       id: crypto.randomUUID(),
@@ -117,148 +94,45 @@ export function TaskManager({ username, initialUserData }: TaskManagerProps) {
       reward,
       category,
     };
+    
     const newTasks = [newTask, ...tasks];
-    updateTasksAndDeadline(newTasks, initialUserData);
+    setTasks(newTasks);
+
+    startTransition(async () => {
+      const result = await updateTaskDeadlineAction(username, newTasks);
+      if (result?.error) {
+        toast({ title: "Hata", description: result.error, variant: 'destructive' });
+        setTasks(tasks); // revert
+      }
+    });
   };
 
-  const toggleTask = async (id: string) => {
-    if (!initialUserData) return;
-
-    const taskToToggle = tasks.find(task => task.id === id);
-    if (!taskToToggle) return;
-
-    const isNowCompleted = !taskToToggle.completed;
-
-    const newTasks = tasks.map(task => 
-      task.id === id ? { ...task, completed: isNowCompleted } : task
-    );
-    
-    setTasks(newTasks); // Optimistic UI update
-
-    try {
-        const userData = initialUserData;
-        const updates: Partial<UserData> = { tasks: newTasks };
-
-        // --- SKILL DATA LOGIC ---
-        const skillData = JSON.parse(JSON.stringify(userData.skillData || {})); // Deep copy
-        const category = taskToToggle.category;
-        
-        if (category !== 'other') {
-            const TASKS_PER_RANK = 20;
-            if (!skillData[category]) {
-                skillData[category] = { completedTasks: 0, rankIndex: 0 };
-            }
-            const skill = skillData[category]!;
-
-            if (isNowCompleted) {
-                skill.completedTasks += 1;
-                if (skill.completedTasks >= TASKS_PER_RANK && skill.rankIndex < 9) {
-                    skill.rankIndex += 1;
-                    skill.completedTasks = 0;
-                }
-            } else {
-                if (skill.completedTasks > 0) {
-                    skill.completedTasks -= 1;
-                } else if (skill.rankIndex > 0) {
-                    skill.rankIndex -= 1;
-                    skill.completedTasks = TASKS_PER_RANK - 1;
-                }
-            }
+  const toggleTask = (task: Task) => {
+    startTransition(async () => {
+        const result = await completeTaskAction(username, task);
+        if (result?.error) {
+            toast({ title: "Hata", description: result.error, variant: "destructive" });
         }
-        // This is the critical fix: assign the MODIFIED skillData to the updates object.
-        updates.skillData = skillData;
-
-        if (isNowCompleted) {
-            // --- LOGIC FOR COMPLETING A TASK ---
-            const isPenaltyActiveNow = userData.penaltyEndTime && userData.penaltyEndTime > Date.now();
-            if(isPenaltyActiveNow) {
-                toast({
-                  title: "Ceza Aktif!",
-                  description: "Ceza süresi bitene kadar ödül kazanamazsın.",
-                  variant: "destructive"
-                });
-                await updateUserData(username, { tasks: newTasks, skillData: updates.skillData });
-                router.refresh();
-                return;
-            }
-
-            let finalReward = taskToToggle.reward;
-            let canLevelUp = true;
-            
-            if (userData.baseStats.hp <= 0) {
-                finalReward = Math.round(taskToToggle.reward * 0.1);
-                toast({ title: "HP Sıfır!", description: "Altın kazanımı %90 azaldı.", variant: "destructive" });
-            }
-            if (userData.baseStats.mp <= 0) {
-                canLevelUp = false;
-                toast({ title: "MP Sıfır!", description: "Seviye ilerlemesi durduruldu.", variant: "destructive" });
-            }
-
-            updates.userGold = (userData.userGold || 0) + finalReward;
-
-            if (canLevelUp) {
-                let { level, tasksCompletedThisLevel, tasksRequiredForNextLevel, attributePoints } = userData;
-                
-                tasksCompletedThisLevel = (tasksCompletedThisLevel || 0) + 1;
-
-                if (tasksCompletedThisLevel >= tasksRequiredForNextLevel) {
-                    level += 1;
-                    tasksCompletedThisLevel = 0;
-                    tasksRequiredForNextLevel = 32 + level;
-                    attributePoints = (attributePoints || 0) + 1;
-                }
-                
-                updates.level = level;
-                updates.tier = getTierForLevel(level);
-                updates.tasksCompletedThisLevel = tasksCompletedThisLevel;
-                updates.tasksRequiredForNextLevel = tasksRequiredForNextLevel;
-                updates.attributePoints = attributePoints;
-            }
-            
-            if (!newTasks.some(t => !t.completed)) {
-              updates.taskDeadline = null;
-            }
-            
-            toast({
+        if(result?.message) {
+             toast({
               title: "Görev Tamamlandı!",
-              description: <div className="flex items-center justify-center w-full gap-2 text-yellow-400"><Coins className="h-5 w-5" /><span className="font-bold">+{finalReward} Altın</span></div>
-            });
-
-        } else {
-            // --- LOGIC FOR UN-COMPLETING A TASK ---
-            const { tasksCompletedThisLevel = 0, userGold = 0 } = userData;
-            
-            if (tasksCompletedThisLevel > 0) {
-                updates.tasksCompletedThisLevel = tasksCompletedThisLevel - 1;
-            }
-            
-            updates.userGold = Math.max(0, userGold - taskToToggle.reward);
-            
-            toast({
-              title: "Görev Geri Alındı",
-              description: `İlerlemeniz ve ${taskToToggle.reward} altın geri alındı.`
+              description: result.message
             });
         }
-
-        await updateUserData(username, updates);
-
-    } catch (error) {
-        console.error("Error toggling task:", error);
-        setTasks(tasks); // Revert optimistic update on error
-        toast({ title: "Hata", description: "Görev durumu güncellenemedi.", variant: "destructive" });
-    } finally {
-       router.refresh();
-    }
+    });
   };
   
   const deleteTask = (id: string) => {
-    if (!initialUserData) return;
-    const newTasks = tasks.filter(task => task.id !== id);
-    updateTasksAndDeadline(newTasks, initialUserData);
+    startTransition(async () => {
+        const result = await deleteTaskAction(username, id);
+        if (result?.error) {
+            toast({ title: "Hata", description: result.error, variant: "destructive" });
+        }
+    });
   };
   
   const isPenaltyActive = initialUserData?.penaltyEndTime && initialUserData.penaltyEndTime > Date.now();
-  const isDeadlineActive = initialUserData?.taskDeadline && initialUserData.taskDeadline > Date.now() && tasks.some(t => !t.completed);
+  const isDeadlineActive = initialUserData?.taskDeadline && initialUserData.taskDeadline > Date.now() && (initialUserData?.tasks || []).some(t => !t.completed);
 
   return (
     <div className="max-w-4xl mx-auto w-full">
@@ -273,7 +147,13 @@ export function TaskManager({ username, initialUserData }: TaskManagerProps) {
             {tasks.length > 0 ? (
               <div className="space-y-0">
                 {tasks.map(task => (
-                  <TaskItem key={task.id} task={task} onToggle={toggleTask} onDelete={deleteTask} />
+                  <TaskItem 
+                    key={task.id} 
+                    task={task} 
+                    onToggle={() => toggleTask(task)} 
+                    onDelete={() => deleteTask(task.id)} 
+                    isPending={isPending}
+                  />
                 ))}
               </div>
             ) : (
