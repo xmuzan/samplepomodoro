@@ -1,9 +1,8 @@
 
 'use client';
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import {
   Dialog,
   DialogContent,
@@ -27,15 +26,30 @@ export interface InventoryItem {
 
 interface InventoryDialogProps {
   children: React.ReactNode;
-  initialInventory: InventoryItem[];
 }
 
-export function InventoryDialog({ children, initialInventory }: InventoryDialogProps) {
-  const [open, setOpen] = useState(false);
+export function InventoryDialog({ children }: InventoryDialogProps) {
+  const [inventory, setInventory] = useState<InventoryItem[]>([]);
+  const [isMounted, setIsMounted] = useState(false);
   const { toast } = useToast();
   const currentUser = getCurrentUser();
-  const router = useRouter();
-  
+
+  const fetchInventory = async () => {
+    if (!currentUser) return;
+    try {
+      const data = await getUserData(currentUser.username);
+      setInventory(data?.inventory || []);
+    } catch (error) {
+      console.error("Failed to fetch inventory from Firestore", error);
+      setInventory([]);
+    }
+  }
+
+  useEffect(() => {
+    setIsMounted(true);
+    fetchInventory();
+  }, []);
+
   const handleUseItem = async (itemId: string) => {
     if (!currentUser) return;
     const itemData = shopItemsData.find(item => item.id === itemId);
@@ -43,68 +57,57 @@ export function InventoryDialog({ children, initialInventory }: InventoryDialogP
     
     try {
         const userData = await getUserData(currentUser.username);
-        if (!userData || !userData.baseStats || !userData.inventory) {
-          toast({ title: "Hata", description: "Kullanıcı verisi bulunamadı.", variant: "destructive" });
-          return;
-        }
+        if (!userData || !userData.baseStats) return;
 
         let newStats = { ...userData.baseStats };
-        let itemUsed = false;
-        
         switch(itemId) {
           case 'potion_energy':
-            if (newStats.hp >= 100) {
-              toast({ title: "HP Zaten Dolu", description: "Enerji iksiri kullanamazsın." });
-              return;
-            }
             newStats.hp = Math.min(100, newStats.hp + 10);
-            itemUsed = true;
+            toast({ title: "Enerji Yenilendi", description: "HP %10 yenilendi." });
             break;
           case 'potion_mind':
-            if (newStats.mp >= 100) {
-              toast({ title: "MP Zaten Dolu", description: "Zihin kristali kullanamazsın." });
-              return;
-            }
             newStats.mp = Math.min(100, newStats.mp + 15);
-            itemUsed = true;
+            toast({ title: "Zihin Canlandı", description: "MP %15 yenilendi." });
             break;
           default:
              toast({ title: itemData.name, description: "Bu eşya bir eylemi tamamlamak için kullanılır." });
-             return;
+             return; // Don't consume item if it has no direct effect here
         }
         
-        if (!itemUsed) return;
+        let updatedInventory = [...inventory];
+        const itemIndex = updatedInventory.findIndex(item => item.id === itemId);
 
-        const itemIndex = userData.inventory.findIndex(item => item.id === itemId);
-        if (itemIndex === -1) {
-          toast({ title: "Hata", description: "Eşya envanterinde bulunamadı.", variant: "destructive" });
-          return;
-        };
-
-        const updatedInventory = [...userData.inventory];
-        if (updatedInventory[itemIndex].quantity > 1) {
-          updatedInventory[itemIndex].quantity -= 1;
-        } else {
-          updatedInventory.splice(itemIndex, 1);
-        }
+        if (itemIndex > -1) {
+            updatedInventory[itemIndex].quantity -= 1;
+            if (updatedInventory[itemIndex].quantity <= 0) {
+                updatedInventory = updatedInventory.filter(item => item.id !== itemId);
+            }
             
-        await updateUserData(currentUser.username, {
-            inventory: updatedInventory,
-            baseStats: newStats
-        });
-        
-        toast({ title: "Başarılı", description: `${itemData.name} kullanıldı.` });
-        router.refresh(); 
-        setOpen(false);
-
+            await updateUserData(currentUser.username, {
+                inventory: updatedInventory,
+                baseStats: newStats
+            });
+            setInventory(updatedInventory);
+            window.dispatchEvent(new Event('storage')); // Notify other components
+        }
     } catch (error) {
         console.error("Failed to use item", error);
         toast({ title: "Hata", description: "Eşya kullanılırken bir sorun oluştu.", variant: "destructive" });
     }
   };
   
+  const handleOpenChange = (open: boolean) => {
+    if (open && isMounted) {
+      fetchInventory();
+    }
+  };
+
+  if (!isMounted) {
+    return <>{children}</>;
+  }
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         {children}
       </DialogTrigger>
@@ -118,9 +121,9 @@ export function InventoryDialog({ children, initialInventory }: InventoryDialogP
               </DialogDescription>
             </DialogHeader>
             <div className="max-h-[60vh] overflow-y-auto px-6 pb-6">
-              {initialInventory && initialInventory.length > 0 ? (
+              {inventory.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {initialInventory.map(invItem => {
+                  {inventory.map(invItem => {
                     const shopItem = shopItemsData.find(sItem => sItem.id === invItem.id);
                     if (!shopItem) return null;
                     
@@ -137,6 +140,7 @@ export function InventoryDialog({ children, initialInventory }: InventoryDialogP
                         </div>
                         <div className="flex-grow">
                           <h4 className="font-bold text-foreground">{shopItem.name} {invItem.quantity > 1 && `(x${invItem.quantity})`}</h4>
+                          <p className="text-xs text-muted-foreground">{shopItem.description}</p>
                         </div>
                         <Button size="sm" variant="outline" onClick={() => handleUseItem(invItem.id)}>
                           Kullan

@@ -1,22 +1,7 @@
 
-"use client"
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
-
+// This page is now handled by the middleware.
+// The middleware will redirect from '/' to '/tasks'.
+// If not logged in, it will then redirect from '/tasks' to '/login'.
 export default function HomePage() {
-  const { user, loading } = useAuth();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (!loading) {
-      if (user) {
-        router.push('/tasks');
-      } else {
-        router.push('/login');
-      }
-    }
-  }, [user, loading, router]);
-
-  return <div>Loading...</div>;
+  return null;
 }

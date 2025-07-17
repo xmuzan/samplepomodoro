@@ -56,16 +56,19 @@ export function Navbar() {
   const [user, setUser] = useState<AuthUser | null>(null);
 
   useEffect(() => {
-    // This function runs only on the client side
     const checkUserAndPenalty = () => {
       const currentUser = getCurrentUser();
       setUser(currentUser);
       
-      const penaltyEndTime = localStorage.getItem('penaltyEndTime');
-      if (penaltyEndTime && parseInt(penaltyEndTime) > Date.now()) {
-        setIsPenaltyActive(true);
-      } else {
-        setIsPenaltyActive(false);
+      // Since penalty is per-user, we should get it from user-specific data
+      // For now, assuming local storage is used for simplicity
+      if (typeof window !== 'undefined') {
+          const penaltyEndTime = localStorage.getItem('penaltyEndTime');
+          if (penaltyEndTime && parseInt(penaltyEndTime) > Date.now()) {
+            setIsPenaltyActive(true);
+          } else {
+            setIsPenaltyActive(false);
+          }
       }
     };
     
@@ -73,16 +76,8 @@ export function Navbar() {
     
     const interval = setInterval(checkUserAndPenalty, 2000); 
 
-    // Listen for storage changes to update penalty status across tabs/components
-    const handleStorageChange = () => {
-        checkUserAndPenalty();
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-
     return () => {
       clearInterval(interval);
-      window.removeEventListener('storage', handleStorageChange);
     };
   }, []);
   

@@ -1,14 +1,13 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { FuturisticBorder } from '@/components/futuristic-border';
 import { ShopItem, type ShopItemData } from './shop-item';
 import { Coins, Lock } from 'lucide-react';
 import { getUserData, updateUserData } from '@/lib/userData';
 import type { InventoryItem } from '../../profile/_components/inventory-dialog';
-import { useToast } from '@/hooks/use-toast';
 
 function PenaltyTimer({ endTime }: { endTime: number }) {
   const [timeLeft, setTimeLeft] = useState(endTime - Date.now());
@@ -66,7 +65,6 @@ interface ShopManagerProps {
 export function ShopManager({ username, initialGold, initialPenaltyEndTime, shopItems }: ShopManagerProps) {
   const [gold, setGold] = useState(initialGold);
   const router = useRouter();
-  const { toast } = useToast();
 
   const handlePurchase = async (item: ShopItemData) => {
     if (!username || (initialPenaltyEndTime && initialPenaltyEndTime > Date.now()) || gold < item.price) return;
@@ -76,42 +74,24 @@ export function ShopManager({ username, initialGold, initialPenaltyEndTime, shop
       const currentInventory: InventoryItem[] = userData?.inventory || [];
       const newGold = gold - item.price;
 
-      const itemIndex = currentInventory.findIndex((invItem) => invItem.id === item.id);
-      let updatedInventory: InventoryItem[];
+      const itemInInventory = currentInventory.find((invItem) => invItem.id === item.id);
 
-      if (itemIndex > -1) {
-        // Item exists, increase quantity
-        updatedInventory = currentInventory.map((invItem, index) => 
-          index === itemIndex 
-            ? { ...invItem, quantity: invItem.quantity + 1 } 
-            : invItem
-        );
+      if (itemInInventory) {
+        itemInInventory.quantity += 1;
       } else {
-        // New item, add to inventory
-        updatedInventory = [...currentInventory, { id: item.id, quantity: 1 }];
+        currentInventory.push({ id: item.id, quantity: 1 });
       }
       
       await updateUserData(username, {
           userGold: newGold,
-          inventory: updatedInventory
+          inventory: currentInventory
       });
       
       setGold(newGold);
-      toast({
-        title: "Satın Alma Başarılı",
-        description: `${item.name} envanterine eklendi.`
-      })
-      // Intentionally not calling router.refresh() here to avoid potential caching issues.
-      // The user will see the updated inventory when they navigate to the profile page,
-      // which will fetch fresh data from the server.
+      router.refresh();
       
     } catch(error) {
-      console.error("Failed to purchase item:", error);
-      toast({
-        title: "Hata",
-        description: "Satın alma sırasında bir sorun oluştu.",
-        variant: "destructive"
-      })
+      console.error("Failed to update inventory in Firestore", error);
     }
   };
 

@@ -82,7 +82,6 @@ export default async function ProfilePage() {
             <FooterActions
               gold={userData.userGold}
               availablePoints={userData.attributePoints}
-              inventory={userData.inventory || []}
             />
           </div>
         </FuturisticBorder>
