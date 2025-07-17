@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { getUserData, updateUserData } from '@/lib/userData';
 import { getTierForLevel } from '@/lib/ranks';
 import { type Task } from '@/components/task-manager';
+import type { UserData } from '@/lib/userData';
 
 const TASKS_PER_RANK = 20;
 
@@ -15,22 +16,26 @@ export async function completeTaskAction(username: string, task: Task): Promise<
       return { error: 'Kullanıcı verisi bulunamadı.' };
     }
 
-    const taskIndex = userData.tasks.findIndex(t => t.id === task.id);
+    // Create a mutable copy of tasks to modify
+    const newTasks = [...userData.tasks];
+    const taskIndex = newTasks.findIndex(t => t.id === task.id);
+
     if (taskIndex === -1) {
       return { error: 'Görev bulunamadı.' };
     }
 
-    const isNowCompleted = !userData.tasks[taskIndex].completed;
-    userData.tasks[taskIndex].completed = isNowCompleted;
+    const isNowCompleted = !newTasks[taskIndex].completed;
+    newTasks[taskIndex].completed = isNowCompleted;
 
-    const skillData = userData.skillData || {};
+    // Create a deep copy of skillData to safely mutate
+    const newSkillData = JSON.parse(JSON.stringify(userData.skillData || {}));
     const category = task.category;
 
     if (category !== 'other') {
-      if (!skillData[category]) {
-        skillData[category] = { completedTasks: 0, rankIndex: 0 };
+      if (!newSkillData[category]) {
+        newSkillData[category] = { completedTasks: 0, rankIndex: 0 };
       }
-      const skill = skillData[category]!;
+      const skill = newSkillData[category]!;
 
       if (isNowCompleted) {
         skill.completedTasks += 1;
@@ -42,21 +47,28 @@ export async function completeTaskAction(username: string, task: Task): Promise<
         if (skill.completedTasks > 0) {
           skill.completedTasks -= 1;
         } else if (skill.rankIndex > 0) {
+          // If we need to de-rank
           skill.rankIndex -= 1;
           skill.completedTasks = TASKS_PER_RANK - 1;
         }
       }
     }
     
-    let completionMessage;
+    // Prepare all updates in a single object
+    const updates: Partial<UserData> = {
+        tasks: newTasks,
+        skillData: newSkillData
+    };
 
+    let completionMessage;
+    
     if (isNowCompleted) {
         let finalReward = task.reward;
         let canLevelUp = true;
         const messages = [];
         
         const isPenaltyActiveNow = userData.penaltyEndTime && userData.penaltyEndTime > Date.now();
-        if(isPenaltyActiveNow) {
+        if (isPenaltyActiveNow) {
             messages.push("Ceza aktif, ödül kazanamazsın.");
         } else {
              if (userData.baseStats.hp <= 0) {
@@ -69,9 +81,8 @@ export async function completeTaskAction(username: string, task: Task): Promise<
                 canLevelUp = false;
                 messages.push("MP Sıfır! Seviye ilerlemesi durdu.");
             }
-             userData.userGold = (userData.userGold || 0) + finalReward;
+             updates.userGold = (userData.userGold || 0) + finalReward;
         }
-
 
         if (canLevelUp) {
             let { level, tasksCompletedThisLevel, tasksRequiredForNextLevel, attributePoints } = userData;
@@ -83,29 +94,33 @@ export async function completeTaskAction(username: string, task: Task): Promise<
                 attributePoints = (attributePoints || 0) + 1;
                 messages.push("Seviye atladın!");
             }
-            userData.level = level;
-            userData.tier = getTierForLevel(level);
-            userData.tasksCompletedThisLevel = tasksCompletedThisLevel;
-            userData.tasksRequiredForNextLevel = tasksRequiredForNextLevel;
-            userData.attributePoints = attributePoints;
+            updates.level = level;
+            updates.tier = getTierForLevel(level);
+            updates.tasksCompletedThisLevel = tasksCompletedThisLevel;
+            updates.tasksRequiredForNextLevel = tasksRequiredForNextLevel;
+            updates.attributePoints = attributePoints;
         }
         
         completionMessage = messages.join(' ');
         
     } else {
+        // Logic for un-completing a task
         const { tasksCompletedThisLevel = 0, userGold = 0 } = userData;
         if (tasksCompletedThisLevel > 0) {
-            userData.tasksCompletedThisLevel = tasksCompletedThisLevel - 1;
+            updates.tasksCompletedThisLevel = tasksCompletedThisLevel - 1;
         }
-        userData.userGold = Math.max(0, userGold - task.reward);
+        updates.userGold = Math.max(0, userGold - task.reward);
         completionMessage = `Görev geri alındı. İlerlemeniz ve ${task.reward} altın geri alındı.`;
     }
 
-    if (!userData.tasks.some(t => !t.completed)) {
-        userData.taskDeadline = null;
+    // Handle task deadline
+    if (!newTasks.some(t => !t.completed)) {
+        updates.taskDeadline = null;
     }
 
-    await updateUserData(username, { ...userData, skillData });
+    // Atomically update the user document with all changes
+    await updateUserData(username, updates);
+
     revalidatePath('/tasks');
     revalidatePath('/profile');
     return { message: completionMessage };
@@ -115,7 +130,6 @@ export async function completeTaskAction(username: string, task: Task): Promise<
     return { error: 'Görev durumu güncellenirken bir hata oluştu.' };
   }
 }
-
 
 export async function deleteTaskAction(username: string, taskId: string): Promise<{ error?: string }> {
     try {
