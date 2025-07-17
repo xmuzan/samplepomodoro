@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import {
   Dialog,
@@ -13,17 +13,12 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { FuturisticBorder } from "@/components/futuristic-border";
-import type { ShopItemData } from "@/app/(protected)/shop/_components/shop-item";
 import { useToast } from "@/hooks/use-toast";
 import { getUserData, updateUserData } from "@/lib/userData";
 import { getCurrentUser } from "@/lib/auth";
 import { shopItemsData } from "../../shop/shop-data";
 import { useRouter } from "next/navigation";
-
-export interface InventoryItem {
-  id: string;
-  quantity: number;
-}
+import type { InventoryItem } from "@/lib/userData";
 
 interface InventoryDialogProps {
   children: React.ReactNode;
@@ -73,11 +68,14 @@ export function InventoryDialog({ children, initialInventory }: InventoryDialogP
                 inventory: updatedInventory,
                 baseStats: newStats
             });
+
+            // Close dialog if inventory becomes empty
+            if (updatedInventory.length === 0) {
+              setOpen(false);
+            }
+            
             // Refresh server components to ensure data consistency everywhere
             router.refresh();
-            if (updatedInventory.length === 0) {
-              setOpen(false); // Close dialog if inventory is empty
-            }
         }
     } catch (error) {
         console.error("Failed to use item", error);
