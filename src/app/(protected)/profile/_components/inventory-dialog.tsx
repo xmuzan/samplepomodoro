@@ -59,7 +59,7 @@ export function InventoryDialog({ children }: InventoryDialogProps) {
     
     try {
         const userData = await getUserData(currentUser.username);
-        if (!userData || !userData.baseStats) return;
+        if (!userData || !userData.baseStats || !userData.inventory) return;
 
         let newStats = { ...userData.baseStats };
         switch(itemId) {
@@ -76,7 +76,7 @@ export function InventoryDialog({ children }: InventoryDialogProps) {
              return; // Don't consume item if it has no direct effect here
         }
         
-        let updatedInventory = [...inventory];
+        let updatedInventory = [...userData.inventory];
         const itemIndex = updatedInventory.findIndex(item => item.id === itemId);
 
         if (itemIndex > -1) {
@@ -89,8 +89,10 @@ export function InventoryDialog({ children }: InventoryDialogProps) {
                 inventory: updatedInventory,
                 baseStats: newStats
             });
+            // Update local state immediately for responsiveness
             setInventory(updatedInventory);
-            router.refresh(); // Refresh server components
+            // Refresh server components to ensure data consistency everywhere
+            router.refresh(); 
         }
     } catch (error) {
         console.error("Failed to use item", error);

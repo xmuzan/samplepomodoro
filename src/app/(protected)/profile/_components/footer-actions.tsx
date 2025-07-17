@@ -1,6 +1,7 @@
 
 'use client';
 
+import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Coins, Star, ShieldQuestion, LogOut } from "lucide-react";
 import { InventoryDialog } from "./inventory-dialog";
@@ -15,6 +16,13 @@ interface FooterActionsProps {
 
 export function FooterActions({ gold, availablePoints }: FooterActionsProps) {
   const router = useRouter();
+  const [formattedGold, setFormattedGold] = useState<string | number>(gold);
+
+  useEffect(() => {
+    // This code runs only on the client, after hydration.
+    // This prevents the hydration mismatch error caused by server/client locale differences.
+    setFormattedGold(new Intl.NumberFormat().format(gold));
+  }, [gold]);
 
   const handleLogout = async () => {
     await logoutAction();
@@ -26,7 +34,7 @@ export function FooterActions({ gold, availablePoints }: FooterActionsProps) {
     <div className="flex flex-col md:flex-row justify-between items-center gap-4 mt-2">
       <div className="flex items-center gap-2 text-lg font-mono p-2 rounded-md bg-muted/20">
         <Coins className="h-6 w-6 text-yellow-400 text-glow" />
-        <span className="font-bold text-yellow-200">{new Intl.NumberFormat().format(gold)}</span>
+        <span className="font-bold text-yellow-200">{formattedGold}</span>
       </div>
       <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
         <SkillsDialog>

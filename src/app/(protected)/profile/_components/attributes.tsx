@@ -5,15 +5,10 @@ import { Button } from "@/components/ui/button";
 import { updateUserData } from "@/lib/userData";
 import { getCurrentUser } from "@/lib/auth";
 import { useRouter } from "next/navigation";
+import type { UserData } from "@/lib/userData";
 
 interface AttributesProps {
-  stats: {
-    str: number;
-    vit: number;
-    agi: number;
-    int: number;
-    per: number;
-  };
+  stats: UserData['stats'];
   attributePoints: number;
 }
 

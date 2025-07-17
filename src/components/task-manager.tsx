@@ -11,7 +11,7 @@ import { FuturisticBorder } from './futuristic-border';
 import { AlarmClock, Coins } from 'lucide-react';
 import type { SkillCategory } from '@/lib/skills';
 import { useToast } from '@/hooks/use-toast';
-import { getUserData, updateUserData, UserData } from '@/lib/userData';
+import { updateUserData, UserData } from '@/lib/userData';
 import { getTierForLevel } from '@/lib/ranks';
 
 export type Task = {
@@ -71,21 +71,19 @@ function TimerDisplay({ endTime, isPenalty }: { endTime: number, isPenalty: bool
 
 interface TaskManagerProps {
     username: string;
-    initialTasks: Task[];
-    initialPenaltyEndTime: number | null;
-    initialTaskDeadline: number | null;
+    initialUserData: UserData | null;
 }
 
-export function TaskManager({ username, initialTasks, initialPenaltyEndTime, initialTaskDeadline }: TaskManagerProps) {
-  const [tasks, setTasks] = useState<Task[]>(initialTasks);
+export function TaskManager({ username, initialUserData }: TaskManagerProps) {
+  const [tasks, setTasks] = useState<Task[]>(initialUserData?.tasks || []);
   const { toast } = useToast();
   const router = useRouter();
 
   useEffect(() => {
-    setTasks(initialTasks);
-  }, [initialTasks]);
+    setTasks(initialUserData?.tasks || []);
+  }, [initialUserData]);
 
-  const updateTasksAndDeadline = useCallback(async (newTasks: Task[]) => {
+  const updateTasksAndDeadline = useCallback(async (newTasks: Task[], currentData: UserData) => {
     setTasks(newTasks);
     const hasTasks = newTasks.length > 0;
     let dataToUpdate: Partial<UserData> = { tasks: newTasks };
@@ -94,11 +92,9 @@ export function TaskManager({ username, initialTasks, initialPenaltyEndTime, ini
         dataToUpdate.taskDeadline = null;
     } else {
       const hasIncompleteTasks = newTasks.some(task => !task.completed);
-      const userData = await getUserData(username); // Need to check current state
+      const isPenaltyActive = currentData.penaltyEndTime && currentData.penaltyEndTime > Date.now();
       
-      const isPenaltyActive = userData?.penaltyEndTime && userData.penaltyEndTime > Date.now();
-      
-      if (hasIncompleteTasks && !userData?.taskDeadline && !isPenaltyActive) {
+      if (hasIncompleteTasks && !currentData.taskDeadline && !isPenaltyActive) {
           dataToUpdate.taskDeadline = Date.now() + 24 * 60 * 60 * 1000;
       } else if (!hasIncompleteTasks) {
           dataToUpdate.taskDeadline = null;
@@ -111,6 +107,7 @@ export function TaskManager({ username, initialTasks, initialPenaltyEndTime, ini
 
 
   const addTask = (taskText: string, difficulty: 'easy' | 'hard', category: SkillCategory) => {
+    if (!initialUserData) return;
     const reward = difficulty === 'easy' ? 50 : 200;
     const newTask: Task = {
       id: crypto.randomUUID(),
@@ -121,10 +118,12 @@ export function TaskManager({ username, initialTasks, initialPenaltyEndTime, ini
       category,
     };
     const newTasks = [newTask, ...tasks];
-    updateTasksAndDeadline(newTasks);
+    updateTasksAndDeadline(newTasks, initialUserData);
   };
 
   const toggleTask = async (id: string) => {
+    if (!initialUserData) return;
+
     const taskToToggle = tasks.find(task => task.id === id);
     if (!taskToToggle) return;
 
@@ -137,9 +136,7 @@ export function TaskManager({ username, initialTasks, initialPenaltyEndTime, ini
     setTasks(newTasks); // Optimistic UI update
 
     try {
-        const userData = await getUserData(username);
-        if (!userData) throw new Error("User data not found");
-
+        const userData = initialUserData; // Use the fresh data passed in
         const updates: Partial<UserData> = { tasks: newTasks };
 
         if (isNowCompleted) {
@@ -254,12 +251,13 @@ export function TaskManager({ username, initialTasks, initialPenaltyEndTime, ini
   };
   
   const deleteTask = (id: string) => {
+    if (!initialUserData) return;
     const newTasks = tasks.filter(task => task.id !== id);
-    updateTasksAndDeadline(newTasks);
+    updateTasksAndDeadline(newTasks, initialUserData);
   };
-
-  const isPenaltyActive = initialPenaltyEndTime && initialPenaltyEndTime > Date.now();
-  const isDeadlineActive = initialTaskDeadline && initialTaskDeadline > Date.now() && tasks.some(t => !t.completed);
+  
+  const isPenaltyActive = initialUserData?.penaltyEndTime && initialUserData.penaltyEndTime > Date.now();
+  const isDeadlineActive = initialUserData?.taskDeadline && initialUserData.taskDeadline > Date.now() && tasks.some(t => !t.completed);
 
   return (
     <div className="max-w-4xl mx-auto w-full">
@@ -285,10 +283,10 @@ export function TaskManager({ username, initialTasks, initialPenaltyEndTime, ini
           </div>
         </CardContent>
         
-        {isPenaltyActive ? (
-          <TimerDisplay endTime={initialPenaltyEndTime} isPenalty={true} />
-        ) : isDeadlineActive ? (
-          <TimerDisplay endTime={initialTaskDeadline} isPenalty={false} />
+        {isPenaltyActive && initialUserData?.penaltyEndTime ? (
+          <TimerDisplay endTime={initialUserData.penaltyEndTime} isPenalty={true} />
+        ) : isDeadlineActive && initialUserData?.taskDeadline ? (
+          <TimerDisplay endTime={initialUserData.taskDeadline} isPenalty={false} />
         ) : null}
 
         </div>

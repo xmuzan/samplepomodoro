@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { FuturisticBorder } from '@/components/futuristic-border';
 import { ShopItem, type ShopItemData } from './shop-item';
@@ -64,21 +64,16 @@ interface ShopManagerProps {
 }
 
 export function ShopManager({ username, initialGold, initialPenaltyEndTime, shopItems }: ShopManagerProps) {
-  const [gold, setGold] = useState(initialGold);
   const router = useRouter();
   const { toast } = useToast();
 
-  useEffect(() => {
-    setGold(initialGold);
-  }, [initialGold]);
-
   const handlePurchase = async (item: ShopItemData) => {
-    if (!username || (initialPenaltyEndTime && initialPenaltyEndTime > Date.now()) || gold < item.price) return;
+    if (!username || (initialPenaltyEndTime && initialPenaltyEndTime > Date.now()) || initialGold < item.price) return;
     
     try {
       const userData = await getUserData(username);
       const currentInventory: InventoryItem[] = userData?.inventory || [];
-      const newGold = gold - item.price;
+      const newGold = initialGold - item.price;
 
       const itemInInventory = currentInventory.find((invItem) => invItem.id === item.id);
 
@@ -93,12 +88,11 @@ export function ShopManager({ username, initialGold, initialPenaltyEndTime, shop
           inventory: currentInventory
       });
       
-      setGold(newGold);
       toast({
         title: "Satın Alındı!",
         description: `${item.name} envanterine eklendi.`,
       });
-      router.refresh();
+      router.refresh(); // Refresh all server components
       
     } catch(error) {
       console.error("Failed to update inventory in Firestore", error);
@@ -127,7 +121,7 @@ export function ShopManager({ username, initialGold, initialPenaltyEndTime, shop
                   </h1>
                   <div className="flex items-center gap-2 text-lg font-mono p-2 rounded-md bg-muted/20">
                     <Coins className="h-6 w-6 text-yellow-400 text-glow" />
-                    <span className="font-bold text-yellow-200">{new Intl.NumberFormat().format(gold)}</span>
+                    <span className="font-bold text-yellow-200">{new Intl.NumberFormat().format(initialGold)}</span>
                   </div>
                 </div>
 
@@ -136,7 +130,7 @@ export function ShopManager({ username, initialGold, initialPenaltyEndTime, shop
                     <ShopItem 
                       key={item.id}
                       item={item}
-                      currentGold={gold}
+                      currentGold={initialGold}
                       onPurchase={handlePurchase}
                     />
                   ))}
