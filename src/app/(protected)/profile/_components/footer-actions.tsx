@@ -41,7 +41,7 @@ export function FooterActions({ gold, availablePoints, initialInventory, userDat
           <span className="font-bold text-yellow-200">{formattedGold}</span>
         </div>
         <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
-          {/* <SkillsDialog>
+          <SkillsDialog>
               <Button 
                   size="lg" 
                   className="gap-2 bg-purple-600 text-white hover:bg-purple-500 shadow-[0_0_15px_#a855f7] w-full relative"
@@ -54,7 +54,7 @@ export function FooterActions({ gold, availablePoints, initialInventory, userDat
                       </span>
                   )}
               </Button>
-          </SkillsDialog> */}
+          </SkillsDialog>
           
           <InventoryDialog
             initialInventory={initialInventory}
