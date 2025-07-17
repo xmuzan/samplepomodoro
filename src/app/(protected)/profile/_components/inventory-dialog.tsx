@@ -24,72 +24,51 @@ interface InventoryDialogProps {
   children: React.ReactNode;
   initialInventory: InventoryItem[];
   userData: UserData | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
-export function InventoryDialog({ children, initialInventory, userData }: InventoryDialogProps) {
+export function InventoryDialog({ children, initialInventory, userData, open, onOpenChange }: InventoryDialogProps) {
   const { toast } = useToast();
   const currentUser = getCurrentUser();
   const router = useRouter();
-  const [open, setOpen] = useState(false);
 
-  const handleUseItem = async (itemId: string) => {
-    if (!currentUser || !userData || !userData.baseStats) {
-        toast({ title: "Hata", description: "Kullanıcı verisi bulunamadı.", variant: "destructive" });
-        return;
+  const handleDeleteItem = async (itemId: string) => {
+    if (!currentUser || !userData) {
+      toast({ title: "Hata", description: "Kullanıcı verisi bulunamadı.", variant: "destructive" });
+      return;
     }
-    const itemData = shopItemsData.find(item => item.id === itemId);
-    if (!itemData) return;
 
     try {
-        let newStats: UserStats = { ...userData.baseStats };
-        let itemConsumed = false;
+      let updatedInventory = [...initialInventory];
+      const itemIndex = updatedInventory.findIndex(item => item.id === itemId);
 
-        switch(itemId) {
-          case 'potion_energy':
-            newStats.hp = Math.min(100, newStats.hp + 10);
-            toast({ title: "Enerji Yenilendi", description: "HP %10 yenilendi." });
-            itemConsumed = true;
-            break;
-          case 'potion_mind':
-            newStats.mp = Math.min(100, newStats.mp + 15);
-            toast({ title: "Zihin Canlandı", description: "MP %15 yenilendi." });
-            itemConsumed = true;
-            break;
-          default:
-             toast({ title: itemData.name, description: "Bu eşyanın doğrudan bir kullanım etkisi yok." });
-             return; 
+      if (itemIndex > -1) {
+        updatedInventory[itemIndex].quantity -= 1;
+        if (updatedInventory[itemIndex].quantity <= 0) {
+          updatedInventory = updatedInventory.filter((_, index) => index !== itemIndex);
+        }
+
+        await updateUserData(currentUser.username, {
+          inventory: updatedInventory,
+        });
+
+        toast({ title: "Başarılı", description: "Eşya envanterden silindi." });
+        
+        if (updatedInventory.length === 0) {
+          onOpenChange(false);
         }
         
-        if (!itemConsumed) return;
-
-        let updatedInventory = [...initialInventory];
-        const itemIndex = updatedInventory.findIndex(item => item.id === itemId);
-
-        if (itemIndex > -1) {
-            updatedInventory[itemIndex].quantity -= 1;
-            if (updatedInventory[itemIndex].quantity <= 0) {
-                updatedInventory = updatedInventory.filter((_, index) => index !== itemIndex);
-            }
-            
-            await updateUserData(currentUser.username, {
-                inventory: updatedInventory,
-                baseStats: newStats
-            });
-            
-            if (updatedInventory.length === 0) {
-              setOpen(false);
-            }
-            
-            router.refresh();
-        }
+        router.refresh();
+      }
     } catch (error) {
-        console.error("Failed to use item", error);
-        toast({ title: "Hata", description: "Eşya kullanılırken bir sorun oluştu.", variant: "destructive" });
+      console.error("Failed to delete item", error);
+      toast({ title: "Hata", description: "Eşya silinirken bir sorun oluştu.", variant: "destructive" });
     }
   };
   
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       {children}
       <DialogContent className="border-none bg-transparent p-0 shadow-none sm:max-w-2xl">
         <FuturisticBorder>
@@ -122,8 +101,8 @@ export function InventoryDialog({ children, initialInventory, userData }: Invent
                           <h4 className="font-bold text-foreground">{shopItem.name} {invItem.quantity > 1 && `(x${invItem.quantity})`}</h4>
                           <p className="text-xs text-muted-foreground">{shopItem.description}</p>
                         </div>
-                        <Button size="sm" variant="outline" onClick={() => handleUseItem(invItem.id)}>
-                          Kullan
+                        <Button size="sm" variant="destructive" onClick={() => handleDeleteItem(invItem.id)}>
+                          Sil
                         </Button>
                       </div>
                     )
