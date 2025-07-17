@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { Bot, Store, Swords, User, FileText, Lock, Crown, Shield, LogOut } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import type { User as AuthUser } from '@/types';
@@ -17,6 +17,7 @@ import {
 import { Button } from './ui/button';
 import { logoutAction } from '@/app/login/actions';
 import { getCookie } from 'cookies-next';
+import { getUserData } from '@/lib/userData';
 
 const baseNavItems = [
   { href: '/tasks', label: 'Görevler', icon: Swords },
@@ -28,7 +29,7 @@ const baseNavItems = [
 
 const adminNavItem = { href: '/admin', label: 'Yönetim', icon: Shield };
 
-function getCurrentUser(): AuthUser | null {
+function getCurrentUserClient(): AuthUser | null {
     if (typeof window === 'undefined') {
         return null;
     }
@@ -51,38 +52,50 @@ function getCurrentUser(): AuthUser | null {
 
 export function Navbar() {
   const pathname = usePathname();
-  const router = useRouter();
   const [isPenaltyActive, setIsPenaltyActive] = useState(false);
   const [user, setUser] = useState<AuthUser | null>(null);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    const checkUserAndPenalty = () => {
-      const currentUser = getCurrentUser();
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isMounted) return;
+
+    const checkUserAndPenalty = async () => {
+      const currentUser = getCurrentUserClient();
       setUser(currentUser);
       
-      // Since penalty is per-user, we should get it from user-specific data
-      // For now, assuming local storage is used for simplicity
-      if (typeof window !== 'undefined') {
-          const penaltyEndTime = localStorage.getItem('penaltyEndTime');
-          if (penaltyEndTime && parseInt(penaltyEndTime) > Date.now()) {
-            setIsPenaltyActive(true);
-          } else {
-            setIsPenaltyActive(false);
-          }
+      if (currentUser) {
+        const userData = await getUserData(currentUser.username);
+        const penaltyEndTime = userData?.penaltyEndTime;
+        if (penaltyEndTime && penaltyEndTime > Date.now()) {
+          setIsPenaltyActive(true);
+        } else {
+          setIsPenaltyActive(false);
+        }
+      } else {
+        setIsPenaltyActive(false);
       }
     };
     
     checkUserAndPenalty();
     
-    const interval = setInterval(checkUserAndPenalty, 2000); 
+    const interval = setInterval(checkUserAndPenalty, 5000); 
 
     return () => {
       clearInterval(interval);
     };
-  }, []);
+  }, [isMounted]);
   
   const handleLogout = async () => {
       await logoutAction();
+  }
+
+  if (!isMounted) {
+    // Render a placeholder or null on the server and initial client render
+    return null;
   }
 
   const navItems = user?.isAdmin ? [...baseNavItems, adminNavItem] : baseNavItems;
@@ -99,16 +112,17 @@ export function Navbar() {
         <div className="flex justify-around">
           {navItems.map(({ href, label, icon: Icon }) => {
             const isShop = label === 'Mağaza';
+            const isActive = pathname.startsWith(href);
             return (
               <Link 
                 key={label} 
                 href={href} 
                 className={cn(
                   commonLinkClasses,
-                  pathname.startsWith(href) && href !== '/' || pathname === href ? activeClasses : inactiveClasses,
+                  isActive ? activeClasses : inactiveClasses,
                   'flex-col text-xs h-14 relative w-full'
               )}>
-                <Icon className={cn('h-6 w-6 lucide-icon', pathname.startsWith(href) && iconGlow)} />
+                <Icon className={cn('h-6 w-6 lucide-icon', isActive && iconGlow)} />
                 <span>{label}</span>
                 {isShop && isPenaltyActive && <Lock className="absolute top-1 right-1 h-3 w-3 text-destructive" />}
               </Link>
@@ -130,7 +144,7 @@ export function Navbar() {
                 <ul className="flex flex-col gap-2">
                     {navItems.map(({ href, label, icon: Icon }) => {
                        const isShop = label === 'Mağaza';
-                       const isActive = pathname.startsWith(href) && href !== '/' || pathname === href;
+                       const isActive = pathname.startsWith(href);
                        return (
                         <li key={label}>
                           <Tooltip>
