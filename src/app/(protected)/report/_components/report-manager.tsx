@@ -36,6 +36,13 @@ const hpActions: ReportAction[] = [
     impact: -5,
     stat: 'hp',
   },
+  {
+    id: 'hp_profanity',
+    title: 'Küfür Etmek',
+    description: 'Ağızdan çıkan kötü sözler ruhsal enerjiyi tüketir.',
+    impact: -3,
+    stat: 'hp',
+  }
 ];
 
 const mpActions: ReportAction[] = [
