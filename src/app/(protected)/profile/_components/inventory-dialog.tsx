@@ -9,7 +9,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { FuturisticBorder } from "@/components/futuristic-border";
@@ -22,20 +21,18 @@ import type { InventoryItem } from "@/lib/userData";
 import type { UserStats } from "@/lib/stats";
 
 interface InventoryDialogProps {
-  children: React.ReactNode;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   initialInventory: InventoryItem[];
-  // Pass the full user data to have access to stats
   userData: UserData | null;
 }
 
-export function InventoryDialog({ children, initialInventory, userData }: InventoryDialogProps) {
-  const [open, setOpen] = useState(false);
+export function InventoryDialog({ open, onOpenChange, initialInventory, userData }: InventoryDialogProps) {
   const { toast } = useToast();
   const currentUser = getCurrentUser();
   const router = useRouter();
 
   const handleUseItem = async (itemId: string) => {
-    // Ensure we have all necessary data before proceeding
     if (!currentUser || !userData || !userData.baseStats || !initialInventory) {
         toast({ title: "Hata", description: "Kullanıcı verisi bulunamadı.", variant: "destructive" });
         return;
@@ -60,12 +57,11 @@ export function InventoryDialog({ children, initialInventory, userData }: Invent
             break;
           default:
              toast({ title: itemData.name, description: "Bu eşyanın doğrudan bir kullanım etkisi yok." });
-             return; // Don't consume item if it has no direct effect here
+             return; 
         }
         
         if (!itemConsumed) return;
 
-        // Use the inventory from props, which is always up-to-date on render
         let updatedInventory = [...initialInventory];
         const itemIndex = updatedInventory.findIndex(item => item.id === itemId);
 
@@ -80,9 +76,8 @@ export function InventoryDialog({ children, initialInventory, userData }: Invent
                 baseStats: newStats
             });
             
-            // Close dialog if the last item was used
             if (updatedInventory.length === 0) {
-              setOpen(false);
+              onOpenChange(false);
             }
             
             router.refresh();
@@ -94,10 +89,7 @@ export function InventoryDialog({ children, initialInventory, userData }: Invent
   };
   
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {children}
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="border-none bg-transparent p-0 shadow-none sm:max-w-2xl">
         <FuturisticBorder>
           <div className="bg-background/90 backdrop-blur-sm p-1">
