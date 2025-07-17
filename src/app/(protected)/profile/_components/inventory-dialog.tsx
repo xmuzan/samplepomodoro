@@ -36,7 +36,7 @@ export function InventoryDialog({ children, initialInventory, userData }: Invent
 
   const handleUseItem = async (itemId: string) => {
     // Ensure we have all necessary data before proceeding
-    if (!currentUser || !userData || !initialInventory) {
+    if (!currentUser || !userData || !userData.baseStats || !initialInventory) {
         toast({ title: "Hata", description: "Kullanıcı verisi bulunamadı.", variant: "destructive" });
         return;
     }
@@ -44,9 +44,7 @@ export function InventoryDialog({ children, initialInventory, userData }: Invent
     if (!itemData) return;
 
     try {
-        // Use existing baseStats or provide a default if it's missing to prevent crash.
-        const currentBaseStats = userData.baseStats || { hp: 100, mp: 100, ir: 100 };
-        let newStats: UserStats = { ...currentBaseStats };
+        let newStats: UserStats = { ...userData.baseStats };
         let itemConsumed = false;
 
         switch(itemId) {
