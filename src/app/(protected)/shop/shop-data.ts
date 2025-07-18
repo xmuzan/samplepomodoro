@@ -22,14 +22,14 @@ export const shopItemsData: ShopItemData[] = [
     id: 'scroll_cinema',
     name: 'Gölge Sineması',
     description: 'Envanterden kullanarak 20 dakikalık bir film, dizi veya video izle. Zihnini dinlendirir ve farklı dünyalara kaçmanı sağlar.',
-    price: 250,
+    price: 200,
     imageUrl: '/sinema.png',
     aiHint: 'futuristic screen'
   },
   {
     id: 'potion_energy_new',
     name: 'Enerji İksiri',
-    description: 'Gerçek hayatta bir bardak favori içeceğini içmeye veya bir paket abur cubur yemeye denktir. Anlık bir motivasyon artışı sağlar.',
+    description: 'Gerçek hayatta bir bardak favori içeceğini içmeye veya bir paket abur cubur yemeye denktir. Anlık bir enerji patlaması sağlar.',
     price: 50,
     imageUrl: '/enerjiiksiriyeni.png',
     aiHint: 'can of energy drink'
