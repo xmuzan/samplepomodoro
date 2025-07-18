@@ -31,7 +31,7 @@ export const shopItemsData: ShopItemData[] = [
     name: 'Enerji İksiri',
     description: 'Gerçek hayatta bir bardak favori içeceğini içmeye veya bir paket abur cubur yemeye denktir. Anlık bir enerji patlaması sağlar.',
     price: 50,
-    imageUrl: '/enerjiiksiriyeni.png',
+    imageUrl: '/enerjiiksiri2.png',
     aiHint: 'can of energy drink'
   }
 ];
