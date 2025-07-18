@@ -83,7 +83,7 @@ export async function completeTaskAction(username: string, task: Task): Promise<
           if (tasksCompletedThisLevel >= tasksRequiredForNextLevel) {
               level += 1;
               tasksCompletedThisLevel = 0;
-              tasksRequiredForNextLevel = 32 + level; // Corrected calculation
+              tasksRequiredForNextLevel = 32 + level; // CORRECTED CALCULATION
               attributePoints = (attributePoints || 0) + 1;
               messages.push("Seviye atladın!");
           }
