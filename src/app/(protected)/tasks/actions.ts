@@ -100,15 +100,14 @@ export async function completeTaskAction(username: string, task: Task): Promise<
       completionMessage = `Görev geri alındı. İlerlemeniz ve ${task.reward} altın geri alındı.`;
     }
 
-    // 4. Update Task Deadline
-    const hadIncompleteTasks = userData.tasks.some(t => !t.completed);
+    // 4. Update Task Deadline (Corrected Logic)
     const nowHasIncompleteTasks = newTasks.some(t => !t.completed);
-
-    if (!hadIncompleteTasks && nowHasIncompleteTasks) {
-      // Transitioning from 0 incomplete tasks to 1+ incomplete tasks
-      updates.taskDeadline = Date.now() + 24 * 60 * 60 * 1000;
-    } else if (hadIncompleteTasks && !nowHasIncompleteTasks) {
-      // All tasks are now completed
+    if (nowHasIncompleteTasks) {
+      // If there are incomplete tasks, ensure a deadline exists.
+      // If one doesn't exist already, create a new one.
+      updates.taskDeadline = userData.taskDeadline || (Date.now() + 24 * 60 * 60 * 1000);
+    } else {
+      // All tasks are now completed, so remove the deadline.
       updates.taskDeadline = null;
     }
     
@@ -134,11 +133,12 @@ export async function deleteTaskAction(username: string, taskId: string): Promis
         
         const updates: Partial<UserData> = { tasks: newTasks };
         
-        const hadIncompleteTasks = userData.tasks.some(t => !t.completed);
         const nowHasIncompleteTasks = newTasks.some(t => !t.completed);
         
-        if (hadIncompleteTasks && !nowHasIncompleteTasks) {
-            updates.taskDeadline = null;
+        if (nowHasIncompleteTasks) {
+          updates.taskDeadline = userData.taskDeadline; // Keep existing deadline
+        } else {
+          updates.taskDeadline = null; // No incomplete tasks, clear deadline
         }
 
         await updateUserData(username, updates);
@@ -159,11 +159,12 @@ export async function addTasksAction(username: string, tasks: Task[]): Promise<{
 
         const updates: Partial<UserData> = { tasks };
 
-        const hadIncompleteTasks = userData.tasks.some(t => !t.completed);
         const nowHasIncompleteTasks = tasks.some(t => !t.completed);
         
-        if (!hadIncompleteTasks && nowHasIncompleteTasks) {
-            updates.taskDeadline = Date.now() + 24 * 60 * 60 * 1000;
+        if (nowHasIncompleteTasks) {
+            updates.taskDeadline = userData.taskDeadline || (Date.now() + 24 * 60 * 60 * 1000);
+        } else {
+            updates.taskDeadline = null;
         }
         
         await updateUserData(username, updates);
