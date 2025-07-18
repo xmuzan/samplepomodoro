@@ -142,15 +142,16 @@ export async function updateTaskDeadlineAction(username: string, tasks: Task[]):
             return { error: 'Kullanıcı verisi bulunamadı.' };
         }
         
-        const hasIncompleteTasks = tasks.some(task => !task.completed);
+        const updates: Partial<UserData> = { tasks };
         const isPenaltyActive = userData.penaltyEndTime && userData.penaltyEndTime > Date.now();
-        let taskDeadline = userData.taskDeadline;
 
-        if (hasIncompleteTasks && !taskDeadline && !isPenaltyActive) {
-            taskDeadline = Date.now() + 24 * 60 * 60 * 1000;
+        // Start a new 24-hour deadline ONLY if the previous task list was empty 
+        // and we are now adding tasks. This is the very first task.
+        if (userData.tasks.length === 0 && tasks.length > 0 && !isPenaltyActive) {
+          updates.taskDeadline = Date.now() + 24 * 60 * 60 * 1000;
         }
 
-        await updateUserData(username, { tasks, taskDeadline });
+        await updateUserData(username, updates);
         revalidatePath('/tasks');
         return {};
 
