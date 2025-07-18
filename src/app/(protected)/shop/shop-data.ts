@@ -3,9 +3,9 @@ import type { ShopItemData } from './_components/shop-item';
 
 export const shopItemsData: ShopItemData[] = [
   {
-    id: 'potion_energy',
-    name: 'Enerji İksiri',
-    description: 'Anında %10 HP yeniler. Gerçek hayatta bir bardak favori içeceğini içmeye veya bir paket abur cubur yemeye denktir. Anlık bir enerji patlaması sağlar ama gerçek sağlık alışkanlıklarının yerini tutmaz.',
+    id: 'potion_hp',
+    name: 'Can İksiri',
+    description: 'Anında %10 HP yeniler. Tükenmiş fiziksel gücü tazelemek için kullanılır.',
     price: 100,
     imageUrl: '/enerjiiksiri.png',
     aiHint: 'glowing potion'
@@ -27,11 +27,11 @@ export const shopItemsData: ShopItemData[] = [
     aiHint: 'futuristic screen'
   },
   {
-    id: 'book_wisdom',
-    name: 'Bilgelik Tomarı',
-    description: 'Envanterden kullanarak 25 dakika boyunca kendini geliştirecek bir kitap oku veya benzeri kaynaklara göz at. Entelektüel kapasiteni ve algını yükseltir.',
-    price: 300,
-    imageUrl: '/bilgeliktomari.png',
-    aiHint: 'ancient book'
-  },
+    id: 'potion_energy_new',
+    name: 'Enerji İksiri',
+    description: 'Gerçek hayatta bir bardak favori içeceğini içmeye veya bir paket abur cubur yemeye denktir. Anlık bir motivasyon artışı sağlar.',
+    price: 50,
+    imageUrl: '/enerjiiksiriyeni.png',
+    aiHint: 'can of energy drink'
+  }
 ];
