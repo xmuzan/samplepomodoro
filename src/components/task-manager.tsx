@@ -12,7 +12,7 @@ import { AlarmClock } from 'lucide-react';
 import type { SkillCategory } from '@/lib/skills';
 import { useToast } from '@/hooks/use-toast';
 import { UserData } from '@/lib/userData';
-import { completeTaskAction, deleteTaskAction, updateTaskDeadlineAction } from '@/app/(protected)/tasks/actions';
+import { completeTaskAction, deleteTaskAction, addTasksAction } from '@/app/(protected)/tasks/actions';
 
 export type Task = {
   id: string;
@@ -28,33 +28,27 @@ function TimerDisplay({ endTime, isPenalty }: { endTime: number, isPenalty: bool
   const router = useRouter();
 
   useEffect(() => {
-    if (endTime <= Date.now()) {
-      setTimeLeft(0);
-      router.refresh();
-      return;
-    }
-    
-    const interval = setInterval(() => {
+    const timer = setInterval(() => {
       const remaining = endTime - Date.now();
       if (remaining <= 0) {
-        clearInterval(interval);
+        clearInterval(timer);
         setTimeLeft(0);
-        router.refresh();
+        router.refresh(); // Refresh to clear the timer from UI
       } else {
         setTimeLeft(remaining);
       }
     }, 1000);
 
-    return () => clearInterval(interval);
+    return () => clearInterval(timer);
   }, [endTime, router]);
 
   if (timeLeft <= 0) {
     return null;
   }
 
-  const hours = Math.floor((timeLeft / (1000 * 60 * 60)));
-  const minutes = Math.floor((timeLeft / (1000 * 60)) % 60);
-  const seconds = Math.floor((timeLeft / 1000) % 60);
+  const hours = Math.floor(timeLeft / (1000 * 60 * 60));
+  const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+  const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
 
   const label = isPenalty ? "CEZA SÜRESİ" : "KALAN SÜRE";
   const labelColor = isPenalty ? "text-destructive" : "text-amber-400";
@@ -76,15 +70,31 @@ interface TaskManagerProps {
 
 export function TaskManager({ username, initialUserData }: TaskManagerProps) {
   const [tasks, setTasks] = useState<Task[]>(initialUserData?.tasks || []);
+  const [deadline, setDeadline] = useState<number | null>(null);
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
-  const router = useRouter();
 
   useEffect(() => {
     setTasks(initialUserData?.tasks || []);
   }, [initialUserData]);
 
+  useEffect(() => {
+    const hasIncompleteTasks = tasks.some(task => !task.completed);
+
+    if (hasIncompleteTasks && !deadline) {
+      // If there are incomplete tasks but no timer, start one.
+      // This happens when the page loads with existing tasks or a task is un-completed.
+      const twentyFourHours = 24 * 60 * 60 * 1000;
+      setDeadline(Date.now() + twentyFourHours);
+    } else if (!hasIncompleteTasks && deadline) {
+      // If all tasks are completed, clear the deadline.
+      setDeadline(null);
+    }
+  }, [tasks, deadline]);
+
+
   const addTask = (taskText: string, difficulty: 'easy' | 'hard', category: SkillCategory) => {
+    const wasTaskListEmpty = tasks.length === 0;
     const reward = difficulty === 'easy' ? 50 : 200;
     const newTask: Task = {
       id: crypto.randomUUID(),
@@ -98,8 +108,13 @@ export function TaskManager({ username, initialUserData }: TaskManagerProps) {
     const newTasks = [newTask, ...tasks];
     setTasks(newTasks);
 
+    if (wasTaskListEmpty) {
+       const twentyFourHours = 24 * 60 * 60 * 1000;
+       setDeadline(Date.now() + twentyFourHours);
+    }
+
     startTransition(async () => {
-      const result = await updateTaskDeadlineAction(username, newTasks);
+      const result = await addTasksAction(username, newTasks);
       if (result?.error) {
         toast({ title: "Hata", description: result.error, variant: 'destructive' });
         setTasks(tasks); // revert
@@ -132,8 +147,8 @@ export function TaskManager({ username, initialUserData }: TaskManagerProps) {
   };
   
   const isPenaltyActive = initialUserData?.penaltyEndTime && initialUserData.penaltyEndTime > Date.now();
-  const isDeadlineActive = initialUserData?.taskDeadline && initialUserData.taskDeadline > Date.now() && (initialUserData?.tasks || []).some(t => !t.completed);
-
+  const isDeadlineActive = deadline && deadline > Date.now() && tasks.some(t => !t.completed);
+  
   return (
     <div className="max-w-4xl mx-auto w-full">
       <FuturisticBorder>
@@ -166,8 +181,8 @@ export function TaskManager({ username, initialUserData }: TaskManagerProps) {
         
         {isPenaltyActive && initialUserData?.penaltyEndTime ? (
           <TimerDisplay endTime={initialUserData.penaltyEndTime} isPenalty={true} />
-        ) : isDeadlineActive && initialUserData?.taskDeadline ? (
-          <TimerDisplay endTime={initialUserData.taskDeadline} isPenalty={false} />
+        ) : isDeadlineActive ? (
+          <TimerDisplay endTime={deadline} isPenalty={false} />
         ) : null}
 
         </div>

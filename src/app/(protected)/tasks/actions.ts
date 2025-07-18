@@ -1,4 +1,3 @@
-
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -27,7 +26,7 @@ export async function completeTaskAction(username: string, task: Task): Promise<
     const isNowCompleted = !newTasks[taskIndex].completed;
     newTasks[taskIndex].completed = isNowCompleted;
     updates.tasks = newTasks;
-
+    
     // 2. Update Skill Data
     const skillData = JSON.parse(JSON.stringify(userData.skillData || {}));
     const category = task.category;
@@ -83,7 +82,7 @@ export async function completeTaskAction(username: string, task: Task): Promise<
           if (tasksCompletedThisLevel >= tasksRequiredForNextLevel) {
               level += 1;
               tasksCompletedThisLevel = 0;
-              tasksRequiredForNextLevel = 32 + level; // CORRECTED CALCULATION
+              tasksRequiredForNextLevel = 32 + level;
               attributePoints = (attributePoints || 0) + 1;
               messages.push("Seviye atladın!");
           }
@@ -100,13 +99,7 @@ export async function completeTaskAction(username: string, task: Task): Promise<
       updates.userGold = Math.max(0, (userData.userGold || 0) - task.reward);
       completionMessage = `Görev geri alındı. İlerlemeniz ve ${task.reward} altın geri alındı.`;
     }
-
-    // 4. Update Task Deadline
-    if (!newTasks.some(t => !t.completed)) {
-        updates.taskDeadline = null;
-    }
-
-    // 5. Atomically update the user document with all changes
+    
     await updateUserData(username, updates);
 
     revalidatePath('/tasks');
@@ -135,24 +128,11 @@ export async function deleteTaskAction(username: string, taskId: string): Promis
     }
 }
 
-export async function updateTaskDeadlineAction(username: string, tasks: Task[]): Promise<{ error?: string }> {
+export async function addTasksAction(username: string, tasks: Task[]): Promise<{ error?: string }> {
      try {
-        const userData = await getUserData(username);
-        if (!userData) {
-            return { error: 'Kullanıcı verisi bulunamadı.' };
-        }
-        
-        const updates: Partial<UserData> = { tasks };
-        const isPenaltyActive = userData.penaltyEndTime && userData.penaltyEndTime > Date.now();
-
-        if (userData.tasks.length === 0 && tasks.length > 0 && !isPenaltyActive) {
-          updates.taskDeadline = Date.now() + 24 * 60 * 60 * 1000;
-        }
-
-        await updateUserData(username, updates);
+        await updateUserData(username, { tasks });
         revalidatePath('/tasks');
         return {};
-
     } catch (error) {
         console.error('Error updating task list:', error);
         return { error: 'Görev listesi güncellenirken bir hata oluştu.' };
