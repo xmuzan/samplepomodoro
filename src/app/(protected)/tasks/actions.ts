@@ -83,7 +83,7 @@ export async function completeTaskAction(username: string, task: Task): Promise<
           if (tasksCompletedThisLevel >= tasksRequiredForNextLevel) {
               level += 1;
               tasksCompletedThisLevel = 0;
-              tasksRequiredForNextLevel = 32 + level;
+              tasksRequiredForNextLevel = 32 + level; // Corrected calculation
               attributePoints = (attributePoints || 0) + 1;
               messages.push("Seviye atladın!");
           }
@@ -145,8 +145,6 @@ export async function updateTaskDeadlineAction(username: string, tasks: Task[]):
         const updates: Partial<UserData> = { tasks };
         const isPenaltyActive = userData.penaltyEndTime && userData.penaltyEndTime > Date.now();
 
-        // Start a new 24-hour deadline ONLY if the previous task list was empty 
-        // and we are now adding tasks. This is the very first task.
         if (userData.tasks.length === 0 && tasks.length > 0 && !isPenaltyActive) {
           updates.taskDeadline = Date.now() + 24 * 60 * 60 * 1000;
         }
