@@ -1,3 +1,4 @@
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -94,10 +95,21 @@ export async function completeTaskAction(username: string, task: Task): Promise<
       }
       completionMessage = messages.join(' ');
     } else {
-      // Logic for un-completing a task
       updates.tasksCompletedThisLevel = Math.max(0, (userData.tasksCompletedThisLevel || 0) - 1);
       updates.userGold = Math.max(0, (userData.userGold || 0) - task.reward);
       completionMessage = `Görev geri alındı. İlerlemeniz ve ${task.reward} altın geri alındı.`;
+    }
+
+    // 4. Update Task Deadline
+    const hadIncompleteTasks = userData.tasks.some(t => !t.completed);
+    const nowHasIncompleteTasks = newTasks.some(t => !t.completed);
+
+    if (!hadIncompleteTasks && nowHasIncompleteTasks) {
+      // Transitioning from 0 incomplete tasks to 1+ incomplete tasks
+      updates.taskDeadline = Date.now() + 24 * 60 * 60 * 1000;
+    } else if (hadIncompleteTasks && !nowHasIncompleteTasks) {
+      // All tasks are now completed
+      updates.taskDeadline = null;
     }
     
     await updateUserData(username, updates);
@@ -119,7 +131,17 @@ export async function deleteTaskAction(username: string, taskId: string): Promis
             return { error: 'Kullanıcı verisi bulunamadı.' };
         }
         const newTasks = userData.tasks.filter(t => t.id !== taskId);
-        await updateUserData(username, { tasks: newTasks });
+        
+        const updates: Partial<UserData> = { tasks: newTasks };
+        
+        const hadIncompleteTasks = userData.tasks.some(t => !t.completed);
+        const nowHasIncompleteTasks = newTasks.some(t => !t.completed);
+        
+        if (hadIncompleteTasks && !nowHasIncompleteTasks) {
+            updates.taskDeadline = null;
+        }
+
+        await updateUserData(username, updates);
         revalidatePath('/tasks');
         return {};
     } catch (error) {
@@ -130,7 +152,21 @@ export async function deleteTaskAction(username: string, taskId: string): Promis
 
 export async function addTasksAction(username: string, tasks: Task[]): Promise<{ error?: string }> {
      try {
-        await updateUserData(username, { tasks });
+        const userData = await getUserData(username);
+        if (!userData) {
+            return { error: 'Kullanıcı verisi bulunamadı.' };
+        }
+
+        const updates: Partial<UserData> = { tasks };
+
+        const hadIncompleteTasks = userData.tasks.some(t => !t.completed);
+        const nowHasIncompleteTasks = tasks.some(t => !t.completed);
+        
+        if (!hadIncompleteTasks && nowHasIncompleteTasks) {
+            updates.taskDeadline = Date.now() + 24 * 60 * 60 * 1000;
+        }
+        
+        await updateUserData(username, updates);
         revalidatePath('/tasks');
         return {};
     } catch (error) {

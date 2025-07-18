@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useTransition } from 'react';
+import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,6 +13,7 @@ import type { SkillCategory } from '@/lib/skills';
 import { useToast } from '@/hooks/use-toast';
 import { UserData } from '@/lib/userData';
 import { completeTaskAction, deleteTaskAction, addTasksAction } from '@/app/(protected)/tasks/actions';
+import { useEffect } from 'react';
 
 export type Task = {
   id: string;
@@ -33,7 +34,8 @@ function TimerDisplay({ endTime, isPenalty }: { endTime: number, isPenalty: bool
       if (remaining <= 0) {
         clearInterval(timer);
         setTimeLeft(0);
-        router.refresh(); // Refresh to clear the timer from UI
+        // Refresh to get updated data from server, which might remove the timer
+        router.refresh(); 
       } else {
         setTimeLeft(remaining);
       }
@@ -70,7 +72,6 @@ interface TaskManagerProps {
 
 export function TaskManager({ username, initialUserData }: TaskManagerProps) {
   const [tasks, setTasks] = useState<Task[]>(initialUserData?.tasks || []);
-  const [deadline, setDeadline] = useState<number | null>(null);
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
 
@@ -78,23 +79,8 @@ export function TaskManager({ username, initialUserData }: TaskManagerProps) {
     setTasks(initialUserData?.tasks || []);
   }, [initialUserData]);
 
-  useEffect(() => {
-    const hasIncompleteTasks = tasks.some(task => !task.completed);
-
-    if (hasIncompleteTasks && !deadline) {
-      // If there are incomplete tasks but no timer, start one.
-      // This happens when the page loads with existing tasks or a task is un-completed.
-      const twentyFourHours = 24 * 60 * 60 * 1000;
-      setDeadline(Date.now() + twentyFourHours);
-    } else if (!hasIncompleteTasks && deadline) {
-      // If all tasks are completed, clear the deadline.
-      setDeadline(null);
-    }
-  }, [tasks, deadline]);
-
 
   const addTask = (taskText: string, difficulty: 'easy' | 'hard', category: SkillCategory) => {
-    const wasTaskListEmpty = tasks.length === 0;
     const reward = difficulty === 'easy' ? 50 : 200;
     const newTask: Task = {
       id: crypto.randomUUID(),
@@ -105,32 +91,34 @@ export function TaskManager({ username, initialUserData }: TaskManagerProps) {
       category,
     };
     
+    // Optimistic update for UI responsiveness
     const newTasks = [newTask, ...tasks];
     setTasks(newTasks);
-
-    if (wasTaskListEmpty) {
-       const twentyFourHours = 24 * 60 * 60 * 1000;
-       setDeadline(Date.now() + twentyFourHours);
-    }
 
     startTransition(async () => {
       const result = await addTasksAction(username, newTasks);
       if (result?.error) {
         toast({ title: "Hata", description: result.error, variant: 'destructive' });
-        setTasks(tasks); // revert
+        setTasks(tasks); // revert on error
       }
     });
   };
 
   const toggleTask = (task: Task) => {
+    // Optimistic update for UI
+    const newTasks = tasks.map(t => t.id === task.id ? {...t, completed: !t.completed} : t);
+    setTasks(newTasks);
+
     startTransition(async () => {
         const result = await completeTaskAction(username, task);
         if (result?.error) {
             toast({ title: "Hata", description: result.error, variant: "destructive" });
+            // Revert optimistic update on error
+            setTasks(tasks); 
         }
         if(result?.message) {
              toast({
-              title: "Görev Tamamlandı!",
+              title: "Görev Durumu Değişti!",
               description: result.message
             });
         }
@@ -138,16 +126,20 @@ export function TaskManager({ username, initialUserData }: TaskManagerProps) {
   };
   
   const deleteTask = (id: string) => {
+    const newTasks = tasks.filter(t => t.id !== id);
+    setTasks(newTasks); // Optimistic update
+
     startTransition(async () => {
         const result = await deleteTaskAction(username, id);
         if (result?.error) {
             toast({ title: "Hata", description: result.error, variant: "destructive" });
+            setTasks(tasks); // Revert on error
         }
     });
   };
   
   const isPenaltyActive = initialUserData?.penaltyEndTime && initialUserData.penaltyEndTime > Date.now();
-  const isDeadlineActive = deadline && deadline > Date.now() && tasks.some(t => !t.completed);
+  const isDeadlineActive = initialUserData?.taskDeadline && initialUserData.taskDeadline > Date.now();
   
   return (
     <div className="max-w-4xl mx-auto w-full">
@@ -181,8 +173,8 @@ export function TaskManager({ username, initialUserData }: TaskManagerProps) {
         
         {isPenaltyActive && initialUserData?.penaltyEndTime ? (
           <TimerDisplay endTime={initialUserData.penaltyEndTime} isPenalty={true} />
-        ) : isDeadlineActive ? (
-          <TimerDisplay endTime={deadline} isPenalty={false} />
+        ) : isDeadlineActive && initialUserData?.taskDeadline ? (
+          <TimerDisplay endTime={initialUserData.taskDeadline} isPenalty={false} />
         ) : null}
 
         </div>
